@@ -2,6 +2,7 @@ import logging
 import os
 import unittest
 
+from headliner.model import SummarizerAttention
 from headliner.preprocessing.preprocessor import Preprocessor
 from headliner.trainer import Trainer
 
@@ -50,3 +51,12 @@ class TestTrainer(unittest.TestCase):
         self.assertEqual(False, trainer.preprocessor.lower_case)
         self.assertEqual(False, trainer.preprocessor.hash_numbers)
 
+    def test_init_model(self) -> None:
+        logging.basicConfig(level=logging.INFO)
+        data = [('a b', 'a'), ('a b c', 'b')]
+        summarizer = SummarizerAttention(lstm_size=16, embedding_size=10)
+        trainer = Trainer(batch_size=2, steps_per_epoch=10, preprocessor=Preprocessor(start_token='<start_token>'))
+        trainer.train(summarizer, data, num_epochs=1)
+        self.assertEqual(7, summarizer.vectorizer.encoding_dim)
+        self.assertEqual(6, summarizer.vectorizer.decoding_dim)
+        self.assertEqual('<start_token>', summarizer.preprocessor.start_token)

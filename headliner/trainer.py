@@ -195,8 +195,7 @@ class Trainer:
                                   embedding_weights_encoder=None,
                                   embedding_weights_decoder=None)
         else:
-            train_preprocessed = (self.preprocessor(d) for d in train_data)
-            tokenizer_encoder, tokenizer_decoder = self._create_tokenizers(train_preprocessed)
+            tokenizer_encoder, tokenizer_decoder = self._create_tokenizers(train_data)
             self.logger.info('vocab encoder: {vocab_enc}, vocab decoder: {vocab_dec}, start training loop...'.format(
                 vocab_enc=len(tokenizer_encoder.word_index), vocab_dec=len(tokenizer_decoder.word_index)))
             vectorizer = Vectorizer(tokenizer_encoder, tokenizer_decoder)
@@ -235,20 +234,21 @@ class Trainer:
         return vectorize
 
     def _create_tokenizers(self,
-                           train_data_preprocessed: Generator[Tuple[str, str], None, None]
+                           train_data: Generator[Tuple[str, str], None, None]
                            ) -> Tuple[Tokenizer, Tokenizer]:
 
-        train_text_encoder, train_text_decoder = zip(*train_data_preprocessed)
         counter_encoder = Counter()
         counter_decoder = Counter()
+        train_text_encoder = (self.preprocessor(d)[0] for d in train_data)
+        train_text_decoder = (self.preprocessor(d)[1] for d in train_data)
         for text_encoder in train_text_encoder:
             counter_encoder.update(text_encoder.split())
         for text_decoder in train_text_decoder:
             counter_decoder.update(text_decoder.split())
         tokens_encoder = {token_count[0] for token_count in counter_encoder.most_common(self.max_vocab_size)}
         tokens_decoder = {token_count[0] for token_count in counter_decoder.most_common(self.max_vocab_size)}
-        tokens_encoder.update({START_TOKEN, END_TOKEN})
-        tokens_decoder.update({START_TOKEN, END_TOKEN})
+        tokens_encoder.update({self.preprocessor.start_token, self.preprocessor.end_token})
+        tokens_decoder.update({self.preprocessor.start_token, self.preprocessor.end_token})
         tokenizer_encoder = Tokenizer(oov_token=OOV_TOKEN, filters='', lower=False)
         tokenizer_decoder = Tokenizer(oov_token=OOV_TOKEN, filters='', lower=False)
         tokenizer_encoder.fit_on_texts(sorted(list(tokens_encoder)))
