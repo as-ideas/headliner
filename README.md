@@ -94,7 +94,7 @@ summarizer.predict_vectors('You are the stars, earth and sky for me!')
 
 A previously trained summarizer can be loaded and then retrained. In this case the data preprocessing and vectorization is loaded from the model.
 ```
-train_data = [('Some new training data.', New data.')]*1000
+train_data = [('Some new training data.', 'New data.')]*1000
 summarizer_loaded = SummarizerAttention.load('/tmp/summarizer')
 trainer = Trainer(batch_size=2)
 trainer.train(summarizer, train_data)
@@ -106,11 +106,15 @@ summarizer_loaded.save('/tmp/summarizer_retrained')
 
 String preprocessing can be customized:
 ```
-preprocessor = Preprocessor(filter_pattern='', 
-                            lower_case='', 
-                            hash_numbers=False)
-trainer = Trainer(batch_size=2, preprocessor=preprocessor)
+sample = ('Some cased training data 1234', 'Cased data.')
+standard_preprocessor = Preprocessor()
+custom_preprocessor = Preprocessor(filter_pattern='', 
+                                   lower_case='', 
+                                   hash_numbers=False)
+standard_preprocessor(sample)
+custom_preprocessor(sample)
 
+trainer = Trainer(batch_size=2, preprocessor=preprocessor)
 ```
 
 
