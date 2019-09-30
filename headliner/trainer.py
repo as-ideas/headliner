@@ -42,18 +42,18 @@ class Trainer:
         Initializes the trainer.
 
         Args:
-            batch_size: size of mini-batches for stochastic gradient descent
-            max_vocab_size: maximum number of unique tokens to consider for embeddings
-            glove_path: path to glove embedding file
-            steps_per_epoch: number of steps to train until callbacks are invoked
-            tensorboard_dir: directory for saving tensorboard logs
-            model_save_path: directory for saving the best model
-            bucketing_buffer_size_batches: number of batches to buffer when bucketing sequences
-            bucketing_batches_to_bucket: number of buffered batches from which sequences are collected for bucketing
-            logging_level: level of logging to use
-            num_print_predictions: number of sample predictions to print in each evaluation
-            preprocessor: optional custom preprocessor, if None a standard preprocessor will be created
-            vectorizer: optional custom vectorizer, if None a standard vectorizer will be created
+            batch_size: Size of mini-batches for stochastic gradient descent.
+            max_vocab_size: Maximum number of unique tokens to consider for embeddings.
+            glove_path: Path to glove embedding file.
+            steps_per_epoch: Number of steps to train until callbacks are invoked.
+            tensorboard_dir: Directory for saving tensorboard logs.
+            model_save_path: Directory for saving the best model.
+            bucketing_buffer_size_batches: Number of batches to buffer when bucketing sequences.
+            bucketing_batches_to_bucket: Number of buffered batches from which sequences are collected for bucketing.
+            logging_level: Level of logging to use, e.g. logging.INFO or logging.DEBUG.
+            num_print_predictions: Number of sample predictions to print in each evaluation.
+            preprocessor (optional): custom preprocessor, if None a standard preprocessor will be created.
+            vectorizer (optional): custom vectorizer, if None a standard vectorizer will be created.
         """
 
         self.batch_size = batch_size

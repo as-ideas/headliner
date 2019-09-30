@@ -4,6 +4,9 @@ from keras_preprocessing.text import Tokenizer
 
 
 class Vectorizer:
+    """
+    Transforlms tuples of text into tuples of vector sequences.
+    """
 
     def __init__(self,
                  tokenizer_encoder: Tokenizer,
@@ -14,7 +17,9 @@ class Vectorizer:
         self._tokenizer_decoder = tokenizer_decoder
 
     def __call__(self, data: Tuple[str, str]) -> Tuple[List[int], List[int]]:
-        """ Encodes preprocessed strings into sequences of one-hot indices """
+        """
+        Encodes preprocessed strings into sequences of one-hot indices
+        """
         text_encoder, text_decoder = data[0], data[1]
         vec_encoder = self._tokenizer_encoder.texts_to_sequences([text_encoder])[0]
         vec_decoder = self._tokenizer_decoder.texts_to_sequences([text_decoder])[0]
