@@ -55,8 +55,13 @@ class TestTrainer(unittest.TestCase):
         logging.basicConfig(level=logging.INFO)
         data = [('a b', 'a'), ('a b c', 'b')]
         summarizer = SummarizerAttention(lstm_size=16, embedding_size=10)
-        trainer = Trainer(batch_size=2, steps_per_epoch=10, preprocessor=Preprocessor(start_token='<start_token>'))
+        trainer = Trainer(batch_size=2,
+                          steps_per_epoch=10,
+                          max_vocab_size=10,
+                          preprocessor=Preprocessor(start_token='<start_token>'))
         trainer.train(summarizer, data, num_epochs=1)
+        # encoding dim and decoding dim are num unique tokens + 4 (pad, start, end, oov)
+        self.assertIsNotNone(summarizer.vectorizer)
         self.assertEqual(7, summarizer.vectorizer.encoding_dim)
         self.assertEqual(6, summarizer.vectorizer.decoding_dim)
         self.assertEqual('<start_token>', summarizer.preprocessor.start_token)
