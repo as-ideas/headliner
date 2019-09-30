@@ -106,6 +106,8 @@ summarizer_loaded.save('/tmp/summarizer_retrained')
 
 String preprocessing can be customized:
 ```
+from headliner.preprocessing import Preprocessor
+
 sample = ('Some cased training data 1234', 'Cased data.')
 standard_preprocessor = Preprocessor()
 custom_preprocessor = Preprocessor(filter_pattern='', 
