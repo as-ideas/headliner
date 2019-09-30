@@ -1,0 +1,45 @@
+import tensorflow as tf
+from typing import Union
+from headliner.model.summarizer import Summarizer
+from headliner.model.summarizer_attention import SummarizerAttention
+
+
+class ModelCheckpointCallback(tf.keras.callbacks.Callback):
+    """
+    Callback for checkpointing summarizer models.
+    """
+
+    def __init__(self,
+                 file_path: str,
+                 summarizer: Union[Summarizer, SummarizerAttention],
+                 monitor='loss_val',
+                 mode='min') -> None:
+        super().__init__()
+        self.file_path = file_path
+        self.summarizer = summarizer
+        self.monitor = monitor
+        self.mode = mode
+        self.best_score = None
+
+    def on_epoch_end(self, batch, logs=None) -> None:
+        if logs is None:
+            logs = {}
+        score = logs[self.monitor]
+        score_is_better = False
+        if self.best_score is None:
+            score_is_better = True
+        else:
+            if self.mode == 'min' and score < self.best_score:
+                score_is_better = True
+            if self.mode == 'max' and score > self.best_score:
+                score_is_better = True
+        if score_is_better:
+            print('{score_name} improved from {prev} to {current}, '
+                  'saving summarizer to {path}'.format(score_name=self.monitor,
+                                                       prev=self.best_score,
+                                                       current=score,
+                                                       path=self.file_path))
+            self.best_score = score
+            self.summarizer.save(self.file_path)
+        else:
+            print('{score_name} did not improve.'.format(score_name=self.monitor))

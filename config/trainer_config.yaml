@@ -1,0 +1,9 @@
+batch_size: 16
+max_vocab_size: 200000
+glove_path: null
+steps_per_epoch: 500
+tensorboard_dir: '/tmp/training'
+model_save_path: '/tmp/summarizer'
+bucketing_buffer_size_batches: 10000
+bucketing_batches_to_bucket: 100
+logging_level: 'info'

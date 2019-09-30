@@ -1,0 +1,38 @@
+site_name: Headliner
+site_author: Axel Springer AI
+
+nav:
+    - Home: index.md
+    - Documentation:
+        - Callbacks:
+            - ValidationCallback: callbacks/validation_callback.md
+            - EvaluationCallback: callbacks/evaluation_callback.md
+            - ModelCheckpointCallback: callbacks/model_checkpoint_callback.md
+        - Evaluation:
+            - BleuScorer: evaluation/bleu_scorer.md
+        - Model:
+            - Summarizer: model/summarizer.md
+            - SummarizerAttention: model/summarizer_attention.md
+        - Preprocessing:
+            - BucketGenerator: preprocessing/bucket_generator.md
+            - DatasetGenerator: preprocessing/dataset_generator.md
+            - Preprocessor: preprocessing/preprocessor.md
+            - Vectorizer: preprocessing/vectorizer.md
+        - Trainer: trainer.md
+        - Training: training.md
+        - Losses: losses.md
+        - Embeddings: embeddings.md
+        - Prediction: prediction.md
+    - Contribution: CONTRIBUTING.md
+    - License: LICENSE.md
+
+theme:
+  name: 'material'
+  palette:
+    primary: 'indigo'
+    accent: 'indigo'
+  logo: 'img/logo.svg'
+  favicon: 'img/favicon.ico'
+
+markdown_extensions:
+  - codehilite

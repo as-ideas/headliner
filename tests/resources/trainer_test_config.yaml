@@ -1,0 +1,9 @@
+batch_size: 1
+max_vocab_size: 2
+glove_path: 'glove.txt'
+steps_per_epoch: 4
+tensorboard_dir: 'tensor_dir'
+model_save_path: 'model_save_path'
+bucketing_buffer_size_batches: 5
+bucketing_batches_to_bucket: 6
+logging_level: 'debug'
