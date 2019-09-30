@@ -68,7 +68,7 @@ from headliner.trainer import Trainer
 from headliner.model.summarizer_attention import SummarizerAttention
 
 train_data = [('You are the stars, earth and sky for me!', 'I love you.'),
-                    ('You are great, but I have other plans.', 'I like you.')]*1000
+              ('You are great, but I have other plans.', 'I like you.')]*1000
 val_data = [('You are great, but I have other plans.', 'I like you.')] * 8
 summarizer = SummarizerAttention(lstm_size=16, 
                                  embedding_size=10)
@@ -95,7 +95,7 @@ summarizer.predict_vectors('You are the stars, earth and sky for me!')
 
 A previously trained summarizer can be loaded and then retrained. In this case the data preprocessing and vectorization is loaded from the model.
 ```
-train_data = [('Some new training data.', New data.'))]*1000
+train_data = [('Some new training data.', New data.')]*1000
 summarizer_loaded = SummarizerAttention.load('/tmp/summarizer')
 trainer = Trainer(batch_size=2)
 trainer.train(summarizer, train_data)
@@ -107,7 +107,7 @@ summarizer_loaded.save('/tmp/summarizer_retrained')
 
 String preprocessing can be customized:
 ```
-train_data = [('Some cased training data 1234', Cased data.'))]
+train_data = [('Some cased training data 1234', Cased data.')]
 preprocessor = Preprocessor(filter_pattern='', 
                             lower_case='', 
                             hash_numbers=False)
