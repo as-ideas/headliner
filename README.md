@@ -130,17 +130,20 @@ trainer = Trainer(batch_size=2, preprocessor=preprocessor)
 
 ### Training on large datasets
 
-Large datasets can be fed as a generator:
+Large datasets can be fed as an iterator:
 ```
-sample = ('Some cased training data 1234', 'Cased data.')
-standard_preprocessor = Preprocessor()
-custom_preprocessor = Preprocessor(filter_pattern='', 
-                                   lower_case='', 
-                                   hash_numbers=False)
-standard_preprocessor(sample)
-custom_preprocessor(sample)
+class DataIterator:
+    def __iter__(self):
+        for i in range(1000):
+            yield ('You are the stars, earth and sky for me!', 'I love you.')
 
-trainer = Trainer(batch_size=2, preprocessor=preprocessor)
+data_iter = DataIterator()
+
+summarizer = SummarizerAttention(lstm_size=16, embedding_size=10)
+trainer = Trainer(batch_size=2, steps_per_epoch=100)
+
+trainer.train(summarizer, data_iter, num_epochs=3)
+
 ```
 
 
