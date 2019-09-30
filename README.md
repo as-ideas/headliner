@@ -8,7 +8,7 @@ and deploy seq2seq models. Although this library was created internally to
 generate headlines, you can also use it for other tasks like machine translations,
 text summarization and many more.
 
-![Seq2seq architecture](_readme/seq2seq.jpg)
+![Seq2seq architecture](figures/seq2seq.jpg)
 
 We built this library with the following goals in mind:
 

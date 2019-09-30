@@ -113,7 +113,8 @@ dmypy.json
 .DS_Store
 .idea/
 .venv/
-mkdocs/docs/_readme/
+docs/
+mkdocs/docs/figures/
 mkdocs/docs/callbacks/
 mkdocs/docs/evaluation/
 mkdocs/docs/model/
