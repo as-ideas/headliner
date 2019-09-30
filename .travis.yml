@@ -1,0 +1,19 @@
+language: python
+python:
+- 3.6
+install:
+- pip install -e ".[tests, docs]"
+script:
+- pytest -vs --cov=headliner --show-capture=no --disable-pytest-warnings tests/
+- cd mkdocs && sh build_docs.sh
+deploy:
+  provider: pages
+  skip_cleanup: true
+  github_token: "$GITHUB_TOKEN"
+  local-dir: docs/
+  on:
+    branch: master
+  target_branch: gh-pages
+env:
+  global:
+    secure: gGBl1jMUnIgCmJFbjhF0fafCL5uAtIw5HlWRIb7BeZg+hTZ0ERFvxMXQzqpGSr1teFBrudaquF4tNa1JUlha70orWgplykvSFdf5Dq7GtuthSshPj9JcfHqJhZgEpABL4ed/U4t8M/aRZ2wERY0HSlvm2gGV4ghhmG8Sce+XCG3c2dPF4BeIKYK6KlHcQoMDVy6wjQIgBe2GXdm+VzoRUWqKoV59a+tXHgJb4sWL4VueSwOOZaTW2zQNeuB8NPfc4J36O90BrHaiw2XHoEVVA9zd9nntrhYs+G8C9oDQuEJZzq2mOsvmu4QQgdzkf7VIkzs7FNGEHL3TO+ecQvBaaA6eBnnCN0NoDJ723pkcROZQQHaN+AN04JeZBqv155hsXKRNZAM3NOLI9AZxIB6j+bz6KwdWzUt5jasjIvYPq2qiJ7nNzrIntoVaIC0sX2C0cJJdHsHk3Mh4TZDP7iJB8tGUmzN0z5ZvJR3rvZuHbEcihOXqs/Y6rY1mBA4dGeXcu2mIA+7ard7zGxbDnRRqzdJdmQdJRlSeFWSeAjRzJzkS9ebpPPH1eTqsRYtE3XnSDsiyiQEaxeCRvyvSH9582GO2ztiZwUVv8HhmSchiviXf48yv9PoyKkl/yuIg6vR+Jx+bIh/2CiJfzE1Ku07WnUkJl2tlmCF85ABgJcMwKCM=
