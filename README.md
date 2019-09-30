@@ -47,6 +47,7 @@ data = [('You are the stars, earth and sky for me!', 'I love you.'),
 summarizer = SummarizerAttention(lstm_size=16, embedding_size=10)
 trainer = Trainer(batch_size=2, steps_per_epoch=100)
 trainer.train(summarizer, data, num_epochs=2)
+summarizer.save('model_path/')
 ```
 
 ### Prediction
@@ -58,6 +59,64 @@ path_to_model = 'model_path/'
 summarizer = SummarizerAttention.load(path_to_model)
 summarizer.predict('You are the stars, earth and sky for me!')
 ```
+
+### Advanced training
+
+Training using a validation split and model checkpointing:
+
+```
+from headliner.trainer import Trainer
+from headliner.model.summarizer_attention import SummarizerAttention
+
+train_data = [('You are the stars, earth and sky for me!', 'I love you.'),
+                    ('You are great, but I have other plans.', 'I like you.')]*1000
+val_data = [('You are great, but I have other plans.', 'I like you.')] * 8
+summarizer = SummarizerAttention(lstm_size=16, 
+                                 embedding_size=10)
+trainer = Trainer(batch_size=8,
+                  steps_per_epoch=50,
+                  max_vocab_size=10000,
+                  tensorboard_dir='/tmp/tensorboard',
+                  model_save_path='/tmp/summarizer')
+trainer.train(summarizer, train_data, val_data=val_data, num_epochs=3)
+```
+
+
+### Advanced prediction
+Advanced prediction information such as attention weights and logits can be accessed via predict_vectors returning a dictionary:
+```
+from headliner.model.summarizer_attention import SummarizerAttention
+
+path_to_model = 'model_path/'
+summarizer = SummarizerAttention.load(path_to_model)
+summarizer.predict_vectors('You are the stars, earth and sky for me!')
+```
+
+### Resume training
+
+A previously trained summarizer can be loaded and then retrained. In this case the data preprocessing and vectorization is loaded from the model.
+```
+train_data = [('Some new training data.', New data.'))]*1000
+summarizer_loaded = SummarizerAttention.load('/tmp/summarizer')
+trainer = Trainer(batch_size=2)
+trainer.train(summarizer, train_data)
+summarizer_loaded.save('/tmp/summarizer_retrained')
+```
+
+
+### Custom preprocessing
+
+String preprocessing can be customized, i.e. if you want to work with non-cased and non-filtered strings:
+```
+train_data = [('Some cased training data 1234', Cased data.'))]
+preprocessor = Preprocessor(filter_pattern='', 
+                            lower_case='', 
+                            hash_numbers=False)
+trainer = Trainer(batch_size=2, preprocessor=preprocessor)
+
+```
+
+
 
 ## Cite this work
 Please cite Headliner in your publications if this is useful for your research. Here is an example BibTeX entry:

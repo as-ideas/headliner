@@ -4,6 +4,7 @@ import tensorflow as tf
 from typing import Tuple, List
 from sklearn.model_selection import train_test_split
 from headliner.model.summarizer_attention import SummarizerAttention
+from headliner.preprocessing import preprocessor, Preprocessor
 from headliner.trainer import Trainer
 
 
@@ -25,6 +26,7 @@ def read_data(file_path: str) -> List[Tuple[str, str]]:
 
 if __name__ == '__main__':
 
+    """
     tf.get_logger().setLevel(logging.ERROR)
     logging.basicConfig(level=logging.INFO)
     data_raw = read_data_json('/Users/cschaefe/datasets/welt_dedup.json', 2000)
@@ -32,15 +34,26 @@ if __name__ == '__main__':
     summarizer = SummarizerAttention(lstm_size=256, embedding_size=50)
     trainer = Trainer(steps_per_epoch=100, glove_path='/Users/cschaefe/datasets/glove_welt_dedup.txt')
     trainer.train(summarizer, train_data, val_data=val_data)
+    """
 
-"""
     logging.basicConfig(level=logging.INFO)
-    data_list = [('You are the stars, earth and sky for me!', 'I love you.'),
-            ('You are great, but I have other plans.', 'I like you.')]
-
+    train_data = [('You are the stars, earth and sky for me!', 'I love you 1.'),
+                    ('You are great, but I have other plans.', 'I like you 2.')]*1000
+    val_data = [('You are great, but I have other plans.', 'I like you.')] * 8
     summarizer = SummarizerAttention(lstm_size=16, embedding_size=10)
-    trainer = Trainer(batch_size=2, steps_per_epoch=100)
-    trainer.train(summarizer, data_list, num_epochs=2)
-    pred = summarizer.predict('You are the stars, earth and sky for me!')
-    print(pred)
-"""
+    preprocessor = Preprocessor(filter_pattern='', lower_case='', hash_numbers=False)
+    trainer = Trainer(batch_size=8,
+                      steps_per_epoch=50,
+                      glove_path=None,
+                      tensorboard_dir='/tmp/tensorboard',
+                      model_save_path='/tmp/summarizer',
+                      preprocessor=preprocessor)
+    trainer.train(summarizer, train_data, val_data=val_data, num_epochs=3)
+
+    summarizer_loaded = SummarizerAttention.load('/tmp/summarizer')
+    pred_vectors = summarizer.predict_vectors('You are great, but I have other plans.', '')
+    print(pred_vectors)
+
+
+
+
