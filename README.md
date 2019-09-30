@@ -73,6 +73,7 @@ from headliner.model.summarizer_attention import SummarizerAttention
 train_data = [('You are the stars, earth and sky for me!', 'I love you.'),
               ('You are great, but I have other plans.', 'I like you.')]*1000
 val_data = [('You are great, but I have other plans.', 'I like you.')] * 8
+
 summarizer = SummarizerAttention(lstm_size=16, 
                                  embedding_size=10)
 trainer = Trainer(batch_size=8,
@@ -80,6 +81,7 @@ trainer = Trainer(batch_size=8,
                   max_vocab_size=10000,
                   tensorboard_dir='/tmp/tensorboard',
                   model_save_path='/tmp/summarizer')
+
 trainer.train(summarizer, train_data, val_data=val_data, num_epochs=3)
 ```
 
@@ -98,6 +100,7 @@ summarizer.predict_vectors('You are the stars, earth and sky for me!')
 A previously trained summarizer can be loaded and then retrained. In this case the data preprocessing and vectorization is loaded from the model.
 ```
 train_data = [('Some new training data.', 'New data.')]*1000
+
 summarizer_loaded = SummarizerAttention.load('/tmp/summarizer')
 trainer = Trainer(batch_size=2)
 trainer.train(summarizer, train_data)
@@ -111,6 +114,23 @@ String preprocessing can be customized:
 ```
 from headliner.preprocessing import Preprocessor
 
+sample = ('Some cased training data 1234', 'Cased data.')
+standard_preprocessor = Preprocessor()
+custom_preprocessor = Preprocessor(filter_pattern='', 
+                                   lower_case='', 
+                                   hash_numbers=False)
+standard_preprocessor(sample)
+custom_preprocessor(sample)
+
+trainer = Trainer(batch_size=2, preprocessor=preprocessor)
+```
+
+
+
+### Training on large datasets
+
+Large datasets can be fed as a generator:
+```
 sample = ('Some cased training data 1234', 'Cased data.')
 standard_preprocessor = Preprocessor()
 custom_preprocessor = Preprocessor(filter_pattern='', 

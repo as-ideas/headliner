@@ -38,19 +38,16 @@ if __name__ == '__main__':
 
     logging.basicConfig(level=logging.INFO)
     train_data = [('You are the stars, earth and sky for me!', 'I love you 1.'),
-                    ('You are great, but I have other plans.', 'I like you 2.')]*1000
-    val_data = [('You are great, but I have other plans.', 'I like you.')] * 8
-    summarizer = SummarizerAttention(lstm_size=16, embedding_size=10)
-    preprocessor = Preprocessor(filter_pattern='', lower_case='', hash_numbers=False)
-    trainer = Trainer(batch_size=8,
-                      steps_per_epoch=50,
-                      glove_path=None,
-                      tensorboard_dir='/tmp/tensorboard',
-                      model_save_path='/tmp/summarizer',
-                      preprocessor=preprocessor)
-    trainer.train(summarizer, train_data, val_data=val_data, num_epochs=3)
+                    ('You are great, but I have other plans.', 'I like you 2.')]
 
-    summarizer_loaded = SummarizerAttention.load('/tmp/summarizer')
+    class DataIterator:
+        def __iter__(self):
+            for t in train_data:
+                yield t
+    data_iter = DataIterator()
+    summarizer = SummarizerAttention(lstm_size=16, embedding_size=10)
+    trainer = Trainer(batch_size=2, steps_per_epoch=100)
+    trainer.train(summarizer, data_iter, num_epochs=3)
     pred_vectors = summarizer.predict_vectors('You are great, but I have other plans.', '')
     print(pred_vectors)
 
