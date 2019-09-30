@@ -86,8 +86,7 @@ Prediction information such as attention weights and logits can be accessed via 
 ```
 from headliner.model.summarizer_attention import SummarizerAttention
 
-path_to_model = 'model_path/'
-summarizer = SummarizerAttention.load(path_to_model)
+summarizer = SummarizerAttention.load('/tmp/summarizer')
 summarizer.predict_vectors('You are the stars, earth and sky for me!')
 ```
 
