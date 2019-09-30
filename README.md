@@ -1,5 +1,8 @@
 # Headliner
 
+[![Build Status](https://travis-ci.org/as-ideas/headliner.svg?branch=master)](https://travis-ci.org/as-ideas/headliner)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/as-ideas/headliner/blob/master/LICENSE)
+
 The goal of this project is to generate headlines from news articles.
 
 In particular, we use sequence-to-sequence (seq2seq) under the hood, 
