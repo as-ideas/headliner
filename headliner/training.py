@@ -46,7 +46,7 @@ if __name__ == '__main__':
     data_iter = DataIterator()
     summarizer = SummarizerAttention(lstm_size=16, embedding_size=10)
 
-    trainer = Trainer(batch_size=2, steps_per_epoch=100)
+    trainer = Trainer(batch_size=32, steps_per_epoch=100)
     trainer.train(summarizer, data_iter, num_epochs=3)
 
     pred_vectors = summarizer.predict_vectors('You are great, but I have other plans.', '')

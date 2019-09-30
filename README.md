@@ -140,7 +140,7 @@ class DataIterator:
 data_iter = DataIterator()
 
 summarizer = SummarizerAttention(lstm_size=16, embedding_size=10)
-trainer = Trainer(batch_size=2, steps_per_epoch=100)
+trainer = Trainer(batch_size=16, steps_per_epoch=100)
 
 trainer.train(summarizer, data_iter, num_epochs=3)
 

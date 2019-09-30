@@ -14,6 +14,17 @@ class ModelCheckpointCallback(tf.keras.callbacks.Callback):
                  summarizer: Union[Summarizer, SummarizerAttention],
                  monitor='loss_val',
                  mode='min') -> None:
+
+        """
+        Initializes the Callback.
+
+        Args:
+            file_path: Path for saving the model (a directory). If existing, the model will be overwritten.
+            summarizer: Summarizer to checkpoint.
+            monitor: Name of the score monitor for improvements.
+            mode: If set to 'min' a decrease of the monitored score is seen as an improvement, otherwise an increase.
+        """
+
         super().__init__()
         self.file_path = file_path
         self.summarizer = summarizer

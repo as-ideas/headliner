@@ -8,6 +8,7 @@ from headliner.model.summarizer_attention import SummarizerAttention
 
 
 class EvaluationCallback(tf.keras.callbacks.Callback):
+
     """
     Callback for custom scoring methods.
     """
@@ -17,6 +18,16 @@ class EvaluationCallback(tf.keras.callbacks.Callback):
                  scorers: Dict[str, Callable[[Dict], float]],
                  val_data: Iterable[Tuple[str, str]],
                  print_num_examples=5) -> None:
+        """
+        Initializes the Callback.
+
+        Args:
+            summarizer: Summarizer that predicts over the validation data.
+            scorers: Dictionary of {scorer_name: scorer}, where each scorer maps a prediction to a score.
+            val_data: Raw validation data to predict on.
+            print_num_examples: Number of prediction examples to output for eyeballing the prediction quality.
+        """
+
         super().__init__()
         self.summarizer = summarizer
         self.scorers = scorers

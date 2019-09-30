@@ -14,6 +14,16 @@ class ValidationCallback(tf.keras.callbacks.Callback):
                  val_dataset: tf.data.Dataset,
                  loss_function: Callable[[tf.Tensor, tf.Tensor], tf.Tensor],
                  batch_size: int) -> None:
+        """
+        Initializes the Callback.
+
+        Args:
+            summarizer: Summarizer to validate.
+            val_dataset: Validation dataset to validate the model on.
+            loss_function: Loss function to apply to calculate the validation score.
+            batch_size: Batch size of the validation dataset, needed for initializing the model.
+        """
+
         super().__init__()
         self.batch_size = batch_size
         self.summarizer = summarizer
