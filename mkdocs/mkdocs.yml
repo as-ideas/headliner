@@ -34,5 +34,8 @@ theme:
   logo: 'img/logo.svg'
   favicon: 'img/favicon.ico'
 
+repo_name: 'as-ideas/headliner'
+repo_url: 'https://github.com/as-ideas/headliner'
+
 markdown_extensions:
   - codehilite

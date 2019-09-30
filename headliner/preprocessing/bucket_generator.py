@@ -14,13 +14,16 @@ class BucketGenerator:
                  batches_to_bucket=10,
                  shuffle=True,
                  seed=None) -> None:
+
         """
+        Initializes the BucketGenerator.
+
         Args:
-            element_length_function: element_length_function: function from element
-                in the dataset to int that determines the length of the element.
+            element_length_function: element_length_function: function from element in the dataset to int that
+            determines the length of the element.
             batch_size: the size of the batches to bucket the sequences into
-            buffer_size_batches: buffer_size_batches: number of batches to keep in internal memory
-            batches_to_bucket: batches_to_bucket: number of batches in buffer to use for bucketing.
+                buffer_size_batches: buffer_size_batches: number of batches to keep in internal memory
+            batches_to_bucket: number of batches in buffer to use for bucketing.
                 If set to buffer_size_batches, the resulting batches will be deterministic.
             shuffle: whether to shuffle elements across batches and the resulting buckets
             seed: seed for shuffling

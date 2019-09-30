@@ -13,7 +13,8 @@ class DatasetGenerator:
 
     def __call__(self, data_generator_func: Callable[..., Iterable]) -> tf.data.Dataset:
         """
-        Initializes a batched dataset.
+        Initializes a dataset generator.
+
         Args:
             data_generator_func: Callable that returns an iterable over the data to be batched, e.g. lambda: [1, 2, 3].
         """
