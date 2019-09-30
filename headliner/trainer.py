@@ -141,6 +141,7 @@ class Trainer:
         train_dataset = self.dataset_generator(lambda: vectorize_train(train_data))
         val_dataset = self.dataset_generator(lambda: vectorize_val(val_data))
 
+        train_callbacks = []
         if callbacks is not None:
             train_callbacks = callbacks[:]
         elif val_data is not None:
