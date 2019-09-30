@@ -111,6 +111,12 @@ dmypy.json
 
 # Custom
 .DS_Store
-mkdocs/docs/*
 .idea/
 .venv/
+docs/
+mkdocs/docs/figures/
+mkdocs/docs/callbacks/
+mkdocs/docs/evaluation/
+mkdocs/docs/model/
+mkdocs/docs/preprocessing/
+mkdocs/docs/*.md
