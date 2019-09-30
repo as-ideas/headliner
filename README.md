@@ -106,7 +106,6 @@ summarizer_loaded.save('/tmp/summarizer_retrained')
 
 String preprocessing can be customized:
 ```
-train_data = [('Some cased training data 1234', Cased data.')]
 preprocessor = Preprocessor(filter_pattern='', 
                             lower_case='', 
                             hash_numbers=False)
