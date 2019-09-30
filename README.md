@@ -49,6 +49,7 @@ data = [('You are the stars, earth and sky for me!', 'I love you.'),
 
 summarizer = SummarizerAttention(lstm_size=16, embedding_size=10)
 trainer = Trainer(batch_size=2, steps_per_epoch=100)
+
 trainer.train(summarizer, data, num_epochs=2)
 ```
 
