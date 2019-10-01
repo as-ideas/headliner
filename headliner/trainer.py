@@ -126,7 +126,7 @@ class Trainer:
             scorers (optional): Dictionary with {score_name, scorer} to add validation scores to the logs.
             callbacks (optional): Additional custom callbacks.
         """
-        
+
         if summarizer.preprocessor is None or summarizer.vectorizer is None:
             self.logger.info('training a bare model, initializing preprocessing...')
             self._init_model(summarizer, train_data)
@@ -162,13 +162,11 @@ class Trainer:
 
         logs = {}
         epoch_count, batch_count = 0, 0
-        en_initial_states = summarizer.encoder.init_states(self.batch_size)
         while epoch_count < num_epochs:
             for train_source_seq, train_target_seq in train_dataset.take(-1):
                 batch_count += 1
                 train_loss = summarizer.train_step(source_seq=train_source_seq,
                                                    target_seq=train_target_seq,
-                                                   en_initial_states=en_initial_states,
                                                    loss_function=self.loss_function)
                 logs['loss'] = float(train_loss)
                 self.logger.info('epoch {epoch}, batch {batch}, logs: {logs}'.format(epoch=epoch_count,

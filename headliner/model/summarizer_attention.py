@@ -165,10 +165,11 @@ class SummarizerAttention:
     def train_step(self,
                    source_seq: tf.Tensor,
                    target_seq: tf.Tensor,
-                   en_initial_states: tf.Tensor,
                    loss_function: Callable[[tf.Tensor, tf.Tensor], tf.Tensor],
                    apply_gradients=True) -> float:
+
         loss = 0
+        en_initial_states = self.encoder.init_states(source_seq.get_shape()[0])
         with tf.GradientTape() as tape:
             en_outputs = self.encoder(source_seq, en_initial_states)
             en_states = en_outputs[1:]

@@ -49,11 +49,9 @@ class TestTraining(unittest.TestCase):
 
         loss_attention = 0
         for e in range(0, 10):
-            summarizer_attention_init = summarizer_attention.encoder.init_states(2)
             for source_seq, target_seq in dataset.take(-1):
                 loss_attention = summarizer_attention.train_step(source_seq,
                                                                  target_seq,
-                                                                 summarizer_attention_init,
                                                                  loss_func)
 
         self.assertAlmostEqual(1.5810251235961914, float(loss_attention), 10)
@@ -65,11 +63,9 @@ class TestTraining(unittest.TestCase):
 
         loss = 0
         for e in range(0, 10):
-            summarizer_init = summarizer.encoder.init_states(2)
             for source_seq, target_seq in dataset.take(-1):
                 loss = summarizer.train_step(source_seq,
                                              target_seq,
-                                             summarizer_init,
                                              loss_func)
 
         self.assertAlmostEqual(1.5771859884262085, float(loss), 10)
