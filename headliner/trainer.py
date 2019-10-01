@@ -164,8 +164,8 @@ class Trainer:
 
         logs = {}
         epoch_count, batch_count = 0, 0
+        en_initial_states = summarizer.encoder.init_states(self.batch_size)
         while epoch_count < num_epochs:
-            en_initial_states = summarizer.encoder.init_states(self.batch_size)
             for train_source_seq, train_target_seq in train_dataset.take(-1):
                 batch_count += 1
                 train_loss = summarizer.train_step(source_seq=train_source_seq,
@@ -179,7 +179,6 @@ class Trainer:
                 if batch_count % self.steps_per_epoch == 0:
                     for callback in train_callbacks:
                         callback.on_epoch_end(epoch_count, logs=logs)
-                    summarizer.save(self.model_save_path)
                     epoch_count += 1
             self.logger.info('finished iterating over dataset, total batches: {}'.format(batch_count))
             if batch_count == 0:

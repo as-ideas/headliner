@@ -40,7 +40,7 @@ if __name__ == '__main__':
 
     class DataIterator:
         def __iter__(self):
-            for i in range(1000):
+            for i in range(100):
                 yield ('You are the stars, earth and sky for me!', 'I love you.')
 
     data_iter = DataIterator()
