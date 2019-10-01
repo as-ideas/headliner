@@ -1,5 +1,7 @@
 # Neural Machine Translation Example
 
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/as-ideas/headliner/blob/master/notebooks/Neural_Machine_Translation_Example.ipynb)
+
 ### Install the package via PyPI
 ```python
 pip install headliner
