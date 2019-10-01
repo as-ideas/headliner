@@ -62,7 +62,7 @@ trainer.train(summarizer, data, num_epochs=2)
 ```
 from headliner.model.summarizer_attention import SummarizerAttention
 
-summarizer = SummarizerAttention.load(/tmp/summarizer)
+summarizer = SummarizerAttention.load('/tmp/summarizer')
 summarizer.predict('You are the stars, earth and sky for me!')
 ```
 
