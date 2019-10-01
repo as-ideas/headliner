@@ -29,9 +29,9 @@ if __name__ == '__main__':
     tf.get_logger().setLevel(logging.ERROR)
 
     data_raw = read_data('/Users/cschaefe/datasets/en_ger.txt')[:5000]
-    train_data, val_data = train_test_split(data_raw, test_size=500, shuffle=True, random_state=42)
+    train_data, val_data = train_test_split(data_raw, test_size=10, shuffle=True, random_state=42)
     summarizer = SummarizerAttention(lstm_size=256, embedding_size=50)
-    trainer = Trainer(steps_per_epoch=10)
+    trainer = Trainer(steps_per_epoch=10, batch_size=20)
     trainer.train(summarizer, train_data, val_data=val_data)
 
 

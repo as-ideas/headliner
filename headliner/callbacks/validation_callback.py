@@ -43,4 +43,7 @@ class ValidationCallback(tf.keras.callbacks.Callback):
                                                         apply_gradients=False)
             val_loss += val_loss_batch
             count_batches_val += 1
+        if count_batches_val == 0:
+            raise ValueError('Tried to validate on empty validation dataset, possibly due to batch size '
+                             'exceeding validation data size.')
         logs['loss_val'] = float(val_loss / count_batches_val)

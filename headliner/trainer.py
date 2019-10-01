@@ -2,7 +2,7 @@ import logging
 import datetime
 import yaml
 from collections import Counter
-from typing import Tuple, List, Iterable, Generator, Union, Callable, Dict
+from typing import Tuple, List, Iterable, Union, Callable, Dict
 from keras_preprocessing.text import Tokenizer
 from tensorflow.python.keras.callbacks import TensorBoard, Callback
 from headliner.callbacks.evaluation_callback import EvaluationCallback
@@ -56,6 +56,7 @@ class Trainer:
             preprocessor (optional): custom preprocessor, if None a standard preprocessor will be created.
             vectorizer (optional): custom vectorizer, if None a standard vectorizer will be created.
         """
+
         self.batch_size = batch_size
         self.max_vocab_size = max_vocab_size
         self.bucketing_buffer_size_batches = bucketing_buffer_size_batches
@@ -125,6 +126,7 @@ class Trainer:
             scorers (optional): Dictionary with {score_name, scorer} to add validation scores to the logs.
             callbacks (optional): Additional custom callbacks.
         """
+        
         if summarizer.preprocessor is None or summarizer.vectorizer is None:
             self.logger.info('training a bare model, initializing preprocessing...')
             self._init_model(summarizer, train_data)
