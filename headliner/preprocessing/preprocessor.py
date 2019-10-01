@@ -19,7 +19,7 @@ class Preprocessor:
         self.hash_numbers = hash_numbers
 
     def __call__(self, data: Tuple[str, str]) -> Tuple[str, str]:
-        """ Performs regex logic for string cleansing and attaches start and end tokens to target """
+        """ Performs regex logic for string cleansing and attaches start and end tokens to target. """
         text_encoder, text_decoder = self.normalize_string(data[0]), self.normalize_string(data[1])
         text_decoder = self.start_token + ' ' + text_decoder + ' ' + self.end_token
         return text_encoder, text_decoder

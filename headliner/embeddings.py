@@ -1,10 +1,8 @@
-from typing import Dict
-
 import numpy as np
+from typing import Dict
 
 
 def read_glove(file_path: str, vector_dim: int) -> Dict[str, np.array]:
-
     """
     Reads an embedding file in glove format into a dictionary mapping tokens to vectors.
     """
@@ -40,7 +38,6 @@ def embedding_to_matrix(embedding: Dict[str, np.array],
 
     Returns: embedding weights as numpy array
     """
-
     np.random.seed(42)
     embedding_matrix = 2. * np.random.rand(len(token_index) + 1, embedding_dim) - 1.
     for token, index in token_index.items():

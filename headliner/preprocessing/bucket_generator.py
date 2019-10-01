@@ -14,7 +14,6 @@ class BucketGenerator:
                  batches_to_bucket=10,
                  shuffle=True,
                  seed=None) -> None:
-
         """
         Initializes the BucketGenerator.
 
@@ -37,7 +36,6 @@ class BucketGenerator:
         self.random = Random(seed)
 
     def __call__(self, data: Iterable) -> Iterable:
-
         """
         Returns iterable of data with elements ordered by bucketed sequence lengths, e.g for batch size = 2 the
         transformation could look like this:

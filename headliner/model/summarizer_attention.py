@@ -1,10 +1,8 @@
 import os
 import pickle
-from typing import Tuple, Callable, Dict, Union
-
 import numpy as np
 import tensorflow as tf
-
+from typing import Tuple, Callable, Dict, Union
 from headliner.preprocessing.preprocessor import Preprocessor
 from headliner.preprocessing.vectorizer import Vectorizer
 
@@ -164,7 +162,6 @@ class SummarizerAttention:
         output['predicted_text'] = self.vectorizer.decode_output(output['predicted_sequence'])
         return output
 
-    # @tf.function
     def train_step(self,
                    source_seq: tf.Tensor,
                    target_seq: tf.Tensor,

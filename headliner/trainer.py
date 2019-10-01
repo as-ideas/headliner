@@ -1,5 +1,5 @@
-import datetime
 import logging
+import datetime
 import yaml
 from collections import Counter
 from typing import Tuple, List, Iterable, Generator, Union, Callable
@@ -17,6 +17,7 @@ from headliner.preprocessing.dataset_generator import DatasetGenerator
 from headliner.preprocessing.bucket_generator import BucketGenerator
 from headliner.preprocessing.preprocessor import Preprocessor
 from headliner.preprocessing.vectorizer import Vectorizer
+from headliner.utils.logger import get_logger
 
 START_TOKEN = '<start>'
 END_TOKEN = '<end>'
@@ -55,7 +56,6 @@ class Trainer:
             preprocessor (optional): custom preprocessor, if None a standard preprocessor will be created.
             vectorizer (optional): custom vectorizer, if None a standard vectorizer will be created.
         """
-
         self.batch_size = batch_size
         self.max_vocab_size = max_vocab_size
         self.bucketing_buffer_size_batches = bucketing_buffer_size_batches
@@ -73,7 +73,7 @@ class Trainer:
                                                 shuffle=True,
                                                 seed=42)
         self.val_scorers = {'bleu_score': BleuScorer(tokens_to_ignore={OOV_TOKEN, START_TOKEN, END_TOKEN})}
-        self.logger = logging.getLogger(__name__)
+        self.logger = get_logger(__name__)
         self.logger.setLevel(logging_level)
         self.num_print_predictions = num_print_predictions
         self.preprocessor = preprocessor or Preprocessor(start_token=START_TOKEN, end_token=END_TOKEN)
@@ -126,7 +126,6 @@ class Trainer:
                 {EvaluationCallback, ValidationCallback, ModelCheckpointCallback, TensorboardCallback}
 
         """
-
         if summarizer.preprocessor is None or summarizer.vectorizer is None:
             self.logger.info('training a bare model, initializing preprocessing...')
             self._init_model(summarizer, train_data)
@@ -230,6 +229,7 @@ class Trainer:
                 return data_vectorized
             else:
                 return self.bucket_generator(data_vectorized)
+
         return vectorize
 
     def _create_tokenizers(self,

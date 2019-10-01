@@ -1,5 +1,5 @@
-from typing import Dict, Union
 import numpy as np
+from typing import Dict, Union
 from nltk.translate.bleu_score import sentence_bleu
 
 

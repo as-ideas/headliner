@@ -1,6 +1,5 @@
-from typing import Iterable, Callable
-
 import tensorflow as tf
+from typing import Iterable, Callable
 
 
 class DatasetGenerator:

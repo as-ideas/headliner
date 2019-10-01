@@ -1,14 +1,11 @@
-import logging
-from typing import Union, Dict, Callable, Iterable, Tuple
-
 import tensorflow as tf
-
+from typing import Union, Dict, Callable, Iterable, Tuple
 from headliner.model.summarizer import Summarizer
 from headliner.model.summarizer_attention import SummarizerAttention
+from headliner.utils.logger import get_logger
 
 
 class EvaluationCallback(tf.keras.callbacks.Callback):
-
     """
     Callback for custom scoring methods.
     """
@@ -32,7 +29,7 @@ class EvaluationCallback(tf.keras.callbacks.Callback):
         self.summarizer = summarizer
         self.scorers = scorers
         self.val_data = val_data
-        self.logger = logging.getLogger(__name__)
+        self.logger = get_logger(__name__)
         self.print_num_examples = print_num_examples
 
     def on_epoch_end(self, batch, logs=None) -> None:
