@@ -89,7 +89,6 @@ trainer = Trainer(batch_size=8,
 trainer.train(summarizer, train_data, val_data=val_data, num_epochs=3)
 ```
 
-
 ### Advanced prediction
 Prediction information such as attention weights and logits can be accessed via predict_vectors returning a dictionary:
 ```
@@ -111,7 +110,6 @@ trainer.train(summarizer, train_data)
 summarizer_loaded.save('/tmp/summarizer_retrained')
 ```
 
-
 ### Custom preprocessing
 
 String preprocessing can be customized:
@@ -128,8 +126,6 @@ custom_preprocessor(sample)
 
 trainer = Trainer(batch_size=2, preprocessor=preprocessor)
 ```
-
-
 
 ### Training on large datasets
 
@@ -148,7 +144,9 @@ trainer = Trainer(batch_size=16, steps_per_epoch=100)
 trainer.train(summarizer, data_iter, num_epochs=3)
 ```
 
-
+## Contribute
+We welcome all kinds of contributions.
+See the [Contribution](CONTRIBUTING.md) guide for more details.
 
 ## Cite this work
 Please cite Headliner in your publications if this is useful for your research. Here is an example BibTeX entry:
