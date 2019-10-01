@@ -9,7 +9,6 @@ from headliner.callbacks.evaluation_callback import EvaluationCallback
 from headliner.callbacks.model_checkpoint_callback import ModelCheckpointCallback
 from headliner.callbacks.validation_callback import ValidationCallback
 from headliner.embeddings import read_glove, embedding_to_matrix
-from headliner.evaluation.bleu_scorer import BleuScorer
 from headliner.evaluation.scorer import Scorer
 from headliner.losses import masked_crossentropy
 from headliner.model.summarizer import Summarizer
@@ -73,7 +72,6 @@ class Trainer:
                                                 batches_to_bucket=self.bucketing_batches_to_bucket,
                                                 shuffle=True,
                                                 seed=42)
-        self.val_scorers = {'bleu_score': BleuScorer(tokens_to_ignore={OOV_TOKEN, START_TOKEN, END_TOKEN})}
         self.logger = get_logger(__name__)
         self.logger.setLevel(logging_level)
         self.num_print_predictions = num_print_predictions
@@ -235,7 +233,7 @@ class Trainer:
         return vectorize
 
     def _create_tokenizers(self,
-                           train_data: Generator[Tuple[str, str], None, None]
+                           train_data: Iterable[Tuple[str, str]]
                            ) -> Tuple[Tokenizer, Tokenizer]:
 
         counter_encoder = Counter()
