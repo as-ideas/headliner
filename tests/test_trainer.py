@@ -1,13 +1,23 @@
+import tensorflow as tf
 import logging
 import os
 import unittest
+from typing import Dict, Union
 
+import numpy as np
+from tensorflow.python.keras.callbacks import Callback
+
+from headliner.evaluation.scorer import Scorer
 from headliner.model import SummarizerAttention
 from headliner.preprocessing.preprocessor import Preprocessor
 from headliner.trainer import Trainer
 
 
 class TestTrainer(unittest.TestCase):
+
+    def setUp(self) -> None:
+        tf.random.set_seed(42)
+        np.random.seed(42)
 
     def test_init_from_config(self) -> None:
         current_dir = os.path.dirname(os.path.abspath(__file__))
@@ -65,3 +75,29 @@ class TestTrainer(unittest.TestCase):
         self.assertEqual(7, summarizer.vectorizer.encoding_dim)
         self.assertEqual(6, summarizer.vectorizer.decoding_dim)
         self.assertEqual('<start_token>', summarizer.preprocessor.start_token)
+
+    def test_train(self) -> None:
+
+        class LogCallback(Callback):
+
+            def __init__(self):
+                super().__init__()
+
+            def on_epoch_end(self, epoch, logs=None):
+                self.logs = logs
+
+        data = [('a b', 'a'), ('a b c', 'b')]
+
+        summarizer = SummarizerAttention(lstm_size=16, embedding_size=10)
+        log_callback = LogCallback()
+        trainer = Trainer(batch_size=2,
+                          steps_per_epoch=10,
+                          max_vocab_size=10)
+
+        trainer.train(summarizer,
+                      data,
+                      num_epochs=2,
+                      callbacks=[log_callback])
+
+        logs = log_callback.logs
+        self.assertAlmostEqual(1.6813855171203613, logs['loss'], 6)
