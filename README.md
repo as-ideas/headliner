@@ -21,6 +21,10 @@ We built this library with the following goals in mind:
 * Extensible for different encoder-decoder models
 * Works on large text data
 
+Read the documentation at: [https://as-ideas.github.io/headliner/](https://as-ideas.github.io/headliner/)
+
+Headliner is compatible with Python 3.6 and is distributed under the MIT license.
+
 ## Installation
 There are two ways to install Headliner:
 
@@ -48,7 +52,7 @@ data = [('You are the stars, earth and sky for me!', 'I love you.'),
         ('You are great, but I have other plans.', 'I like you.')]
 
 summarizer = SummarizerAttention(lstm_size=16, embedding_size=10)
-trainer = Trainer(batch_size=2, steps_per_epoch=100)
+trainer = Trainer(batch_size=2, steps_per_epoch=100, model_save_path='/tmp/summarizer')
 
 trainer.train(summarizer, data, num_epochs=2)
 ```
@@ -58,8 +62,7 @@ trainer.train(summarizer, data, num_epochs=2)
 ```
 from headliner.model.summarizer_attention import SummarizerAttention
 
-path_to_model = 'model_path/'
-summarizer = SummarizerAttention.load(path_to_model)
+summarizer = SummarizerAttention.load(/tmp/summarizer)
 summarizer.predict('You are the stars, earth and sky for me!')
 ```
 
@@ -143,7 +146,6 @@ summarizer = SummarizerAttention(lstm_size=16, embedding_size=10)
 trainer = Trainer(batch_size=16, steps_per_epoch=100)
 
 trainer.train(summarizer, data_iter, num_epochs=3)
-
 ```
 
 

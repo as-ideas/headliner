@@ -5,7 +5,7 @@ from keras_preprocessing.text import Tokenizer
 
 class Vectorizer:
     """
-    Transforlms tuples of text into tuples of vector sequences.
+    Transforms tuples of text into tuples of vector sequences.
     """
 
     def __init__(self,
