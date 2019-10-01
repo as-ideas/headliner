@@ -169,9 +169,10 @@ class Trainer:
                                                    target_seq=train_target_seq,
                                                    loss_function=self.loss_function)
                 logs['loss'] = float(train_loss)
-                self.logger.info('epoch {epoch}, batch {batch}, logs: {logs}'.format(epoch=epoch_count,
-                                                                                     batch=batch_count,
-                                                                                     logs=logs))
+                if batch_count % 10 == 0:
+                    self.logger.info('epoch {epoch}, batch {batch}, logs: {logs}'.format(epoch=epoch_count,
+                                                                                         batch=batch_count,
+                                                                                         logs=logs))
                 if batch_count % self.steps_per_epoch == 0:
                     for callback in train_callbacks:
                         callback.on_epoch_end(epoch_count, logs=logs)
