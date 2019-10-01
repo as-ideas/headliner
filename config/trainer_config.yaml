@@ -6,4 +6,5 @@ tensorboard_dir: '/tmp/training'
 model_save_path: '/tmp/summarizer'
 bucketing_buffer_size_batches: 10000
 bucketing_batches_to_bucket: 100
+steps_to_log: 10
 logging_level: 'info'

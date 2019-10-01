@@ -6,4 +6,5 @@ tensorboard_dir: 'tensor_dir'
 model_save_path: 'model_save_path'
 bucketing_buffer_size_batches: 5
 bucketing_batches_to_bucket: 6
+steps_to_log: 7
 logging_level: 'debug'

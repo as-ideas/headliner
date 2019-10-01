@@ -37,6 +37,7 @@ class Trainer:
                  bucketing_batches_to_bucket=100,
                  logging_level=logging.INFO,
                  num_print_predictions=5,
+                 steps_to_log=10,
                  preprocessor=None,
                  vectorizer=None) -> None:
         """
@@ -53,6 +54,7 @@ class Trainer:
             bucketing_batches_to_bucket: Number of buffered batches from which sequences are collected for bucketing.
             logging_level: Level of logging to use, e.g. logging.INFO or logging.DEBUG.
             num_print_predictions: Number of sample predictions to print in each evaluation.
+            steps_to_log: Number of steps to wait for logging output.
             preprocessor (optional): custom preprocessor, if None a standard preprocessor will be created.
             vectorizer (optional): custom vectorizer, if None a standard vectorizer will be created.
         """
@@ -76,6 +78,7 @@ class Trainer:
         self.logger = get_logger(__name__)
         self.logger.setLevel(logging_level)
         self.num_print_predictions = num_print_predictions
+        self.steps_to_log = steps_to_log
         self.preprocessor = preprocessor or Preprocessor(start_token=START_TOKEN, end_token=END_TOKEN)
         self.vectorizer = vectorizer
 
@@ -91,6 +94,7 @@ class Trainer:
             model_save_path = cfg['model_save_path']
             bucketing_buffer_size_batches = cfg['bucketing_buffer_size_batches']
             bucketing_batches_to_bucket = cfg['bucketing_batches_to_bucket']
+            steps_to_log = cfg['steps_to_log']
             logging_level = logging.INFO
             logging_level_string = cfg['logging_level']
             if logging_level_string == 'debug':
@@ -106,6 +110,7 @@ class Trainer:
                            bucketing_buffer_size_batches=bucketing_buffer_size_batches,
                            bucketing_batches_to_bucket=bucketing_batches_to_bucket,
                            logging_level=logging_level,
+                           steps_to_log=steps_to_log,
                            **kwargs)
 
     def train(self,
@@ -169,7 +174,7 @@ class Trainer:
                                                    target_seq=train_target_seq,
                                                    loss_function=self.loss_function)
                 logs['loss'] = float(train_loss)
-                if batch_count % 10 == 0:
+                if batch_count % self.steps_to_log == 0:
                     self.logger.info('epoch {epoch}, batch {batch}, logs: {logs}'.format(epoch=epoch_count,
                                                                                          batch=batch_count,
                                                                                          logs=logs))

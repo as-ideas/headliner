@@ -32,6 +32,7 @@ class TestTrainer(unittest.TestCase):
         self.assertEqual('model_save_path', trainer.model_save_path)
         self.assertEqual(5, trainer.bucketing_buffer_size_batches)
         self.assertEqual(6, trainer.bucketing_batches_to_bucket)
+        self.assertEqual(7, trainer.steps_to_log)
         self.assertEqual(logging.DEBUG, trainer.logger.level)
         self.assertEqual('<custom_start_token>', trainer.preprocessor.start_token)
 
@@ -45,6 +46,7 @@ class TestTrainer(unittest.TestCase):
                           model_save_path='model_save_path',
                           bucketing_buffer_size_batches=5,
                           bucketing_batches_to_bucket=6,
+                          steps_to_log=7,
                           logging_level=logging.DEBUG,
                           preprocessor=preprocessor)
 
@@ -56,6 +58,7 @@ class TestTrainer(unittest.TestCase):
         self.assertEqual('model_save_path', trainer.model_save_path)
         self.assertEqual(5, trainer.bucketing_buffer_size_batches)
         self.assertEqual(6, trainer.bucketing_batches_to_bucket)
+        self.assertEqual(7, trainer.steps_to_log)
         self.assertEqual(logging.DEBUG, trainer.logger.level)
         self.assertEqual('<custom_start_token>', trainer.preprocessor.start_token)
         self.assertEqual(False, trainer.preprocessor.lower_case)
