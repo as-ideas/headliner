@@ -42,7 +42,7 @@ class EvaluationCallback(tf.keras.callbacks.Callback):
             input_text, target_text = d
             prediction = self.summarizer.predict_vectors(input_text, target_text)
             if count_val <= self.print_num_examples:
-                self.logger.info('\n\n(input) {} \n(target) {} \n(prediction) {}\n'.format(
+                self.logger.info('\n(input) {} \n(target) {} \n(prediction) {}\n'.format(
                     d[0], d[1], prediction['predicted_text']
                 ))
             for score_name, scorer in self.scorers.items():

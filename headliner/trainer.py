@@ -2,7 +2,7 @@ import logging
 import datetime
 import yaml
 from collections import Counter
-from typing import Tuple, List, Iterable, Generator, Union, Callable
+from typing import Tuple, List, Iterable, Generator, Union, Callable, Dict
 from keras_preprocessing.text import Tokenizer
 from tensorflow.python.keras.callbacks import TensorBoard, Callback
 from headliner.callbacks.evaluation_callback import EvaluationCallback
@@ -10,6 +10,7 @@ from headliner.callbacks.model_checkpoint_callback import ModelCheckpointCallbac
 from headliner.callbacks.validation_callback import ValidationCallback
 from headliner.embeddings import read_glove, embedding_to_matrix
 from headliner.evaluation.bleu_scorer import BleuScorer
+from headliner.evaluation.scorer import Scorer
 from headliner.losses import masked_crossentropy
 from headliner.model.summarizer import Summarizer
 from headliner.model.summarizer_attention import SummarizerAttention
@@ -113,18 +114,18 @@ class Trainer:
               train_data: Iterable[Tuple[str, str]],
               val_data: Iterable[Tuple[str, str]] = None,
               num_epochs=2500,
+              scorers: Dict[str, Scorer] = None,
               callbacks: List[Callback] = None) -> None:
         """
         Trains a summarizer or resumes training of a previously initialized summarizer.
 
         Args:
-            summarizer: model to train, can be either a freshly created model or a loaded model
-            train_data: data to train the model on
-            val_data: optional validation data
-            num_epochs: number of epochs to train
-            callbacks: optional custom callbacks, if None the following standard callbacks will be used:
-                {EvaluationCallback, ValidationCallback, ModelCheckpointCallback, TensorboardCallback}
-
+            summarizer: Model to train, can be either a freshly created model or a loaded model.
+            train_data: Data to train the model on.
+            val_data (optional): Validation data.
+            num_epochs: Number of epochs to train.
+            scorers (optional): Dictionary with {score_name, scorer} to add validation scores to the logs.
+            callbacks (optional): Additional custom callbacks.
         """
         if summarizer.preprocessor is None or summarizer.vectorizer is None:
             self.logger.info('training a bare model, initializing preprocessing...')
@@ -140,13 +141,11 @@ class Trainer:
         train_dataset = self.dataset_generator(lambda: vectorize_train(train_data))
         val_dataset = self.dataset_generator(lambda: vectorize_val(val_data))
 
-        train_callbacks = []
-        if callbacks is not None:
-            train_callbacks = callbacks[:]
-        elif val_data is not None:
-            train_callbacks = [
+        train_callbacks = callbacks or []
+        if val_data is not None:
+            train_callbacks.extend([
                 EvaluationCallback(summarizer=summarizer,
-                                   scorers=self.val_scorers,
+                                   scorers=scorers or {},
                                    val_data=val_data,
                                    print_num_examples=self.num_print_predictions),
                 ValidationCallback(summarizer=summarizer,
@@ -159,7 +158,7 @@ class Trainer:
                                         mode='min'),
                 TensorBoard(log_dir=self.tensorboard_dir,
                             update_freq='epoch')
-            ]
+            ])
 
         logs = {}
         epoch_count, batch_count = 0, 0
