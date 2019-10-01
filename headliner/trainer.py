@@ -178,6 +178,9 @@ class Trainer:
                     for callback in train_callbacks:
                         callback.on_epoch_end(epoch_count, logs=logs)
                     epoch_count += 1
+                    if epoch_count >= num_epochs:
+                        break
+
             self.logger.info('finished iterating over dataset, total batches: {}'.format(batch_count))
             if batch_count == 0:
                 raise ValueError('Iterating over the dataset yielded zero batches!')
