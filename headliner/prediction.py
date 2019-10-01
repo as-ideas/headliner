@@ -2,7 +2,7 @@ import numpy as np
 from headliner.model.summarizer_attention import SummarizerAttention
 
 if __name__ == '__main__':
-    path_to_model = '/Users/cschaefe/saved_models/mod'
+    path_to_model = '/Users/cschaefe/saved_models/mod4'
     summarizer = SummarizerAttention.load(path_to_model)
     while True:
         text = input('\nEnter text: ')
