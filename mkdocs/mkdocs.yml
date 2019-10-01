@@ -3,6 +3,8 @@ site_author: Axel Springer AI
 
 nav:
     - Home: index.md
+    - Examples:
+        - Neural Machine Translation: examples/nmt_example.md
     - Documentation:
         - Callbacks:
             - ValidationCallback: callbacks/validation_callback.md

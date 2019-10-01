@@ -119,4 +119,5 @@ mkdocs/docs/callbacks/
 mkdocs/docs/evaluation/
 mkdocs/docs/model/
 mkdocs/docs/preprocessing/
+mkdocs/docs/utils/
 mkdocs/docs/*.md
