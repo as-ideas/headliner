@@ -86,10 +86,10 @@ class SummarizerAttention:
 
     def __init__(self,
                  lstm_size=50,
-                 max_head_len=20,
+                 max_output_len=20,
                  embedding_size=50):
         self.lstm_size = lstm_size
-        self.max_head_len = max_head_len
+        self.max_output_len = max_output_len
         self.embedding_size = embedding_size
         self.preprocessor = None
         self.vectorizer = None
@@ -140,15 +140,15 @@ class SummarizerAttention:
         en_inputs, de_inputs = self.vectorizer(text_preprocessed)
         en_initial_states = self.encoder.init_states(1)
         en_outputs = self.encoder(tf.constant([en_inputs]), en_initial_states)
-        _, de_start_index = self.vectorizer(('', self.preprocessor.start_token))
-        _, de_end_index = self.vectorizer(('', self.preprocessor.end_token))
+        de_start_index = self.vectorizer.encode_output(self.preprocessor.start_token)
+        de_end_index = self.vectorizer.encode_output(self.preprocessor.end_token)
         de_input = tf.constant([de_start_index])
         de_state_h, de_state_c = en_outputs[1:]
         output = {'preprocessed_text': text_preprocessed,
                   'logits': [],
                   'alignment': [],
                   'predicted_sequence': []}
-        for _ in range(self.max_head_len):
+        for _ in range(self.max_output_len):
             de_output, de_state_h, de_state_c, alignment = self.decoder(de_input, (de_state_h, de_state_c),
                                                                         en_outputs[0])
             de_input = tf.expand_dims(tf.argmax(de_output, -1), 0)
@@ -162,28 +162,39 @@ class SummarizerAttention:
         output['predicted_text'] = self.vectorizer.decode_output(output['predicted_sequence'])
         return output
 
-    def train_step(self,
-                   source_seq: tf.Tensor,
-                   target_seq: tf.Tensor,
-                   loss_function: Callable[[tf.Tensor, tf.Tensor], tf.Tensor],
-                   apply_gradients=True) -> float:
+    def new_train_step(self,
+                       loss_function,
+                       batch_size,
+                       apply_gradients=True) -> Callable[[tf.Tensor, tf.Tensor], float]:
 
-        loss = 0
-        en_initial_states = self.encoder.init_states(source_seq.get_shape()[0])
-        with tf.GradientTape() as tape:
-            en_outputs = self.encoder(source_seq, en_initial_states)
-            en_states = en_outputs[1:]
-            de_state_h, de_state_c = en_states
-            for i in range(target_seq.shape[1] - 1):
-                decoder_in = tf.expand_dims(target_seq[:, i], 1)
-                logit, de_state_h, de_state_c, _ = self.decoder(
-                    decoder_in, (de_state_h, de_state_c), en_outputs[0])
-                loss += loss_function(target_seq[:, i + 1], logit)
-        if apply_gradients is True:
-            variables = self.encoder.trainable_variables + self.decoder.trainable_variables
-            gradients = tape.gradient(loss, variables)
-            self.optimizer.apply_gradients(zip(gradients, variables))
-        return loss / (target_seq.shape[1] - 1)
+        train_step_signature = [
+            tf.TensorSpec(shape=(batch_size, None), dtype=tf.int64),
+            tf.TensorSpec(shape=(batch_size, self.max_output_len), dtype=tf.int64),
+        ]
+        encoder = self.encoder
+        decoder = self.decoder
+        optimizer = self.optimizer
+
+        @tf.function(input_signature=train_step_signature)
+        def train_step(source_seq, target_seq):
+            loss = 0
+            en_initial_states = encoder.init_states(batch_size)
+            with tf.GradientTape() as tape:
+                en_outputs = encoder(source_seq, en_initial_states)
+                en_states = en_outputs[1:]
+                de_state_h, de_state_c = en_states
+                for i in range(target_seq.shape[1] - 1):
+                    decoder_in = tf.expand_dims(target_seq[:, i], 1)
+                    logit, de_state_h, de_state_c, _ = decoder(
+                        decoder_in, (de_state_h, de_state_c), en_outputs[0])
+                    loss += loss_function(target_seq[:, i + 1], logit)
+            if apply_gradients is True:
+                variables = encoder.trainable_variables + decoder.trainable_variables
+                gradients = tape.gradient(loss, variables)
+                optimizer.apply_gradients(zip(gradients, variables))
+            return loss / (target_seq.shape[1] - 1)
+
+        return train_step
 
     def save(self, out_path):
         if not os.path.exists(out_path):

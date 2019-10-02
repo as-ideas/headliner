@@ -63,10 +63,10 @@ class Summarizer:
 
     def __init__(self,
                  lstm_size=50,
-                 max_head_len=20,
+                 max_output_len=20,
                  embedding_size=50):
         self.lstm_size = lstm_size
-        self.max_head_len = max_head_len
+        self.max_output_len = max_output_len
         self.embedding_size = embedding_size
         self.preprocessor = None
         self.vectorizer = None
@@ -82,6 +82,9 @@ class Summarizer:
                    embedding_weights_encoder=None,
                    embedding_weights_decoder=None) -> None:
         self.preprocessor = preprocessor
+        if vectorizer.max_output_len != self.max_output_len:
+            raise ValueError('Max output len of vectorizer does not match max output len of summarizer! '
+                             'Vectorizer: {}, summarizer: {}'.format(vectorizer.max_output_len, self.max_output_len))
         self.vectorizer = vectorizer
         self.embedding_shape_in = (self.vectorizer.encoding_dim, self.embedding_size)
         self.embedding_shape_out = (self.vectorizer.decoding_dim, self.embedding_size)
@@ -124,7 +127,7 @@ class Summarizer:
                   'logits': [],
                   'alignment': [],
                   'predicted_sequence': []}
-        for _ in range(self.max_head_len):
+        for _ in range(self.max_output_len):
             de_output, de_state_h, de_state_c = self.decoder(de_input, (de_state_h, de_state_c))
             de_input = tf.argmax(de_output, -1)
             pred_token_index = de_input.numpy()[0][0]

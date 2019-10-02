@@ -24,7 +24,7 @@ class TestSummarizer(unittest.TestCase):
         tokenizer = Tokenizer()
         vectorizer = Vectorizer(tokenizer, tokenizer)
         summarizer = SummarizerAttention(lstm_size=10,
-                                         max_head_len=10,
+                                         max_output_len=10,
                                          embedding_size=10)
         summarizer.init_model(preprocessor=preprocessor,
                               vectorizer=vectorizer)

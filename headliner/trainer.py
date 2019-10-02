@@ -27,6 +27,7 @@ OOV_TOKEN = '<unk>'
 class Trainer:
 
     def __init__(self,
+                 max_output_len=20,
                  batch_size=16,
                  max_vocab_size=200000,
                  glove_path=None,
@@ -44,6 +45,7 @@ class Trainer:
         Initializes the trainer.
 
         Args:
+            max_output_len: Maximum length of output sequences.
             batch_size: Size of mini-batches for stochastic gradient descent.
             max_vocab_size: Maximum number of unique tokens to consider for embeddings.
             glove_path: Path to glove embedding file.
@@ -59,6 +61,7 @@ class Trainer:
             vectorizer (optional): custom vectorizer, if None a standard vectorizer will be created.
         """
 
+        self.max_output_len = max_output_len
         self.batch_size = batch_size
         self.max_vocab_size = max_vocab_size
         self.bucketing_buffer_size_batches = bucketing_buffer_size_batches
@@ -167,12 +170,11 @@ class Trainer:
 
         logs = {}
         epoch_count, batch_count = 0, 0
+        train_step = summarizer.new_train_step(self.loss_function, self.batch_size, apply_gradients=True)
         while epoch_count < num_epochs:
             for train_source_seq, train_target_seq in train_dataset.take(-1):
                 batch_count += 1
-                train_loss = summarizer.train_step(source_seq=train_source_seq,
-                                                   target_seq=train_target_seq,
-                                                   loss_function=self.loss_function)
+                train_loss = train_step(train_source_seq, train_target_seq)
                 logs['loss'] = float(train_loss)
                 if batch_count % self.steps_to_log == 0:
                     self.logger.info('epoch {epoch}, batch {batch}, logs: {logs}'.format(epoch=epoch_count,
@@ -202,7 +204,9 @@ class Trainer:
             tokenizer_encoder, tokenizer_decoder = self._create_tokenizers(train_data)
             self.logger.info('vocab encoder: {vocab_enc}, vocab decoder: {vocab_dec}, start training loop...'.format(
                 vocab_enc=len(tokenizer_encoder.word_index), vocab_dec=len(tokenizer_decoder.word_index)))
-            vectorizer = Vectorizer(tokenizer_encoder, tokenizer_decoder)
+            vectorizer = Vectorizer(tokenizer_encoder,
+                                    tokenizer_decoder,
+                                    self.max_output_len)
             embedding_weights_encoder, embedding_weights_decoder = None, None
             if self.glove_path is not None:
                 print('loading embedding from {}'.format(self.glove_path))

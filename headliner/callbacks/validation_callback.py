@@ -29,16 +29,16 @@ class ValidationCallback(tf.keras.callbacks.Callback):
         self.summarizer = summarizer
         self.loss_function = loss_function
         self.val_dataset = val_dataset
+        self.train_step = summarizer.new_train_step(self.loss_function,
+                                                    self.batch_size,
+                                                    apply_gradients=False)
 
     def on_epoch_end(self, batch, logs=None) -> None:
         if logs is None:
             logs = {}
         val_loss, count_batches_val = 0, 0
         for test_source_seq, test_target_seq in self.val_dataset.take(-1):
-            val_loss_batch = self.summarizer.train_step(source_seq=test_source_seq,
-                                                        target_seq=test_target_seq,
-                                                        loss_function=self.loss_function,
-                                                        apply_gradients=False)
+            val_loss_batch = self.train_step(test_source_seq, test_target_seq)
             val_loss += val_loss_batch
             count_batches_val += 1
         if count_batches_val == 0:
