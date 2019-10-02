@@ -24,6 +24,12 @@ class Vectorizer:
         vec_decoder = self._tokenizer_decoder.texts_to_sequences([text_decoder])[0]
         return vec_encoder, vec_decoder
 
+    def encode_input(self, text: str) -> List[int]:
+        return self._tokenizer_encoder.texts_to_sequences([text])[0]
+
+    def encode_output(self, text: str) -> List[int]:
+        return self._tokenizer_decoder.texts_to_sequences([text])[0]
+
     def decode_input(self, sequence: List[int]) -> str:
         return self._tokenizer_encoder.sequences_to_texts([sequence])[0]
 

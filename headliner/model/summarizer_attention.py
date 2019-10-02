@@ -140,8 +140,8 @@ class SummarizerAttention:
         en_inputs, de_inputs = self.vectorizer(text_preprocessed)
         en_initial_states = self.encoder.init_states(1)
         en_outputs = self.encoder(tf.constant([en_inputs]), en_initial_states)
-        _, de_start_index = self.vectorizer(('', self.preprocessor.start_token))
-        _, de_end_index = self.vectorizer(('', self.preprocessor.end_token))
+        de_start_index = self.vectorizer.encode_output(self.preprocessor.start_token)
+        de_end_index = self.vectorizer.encode_output(self.preprocessor.end_token)
         de_input = tf.constant([de_start_index])
         de_state_h, de_state_c = en_outputs[1:]
         output = {'preprocessed_text': text_preprocessed,
