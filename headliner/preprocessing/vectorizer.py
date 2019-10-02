@@ -15,13 +15,23 @@ class Vectorizer:
         self._tokenizer_encoder = tokenizer_encoder
         self._tokenizer_decoder = tokenizer_decoder
 
-    def __call__(self, data: Tuple[str, str]) -> Tuple[List[int], List[int]]:
+    def __call__(self, data: Tuple[str, str], do_not_pad=False) -> Tuple[List[int], List[int]]:
         """
         Encodes preprocessed strings into sequences of one-hot indices.
         """
         text_encoder, text_decoder = data[0], data[1]
         vec_encoder = self._tokenizer_encoder.texts_to_sequences([text_encoder])[0]
+
         vec_decoder = self._tokenizer_decoder.texts_to_sequences([text_decoder])[0]
+
+        if not do_not_pad:
+            if len(vec_decoder) > 20:
+                vec_decoder = vec_decoder[:10]
+            else:
+                vec_decoder = vec_decoder + [0] * (20 - len(vec_decoder))
+
+      #  print('len vec {}'.format(len(vec_decoder)))
+
         return vec_encoder, vec_decoder
 
     def decode_input(self, sequence: List[int]) -> str:

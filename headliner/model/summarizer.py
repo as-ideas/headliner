@@ -137,8 +137,6 @@ class Summarizer:
         return output
 
     def train_step(self,
-                   source_seq: tf.Tensor,
-                   target_seq: tf.Tensor,
                    loss_function: Callable[[tf.Tensor, tf.Tensor], tf.Tensor],
                    apply_gradients=True) -> tf.Tensor:
 

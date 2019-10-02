@@ -1,6 +1,8 @@
 import logging
 import datetime
+import time
 import yaml
+import timeit
 from collections import Counter
 from typing import Tuple, List, Iterable, Union, Callable, Dict
 from keras_preprocessing.text import Tokenizer
@@ -167,12 +169,19 @@ class Trainer:
 
         logs = {}
         epoch_count, batch_count = 0, 0
+
+        train_step = summarizer.train_step(self.loss_function, apply_gradients=True)
+
+        print('start training...')
+        time_elapsed = 0.
         while epoch_count < num_epochs:
             for train_source_seq, train_target_seq in train_dataset.take(-1):
                 batch_count += 1
-                train_loss = summarizer.train_step(source_seq=train_source_seq,
-                                                   target_seq=train_target_seq,
-                                                   loss_function=self.loss_function)
+                train_loss = train_step(train_source_seq, train_target_seq)
+                time_start = time.time()
+                time_end = time.time()
+                time_elapsed = time_elapsed + (time_end - time_start)
+                print('batch_count: {}, time elapsed: {}'.format(batch_count, time_elapsed))
                 logs['loss'] = float(train_loss)
                 if batch_count % self.steps_to_log == 0:
                     self.logger.info('epoch {epoch}, batch {batch}, logs: {logs}'.format(epoch=epoch_count,
@@ -184,6 +193,7 @@ class Trainer:
                     epoch_count += 1
                     if epoch_count >= num_epochs:
                         break
+
 
             self.logger.info('finished iterating over dataset, total batches: {}'.format(batch_count))
             if batch_count == 0:

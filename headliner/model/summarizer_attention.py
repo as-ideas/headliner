@@ -3,6 +3,8 @@ import pickle
 import numpy as np
 import tensorflow as tf
 from typing import Tuple, Callable, Dict, Union
+
+from headliner.losses import masked_crossentropy
 from headliner.preprocessing.preprocessor import Preprocessor
 from headliner.preprocessing.vectorizer import Vectorizer
 
@@ -137,11 +139,11 @@ class SummarizerAttention:
         """
 
         text_preprocessed = self.preprocessor((input_text, target_text))
-        en_inputs, de_inputs = self.vectorizer(text_preprocessed)
+        en_inputs, de_inputs = self.vectorizer(text_preprocessed, do_not_pad=True)
         en_initial_states = self.encoder.init_states(1)
         en_outputs = self.encoder(tf.constant([en_inputs]), en_initial_states)
-        _, de_start_index = self.vectorizer(('', self.preprocessor.start_token))
-        _, de_end_index = self.vectorizer(('', self.preprocessor.end_token))
+        _, de_start_index = self.vectorizer(('', self.preprocessor.start_token), do_not_pad=True)
+        _, de_end_index = self.vectorizer(('', self.preprocessor.end_token), do_not_pad=True)
         de_input = tf.constant([de_start_index])
         de_state_h, de_state_c = en_outputs[1:]
         output = {'preprocessed_text': text_preprocessed,
@@ -162,28 +164,40 @@ class SummarizerAttention:
         output['predicted_text'] = self.vectorizer.decode_output(output['predicted_sequence'])
         return output
 
-    def train_step(self,
-                   source_seq: tf.Tensor,
-                   target_seq: tf.Tensor,
-                   loss_function: Callable[[tf.Tensor, tf.Tensor], tf.Tensor],
-                   apply_gradients=True) -> float:
+    def train_step(self, loss_function, batch_size=16, apply_gradients=True) -> float:
 
-        loss = 0
-        en_initial_states = self.encoder.init_states(source_seq.get_shape()[0])
-        with tf.GradientTape() as tape:
-            en_outputs = self.encoder(source_seq, en_initial_states)
-            en_states = en_outputs[1:]
-            de_state_h, de_state_c = en_states
-            for i in range(target_seq.shape[1] - 1):
-                decoder_in = tf.expand_dims(target_seq[:, i], 1)
-                logit, de_state_h, de_state_c, _ = self.decoder(
-                    decoder_in, (de_state_h, de_state_c), en_outputs[0])
-                loss += loss_function(target_seq[:, i + 1], logit)
-        if apply_gradients is True:
-            variables = self.encoder.trainable_variables + self.decoder.trainable_variables
-            gradients = tape.gradient(loss, variables)
-            self.optimizer.apply_gradients(zip(gradients, variables))
-        return loss / (target_seq.shape[1] - 1)
+        train_step_signature = [
+            tf.TensorSpec(shape=(batch_size, None), dtype=tf.int64),
+            tf.TensorSpec(shape=(batch_size, self.max_head_len), dtype=tf.int64),
+        ]
+        
+        encoder = self.encoder
+        decoder = self.decoder
+        optimizer = self.optimizer
+
+        @tf.function(input_signature=train_step_signature)
+        def train(source_seq, target_seq):
+
+            loss = 0
+            en_initial_states = encoder.init_states(16)
+
+            with tf.GradientTape() as tape:
+                en_outputs = encoder(source_seq, en_initial_states)
+                en_states = en_outputs[1:]
+                de_state_h, de_state_c = en_states
+                for i in range(target_seq.shape[1] - 1):
+                    decoder_in = tf.expand_dims(target_seq[:, i], 1)
+                    logit, de_state_h, de_state_c, _ = decoder(
+                        decoder_in, (de_state_h, de_state_c), en_outputs[0])
+                    loss += loss_function(target_seq[:, i + 1], logit)
+            if apply_gradients is True:
+                variables = encoder.trainable_variables + decoder.trainable_variables
+                gradients = tape.gradient(loss, variables)
+                optimizer.apply_gradients(zip(gradients, variables))
+            return loss / (target_seq.shape[1] - 1)
+
+
+        return train
 
     def save(self, out_path):
         if not os.path.exists(out_path):
