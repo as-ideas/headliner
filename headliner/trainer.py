@@ -194,7 +194,6 @@ class Trainer:
                     if epoch_count >= num_epochs:
                         break
 
-
             self.logger.info('finished iterating over dataset, total batches: {}'.format(batch_count))
             if batch_count == 0:
                 raise ValueError('Iterating over the dataset yielded zero batches!')
@@ -212,7 +211,7 @@ class Trainer:
             tokenizer_encoder, tokenizer_decoder = self._create_tokenizers(train_data)
             self.logger.info('vocab encoder: {vocab_enc}, vocab decoder: {vocab_dec}, start training loop...'.format(
                 vocab_enc=len(tokenizer_encoder.word_index), vocab_dec=len(tokenizer_decoder.word_index)))
-            vectorizer = Vectorizer(tokenizer_encoder, tokenizer_decoder)
+            vectorizer = Vectorizer(tokenizer_encoder, tokenizer_decoder, summarizer.max_head_len)
             embedding_weights_encoder, embedding_weights_decoder = None, None
             if self.glove_path is not None:
                 print('loading embedding from {}'.format(self.glove_path))
