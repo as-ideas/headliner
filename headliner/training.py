@@ -1,8 +1,11 @@
 import json
 import logging
-import tensorflow as tf
 from typing import Tuple, List
+
+import tensorflow as tf
 from sklearn.model_selection import train_test_split
+
+from headliner.evaluation import BleuScorer
 from headliner.model.summarizer_attention import SummarizerAttention
 from headliner.trainer import Trainer
 
@@ -25,15 +28,13 @@ def read_data(file_path: str) -> List[Tuple[str, str]]:
 
 if __name__ == '__main__':
 
-
     tf.get_logger().setLevel(logging.ERROR)
 
     data_raw = read_data('/Users/cschaefe/datasets/en_ger.txt')[:5000]
     train_data, val_data = train_test_split(data_raw, test_size=100, shuffle=True, random_state=42)
-    summarizer = SummarizerAttention(lstm_size=16, embedding_size=50)
-    trainer = Trainer(steps_per_epoch=500, batch_size=100, steps_to_log=5)
-    trainer.train(summarizer, train_data, val_data=val_data)
-
+    summarizer = SummarizerAttention(lstm_size=512, embedding_size=50)
+    trainer = Trainer(steps_per_epoch=500, batch_size=16, steps_to_log=5, model_save_path='/tmp/model_new')
+    trainer.train(summarizer, train_data, val_data=val_data, scorers={'bleu': BleuScorer(weights=(1, 0, 0, 0))})
 
     """
     logging.basicConfig(level=logging.INFO)

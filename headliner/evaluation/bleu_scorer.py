@@ -1,6 +1,8 @@
-import numpy as np
 from typing import Dict, Union
+
+import numpy as np
 from nltk.translate.bleu_score import sentence_bleu
+
 from headliner.evaluation.scorer import Scorer
 
 

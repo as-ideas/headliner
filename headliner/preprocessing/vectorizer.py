@@ -1,4 +1,5 @@
 from typing import Tuple, List
+
 from keras_preprocessing.text import Tokenizer
 
 
@@ -25,7 +26,7 @@ class Vectorizer:
         vec_encoder = self._tokenizer_encoder.texts_to_sequences([text_encoder])[0]
         vec_decoder = self._tokenizer_decoder.texts_to_sequences([text_decoder])[0]
         if len(vec_decoder) > self.max_output_len:
-            vec_decoder = vec_decoder[:self.max_output_len]
+            vec_decoder = vec_decoder[:self.max_output_len-1] + vec_decoder[-1]
         else:
             vec_decoder = vec_decoder + [0] * (self.max_output_len - len(vec_decoder))
 

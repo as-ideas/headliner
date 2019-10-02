@@ -1,6 +1,7 @@
 import abc
-import numpy as np
 from typing import Dict, Union
+
+import numpy as np
 
 
 class Scorer(abc.ABC):

@@ -8,7 +8,7 @@ class TestValidationCallback(unittest.TestCase):
 
     def test_on_epoch_end(self):
         mock_summarizer = Mock()
-        mock_summarizer.train_step.return_value = 0.5
+        mock_summarizer.new_train_step.return_value = lambda input_seq, output_seq: 0.5
         mock_scorer_a, mock_scorer_b = Mock(), Mock()
         mock_scorer_a.return_value = 1
         mock_scorer_b.return_value = 2

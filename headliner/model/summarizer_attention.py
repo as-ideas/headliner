@@ -1,8 +1,10 @@
 import os
 import pickle
+from typing import Tuple, Callable, Dict, Union
+
 import numpy as np
 import tensorflow as tf
-from typing import Tuple, Callable, Dict, Union
+
 from headliner.preprocessing.preprocessor import Preprocessor
 from headliner.preprocessing.vectorizer import Vectorizer
 
@@ -86,10 +88,8 @@ class SummarizerAttention:
 
     def __init__(self,
                  lstm_size=50,
-                 max_output_len=20,
                  embedding_size=50):
         self.lstm_size = lstm_size
-        self.max_output_len = max_output_len
         self.embedding_size = embedding_size
         self.preprocessor = None
         self.vectorizer = None
@@ -148,7 +148,7 @@ class SummarizerAttention:
                   'logits': [],
                   'alignment': [],
                   'predicted_sequence': []}
-        for _ in range(self.max_output_len):
+        for _ in range(self.vectorizer.max_output_len):
             de_output, de_state_h, de_state_c, alignment = self.decoder(de_input, (de_state_h, de_state_c),
                                                                         en_outputs[0])
             de_input = tf.expand_dims(tf.argmax(de_output, -1), 0)
@@ -168,8 +168,8 @@ class SummarizerAttention:
                        apply_gradients=True) -> Callable[[tf.Tensor, tf.Tensor], float]:
 
         train_step_signature = [
-            tf.TensorSpec(shape=(batch_size, None), dtype=tf.int64),
-            tf.TensorSpec(shape=(batch_size, self.max_output_len), dtype=tf.int64),
+            tf.TensorSpec(shape=(batch_size, None), dtype=tf.int32),
+            tf.TensorSpec(shape=(batch_size, self.vectorizer.max_output_len), dtype=tf.int32),
         ]
         encoder = self.encoder
         decoder = self.decoder

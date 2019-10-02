@@ -1,10 +1,12 @@
-import logging
 import datetime
-import yaml
+import logging
 from collections import Counter
 from typing import Tuple, List, Iterable, Union, Callable, Dict
+
+import yaml
 from keras_preprocessing.text import Tokenizer
 from tensorflow.python.keras.callbacks import TensorBoard, Callback
+
 from headliner.callbacks.evaluation_callback import EvaluationCallback
 from headliner.callbacks.model_checkpoint_callback import ModelCheckpointCallback
 from headliner.callbacks.validation_callback import ValidationCallback
@@ -13,8 +15,8 @@ from headliner.evaluation.scorer import Scorer
 from headliner.losses import masked_crossentropy
 from headliner.model.summarizer import Summarizer
 from headliner.model.summarizer_attention import SummarizerAttention
-from headliner.preprocessing.dataset_generator import DatasetGenerator
 from headliner.preprocessing.bucket_generator import BucketGenerator
+from headliner.preprocessing.dataset_generator import DatasetGenerator
 from headliner.preprocessing.preprocessor import Preprocessor
 from headliner.preprocessing.vectorizer import Vectorizer
 from headliner.utils.logger import get_logger
@@ -100,6 +102,7 @@ class Trainer:
             steps_to_log = cfg['steps_to_log']
             logging_level = logging.INFO
             logging_level_string = cfg['logging_level']
+            max_output_len = cfg['max_output_len']
             if logging_level_string == 'debug':
                 logging_level = logging.DEBUG
             elif logging_level_string == 'error':
@@ -114,6 +117,7 @@ class Trainer:
                            bucketing_batches_to_bucket=bucketing_batches_to_bucket,
                            logging_level=logging_level,
                            steps_to_log=steps_to_log,
+                           max_output_len=max_output_len,
                            **kwargs)
 
     def train(self,
