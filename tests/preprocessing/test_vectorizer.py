@@ -1,7 +1,6 @@
 import unittest
 
 from keras_preprocessing.text import Tokenizer
-
 from headliner.preprocessing.vectorizer import Vectorizer
 
 

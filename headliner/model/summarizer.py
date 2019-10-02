@@ -65,9 +65,11 @@ class Summarizer:
 
     def __init__(self,
                  lstm_size=50,
+                 max_prediction_len=20,
                  embedding_size=50):
         self.lstm_size = lstm_size
         self.embedding_size = embedding_size
+        self.max_prediction_len = max_prediction_len
         self.preprocessor = None
         self.vectorizer = None
         self.encoder = None
@@ -124,7 +126,7 @@ class Summarizer:
                   'logits': [],
                   'alignment': [],
                   'predicted_sequence': []}
-        for _ in range(self.vectorizer.max_output_len):
+        for _ in range(self.max_prediction_len):
             de_output, de_state_h, de_state_c = self.decoder(de_input, (de_state_h, de_state_c))
             de_input = tf.argmax(de_output, -1)
             pred_token_index = de_input.numpy()[0][0]
@@ -167,7 +169,10 @@ class Summarizer:
                 optimizer.apply_gradients(zip(gradients, variables))
             return float(loss)
 
-        return train_step
+        if self.vectorizer.max_output_len is not None:
+            return tf.function(train_step, input_signature=train_step_signature)
+        else:
+            return train_step
 
     def save(self, out_path):
         if not os.path.exists(out_path):

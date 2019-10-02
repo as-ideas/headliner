@@ -1,8 +1,6 @@
 import json
-import logging
 from typing import Tuple, List
 
-import tensorflow as tf
 from sklearn.model_selection import train_test_split
 
 from headliner.evaluation import BleuScorer
@@ -28,12 +26,10 @@ def read_data(file_path: str) -> List[Tuple[str, str]]:
 
 if __name__ == '__main__':
 
-    tf.get_logger().setLevel(logging.ERROR)
-
-    data_raw = read_data_json('resources/welt_dedup.json', 2000)
+    data_raw = read_data('/Users/cschaefe/datasets/en_ger.txt')[0:10000]
     train_data, val_data = train_test_split(data_raw, test_size=100, shuffle=True, random_state=42)
     summarizer = SummarizerAttention(lstm_size=256, embedding_size=50)
-    trainer = Trainer(steps_per_epoch=500, batch_size=16, steps_to_log=5, model_save_path='/tmp/model_new')
+    trainer = Trainer(steps_per_epoch=100, batch_size=16, steps_to_log=5, tensorboard_dir='/tmp/padded', max_output_len=30)
     trainer.train(summarizer, train_data, val_data=val_data, scorers={'bleu': BleuScorer(weights=(1, 0, 0, 0))})
 
     """

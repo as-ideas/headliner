@@ -29,7 +29,7 @@ OOV_TOKEN = '<unk>'
 class Trainer:
 
     def __init__(self,
-                 max_output_len=20,
+                 max_output_len=None,
                  batch_size=16,
                  max_vocab_size=200000,
                  glove_path=None,
@@ -47,7 +47,8 @@ class Trainer:
         Initializes the trainer.
 
         Args:
-            max_output_len: Maximum length of output sequences.
+            max_output_len: Maximum length of output sequences. Default None, then eager mode will be enabled,
+                else static.
             batch_size: Size of mini-batches for stochastic gradient descent.
             max_vocab_size: Maximum number of unique tokens to consider for embeddings.
             glove_path: Path to glove embedding file.

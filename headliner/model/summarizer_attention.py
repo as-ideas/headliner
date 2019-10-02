@@ -88,9 +88,11 @@ class SummarizerAttention:
 
     def __init__(self,
                  lstm_size=50,
+                 max_prediction_len=20,
                  embedding_size=50):
         self.lstm_size = lstm_size
         self.embedding_size = embedding_size
+        self.max_prediction_len = max_prediction_len
         self.preprocessor = None
         self.vectorizer = None
         self.encoder = None
@@ -148,7 +150,7 @@ class SummarizerAttention:
                   'logits': [],
                   'alignment': [],
                   'predicted_sequence': []}
-        for _ in range(self.vectorizer.max_output_len):
+        for _ in range(self.max_prediction_len):
             de_output, de_state_h, de_state_c, alignment = self.decoder(de_input, (de_state_h, de_state_c),
                                                                         en_outputs[0])
             de_input = tf.expand_dims(tf.argmax(de_output, -1), 0)
@@ -175,7 +177,6 @@ class SummarizerAttention:
         decoder = self.decoder
         optimizer = self.optimizer
 
-        @tf.function(input_signature=train_step_signature)
         def train_step(source_seq, target_seq):
             loss = 0
             en_initial_states = encoder.init_states(batch_size)
@@ -194,7 +195,10 @@ class SummarizerAttention:
                 optimizer.apply_gradients(zip(gradients, variables))
             return loss / (target_seq.shape[1] - 1)
 
-        return train_step
+        if self.vectorizer.max_output_len is not None:
+            return tf.function(train_step, input_signature=train_step_signature)
+        else:
+            return train_step
 
     def save(self, out_path):
         if not os.path.exists(out_path):
