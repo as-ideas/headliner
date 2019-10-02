@@ -177,8 +177,8 @@ class Trainer:
         while epoch_count < num_epochs:
             for train_source_seq, train_target_seq in train_dataset.take(-1):
                 batch_count += 1
-                train_loss = train_step(train_source_seq, train_target_seq)
                 time_start = time.time()
+                train_loss = train_step(train_source_seq, train_target_seq)
                 time_end = time.time()
                 time_elapsed = time_elapsed + (time_end - time_start)
                 print('batch_count: {}, time elapsed: {}'.format(batch_count, time_elapsed))
