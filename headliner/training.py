@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split
 
 from headliner.evaluation import BleuScorer
 from headliner.model.summarizer_attention import SummarizerAttention
-from headliner.model.transformer import SummarizerTransformer
+from headliner.model.summarizer_transformer import SummarizerTransformer
 from headliner.trainer import Trainer
 
 
