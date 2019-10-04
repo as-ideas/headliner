@@ -1,6 +1,9 @@
+max_output_len: 9
 batch_size: 1
-max_vocab_size: 2
-glove_path: 'glove.txt'
+max_vocab_size_encoder: 7
+max_vocab_size_decoder: 6
+glove_path_encoder: 'glove.txt'
+glove_path_decoder: null
 steps_per_epoch: 4
 tensorboard_dir: 'tensor_dir'
 model_save_path: 'model_save_path'

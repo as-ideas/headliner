@@ -1,10 +1,12 @@
-import logging
 import datetime
-import yaml
+import logging
 from collections import Counter
 from typing import Tuple, List, Iterable, Union, Callable, Dict
+
+import yaml
 from keras_preprocessing.text import Tokenizer
 from tensorflow.python.keras.callbacks import TensorBoard, Callback
+
 from headliner.callbacks.evaluation_callback import EvaluationCallback
 from headliner.callbacks.model_checkpoint_callback import ModelCheckpointCallback
 from headliner.callbacks.validation_callback import ValidationCallback
@@ -13,8 +15,8 @@ from headliner.evaluation.scorer import Scorer
 from headliner.losses import masked_crossentropy
 from headliner.model.summarizer import Summarizer
 from headliner.model.summarizer_attention import SummarizerAttention
-from headliner.preprocessing.dataset_generator import DatasetGenerator
 from headliner.preprocessing.bucket_generator import BucketGenerator
+from headliner.preprocessing.dataset_generator import DatasetGenerator
 from headliner.preprocessing.preprocessor import Preprocessor
 from headliner.preprocessing.vectorizer import Vectorizer
 from headliner.utils.logger import get_logger
@@ -27,9 +29,12 @@ OOV_TOKEN = '<unk>'
 class Trainer:
 
     def __init__(self,
+                 max_output_len=None,
                  batch_size=16,
-                 max_vocab_size=200000,
-                 glove_path=None,
+                 max_vocab_size_encoder=200000,
+                 max_vocab_size_decoder=200000,
+                 glove_path_encoder=None,
+                 glove_path_decoder=None,
                  steps_per_epoch=500,
                  tensorboard_dir='/tmp/train_tens_' + datetime.datetime.now().strftime('%Y%m%d_%H%M%S'),
                  model_save_path='/tmp/summarizer_' + datetime.datetime.now().strftime('%Y%m%d_%H%M%S'),
@@ -44,9 +49,13 @@ class Trainer:
         Initializes the trainer.
 
         Args:
+            max_output_len: Maximum length of output sequences. Default None, then eager mode will be enabled,
+                else static.
             batch_size: Size of mini-batches for stochastic gradient descent.
-            max_vocab_size: Maximum number of unique tokens to consider for embeddings.
-            glove_path: Path to glove embedding file.
+            max_vocab_size_encoder: Maximum number of unique tokens to consider for encoder embeddings.
+            max_vocab_size_decoder: Maximum number of unique tokens to consider for decoder embeddings.
+            glove_path_encoder: Path to glove embedding file for the encoder.
+            glove_path_decoder: Path to glove embedding file for the decoder.
             steps_per_epoch: Number of steps to train until callbacks are invoked.
             tensorboard_dir: Directory for saving tensorboard logs.
             model_save_path: Directory for saving the best model.
@@ -59,11 +68,14 @@ class Trainer:
             vectorizer (optional): custom vectorizer, if None a standard vectorizer will be created.
         """
 
+        self.max_output_len = max_output_len
         self.batch_size = batch_size
-        self.max_vocab_size = max_vocab_size
+        self.max_vocab_size_encoder = max_vocab_size_encoder
+        self.max_vocab_size_decoder = max_vocab_size_decoder
         self.bucketing_buffer_size_batches = bucketing_buffer_size_batches
         self.bucketing_batches_to_bucket = bucketing_batches_to_bucket
-        self.glove_path = glove_path
+        self.glove_path_encoder = glove_path_encoder
+        self.glove_path_decoder = glove_path_decoder
         self.steps_per_epoch = steps_per_epoch
         self.tensorboard_dir = tensorboard_dir
         self.model_save_path = model_save_path
@@ -87,8 +99,10 @@ class Trainer:
         with open(file_path, 'r', encoding='utf-8') as f:
             cfg = yaml.load(f)
             batch_size = cfg['batch_size']
-            max_vocab_size = cfg['max_vocab_size']
-            glove_path = cfg['glove_path']
+            max_vocab_size_encoder = cfg['max_vocab_size_encoder']
+            max_vocab_size_decoder = cfg['max_vocab_size_decoder']
+            glove_path_encoder = cfg['glove_path_encoder']
+            glove_path_decoder = cfg['glove_path_decoder']
             steps_per_epoch = cfg['steps_per_epoch']
             tensorboard_dir = cfg['tensorboard_dir']
             model_save_path = cfg['model_save_path']
@@ -97,13 +111,16 @@ class Trainer:
             steps_to_log = cfg['steps_to_log']
             logging_level = logging.INFO
             logging_level_string = cfg['logging_level']
+            max_output_len = cfg['max_output_len']
             if logging_level_string == 'debug':
                 logging_level = logging.DEBUG
             elif logging_level_string == 'error':
                 logging_level = logging.ERROR
             return Trainer(batch_size=batch_size,
-                           max_vocab_size=max_vocab_size,
-                           glove_path=glove_path,
+                           max_vocab_size_encoder=max_vocab_size_encoder,
+                           max_vocab_size_decoder=max_vocab_size_decoder,
+                           glove_path_encoder=glove_path_encoder,
+                           glove_path_decoder=glove_path_decoder,
                            steps_per_epoch=steps_per_epoch,
                            tensorboard_dir=tensorboard_dir,
                            model_save_path=model_save_path,
@@ -111,6 +128,7 @@ class Trainer:
                            bucketing_batches_to_bucket=bucketing_batches_to_bucket,
                            logging_level=logging_level,
                            steps_to_log=steps_to_log,
+                           max_output_len=max_output_len,
                            **kwargs)
 
     def train(self,
@@ -133,7 +151,7 @@ class Trainer:
         """
 
         if summarizer.preprocessor is None or summarizer.vectorizer is None:
-            self.logger.info('training a bare model, initializing preprocessing...')
+            self.logger.info('training a bare model, preprocessing data to init model...')
             self._init_model(summarizer, train_data)
         else:
             self.logger.info('training an already initialized model...')
@@ -167,12 +185,11 @@ class Trainer:
 
         logs = {}
         epoch_count, batch_count = 0, 0
+        train_step = summarizer.new_train_step(self.loss_function, self.batch_size, apply_gradients=True)
         while epoch_count < num_epochs:
             for train_source_seq, train_target_seq in train_dataset.take(-1):
                 batch_count += 1
-                train_loss = summarizer.train_step(source_seq=train_source_seq,
-                                                   target_seq=train_target_seq,
-                                                   loss_function=self.loss_function)
+                train_loss = train_step(train_source_seq, train_target_seq)
                 logs['loss'] = float(train_loss)
                 if batch_count % self.steps_to_log == 0:
                     self.logger.info('epoch {epoch}, batch {batch}, logs: {logs}'.format(epoch=epoch_count,
@@ -200,23 +217,31 @@ class Trainer:
                                   embedding_weights_decoder=None)
         else:
             tokenizer_encoder, tokenizer_decoder = self._create_tokenizers(train_data)
-            self.logger.info('vocab encoder: {vocab_enc}, vocab decoder: {vocab_dec}, start training loop...'.format(
+            self.logger.info('vocab encoder: {vocab_enc}, vocab decoder: {vocab_dec}'.format(
                 vocab_enc=len(tokenizer_encoder.word_index), vocab_dec=len(tokenizer_decoder.word_index)))
-            vectorizer = Vectorizer(tokenizer_encoder, tokenizer_decoder)
+            vectorizer = Vectorizer(tokenizer_encoder,
+                                    tokenizer_decoder,
+                                    self.max_output_len)
             embedding_weights_encoder, embedding_weights_decoder = None, None
-            if self.glove_path is not None:
-                print('loading embedding from {}'.format(self.glove_path))
-                embedding = read_glove(self.glove_path, summarizer.embedding_size)
+
+            if self.glove_path_encoder is not None:
+                print('loading encoder embedding from {}'.format(self.glove_path_encoder))
+                embedding = read_glove(self.glove_path_encoder, summarizer.embedding_size)
                 embedding_weights_encoder = embedding_to_matrix(embedding=embedding,
                                                                 token_index=tokenizer_encoder.word_index,
                                                                 embedding_dim=summarizer.embedding_size)
+                unknown_tokens_encoder = tokenizer_encoder.word_index.keys() - embedding.keys()
+                print('unknown vocab encoder embedding: {}'.format(len(unknown_tokens_encoder)))
+
+            if self.glove_path_decoder is not None:
+                print('loading decoder embedding from {}'.format(self.glove_path_decoder))
+                embedding = read_glove(self.glove_path_decoder, summarizer.embedding_size)
                 embedding_weights_decoder = embedding_to_matrix(embedding=embedding,
                                                                 token_index=tokenizer_decoder.word_index,
                                                                 embedding_dim=summarizer.embedding_size)
-                unknown_tokens_encoder = tokenizer_encoder.word_index.keys() - embedding.keys()
                 unknown_tokens_decoder = tokenizer_decoder.word_index.keys() - embedding.keys()
-                print('unknown vocab encoder: {vocab_enc}, decoder: {vocab_dec}'.format(
-                    vocab_enc=len(unknown_tokens_encoder), vocab_dec=len(unknown_tokens_decoder)))
+                print('unknown vocab decoder embedding: {}'.format(len(unknown_tokens_decoder)))
+
             summarizer.init_model(preprocessor=self.preprocessor,
                                   vectorizer=vectorizer,
                                   embedding_weights_encoder=embedding_weights_encoder,
@@ -250,8 +275,9 @@ class Trainer:
             counter_encoder.update(text_encoder.split())
         for text_decoder in train_text_decoder:
             counter_decoder.update(text_decoder.split())
-        tokens_encoder = {token_count[0] for token_count in counter_encoder.most_common(self.max_vocab_size)}
-        tokens_decoder = {token_count[0] for token_count in counter_decoder.most_common(self.max_vocab_size)}
+
+        tokens_encoder = {token_count[0] for token_count in counter_encoder.most_common(self.max_vocab_size_encoder)}
+        tokens_decoder = {token_count[0] for token_count in counter_decoder.most_common(self.max_vocab_size_decoder)}
         tokens_encoder.update({self.preprocessor.start_token, self.preprocessor.end_token})
         tokens_decoder.update({self.preprocessor.start_token, self.preprocessor.end_token})
         tokenizer_encoder = Tokenizer(oov_token=OOV_TOKEN, filters='', lower=False)

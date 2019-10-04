@@ -1,9 +1,13 @@
 import numpy as np
+
 from headliner.model.summarizer_attention import SummarizerAttention
 
 if __name__ == '__main__':
-    path_to_model = '/Users/cschaefe/saved_models/mod4'
+    path_to_model = '//Users/cschaefe/saved_models/mod4'
     summarizer = SummarizerAttention.load(path_to_model)
+    summarizer.vectorizer.max_output_len = 20
+    summarizer.max_prediction_len=20
+
     while True:
         text = input('\nEnter text: ')
         prediction_vecs = summarizer.predict_vectors(text, '')

@@ -1,5 +1,7 @@
-import tensorflow as tf
 from typing import Union
+
+import tensorflow as tf
+
 from headliner.model.summarizer import Summarizer
 from headliner.model.summarizer_attention import SummarizerAttention
 

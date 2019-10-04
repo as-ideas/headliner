@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/as-ideas/headliner.svg?branch=master)](https://travis-ci.org/as-ideas/headliner)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/as-ideas/headliner/blob/master/LICENSE)
+[![codecov](https://codecov.io/gh/as-ideas/headliner/branch/master/graph/badge.svg)](https://codecov.io/gh/as-ideas/headliner)
 
 The goal of this project is to generate headlines from news articles.
 
@@ -26,7 +27,10 @@ Read the documentation at: [https://as-ideas.github.io/headliner/](https://as-id
 Headliner is compatible with Python 3.6 and is distributed under the MIT license.
 
 ## Installation
-There are two ways to install Headliner:
+⚠️ Before installing Headliner, you need to install TensorFlow as we use this as our deep learning framework. For more 
+details on how to install it, have a look at the [TensorFlow installation instructions](https://www.tensorflow.org/install/).
+
+Then you can install Headliner itself. There are two ways to install Headliner:
 
 * Install Headliner from PyPI (recommended):
 ```

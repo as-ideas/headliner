@@ -1,5 +1,6 @@
-import tensorflow as tf
 from typing import Iterable, Callable
+
+import tensorflow as tf
 
 
 class DatasetGenerator:
@@ -17,7 +18,7 @@ class DatasetGenerator:
         Args:
             data_generator_func: Callable that returns an iterable over the data to be batched, e.g. lambda: [1, 2, 3].
         """
-        tensor_types = (tf.int64, tf.int64)
+        tensor_types = (tf.int32, tf.int32)
         tensor_shapes = (tf.TensorShape([None]), tf.TensorShape([None]))
         dataset = tf.data.Dataset.from_generator(data_generator_func, tensor_types, tensor_shapes)
         if self.shuffle_buffer_size is not None:
