@@ -34,31 +34,6 @@ def read_data(file_path: str) -> List[Tuple[str, str]]:
         return data_out
 
 
-data_raw = read_data('/Users/cschaefe/datasets/en_ger.txt')[:5000]
-train_data, val_data = train_test_split(data_raw, test_size=100, shuffle=True, random_state=42)
-preprocessor = Preprocessor()
-train_text_encoder = (preprocessor(d)[0] for d in train_data)
-train_text_decoder = (preprocessor(d)[1] for d in train_data)
-tokenizer_encoder = Tokenizer(oov_token='<oov>', filters='', lower=False)
-tokenizer_decoder = Tokenizer(oov_token='<oov>', filters='', lower=False)
-tokenizer_encoder.fit_on_texts(train_text_encoder)
-tokenizer_decoder.fit_on_texts(train_text_decoder)
-vectorizer = Vectorizer(tokenizer_encoder, tokenizer_decoder)
-
-tf.random.set_seed(42)
-np.random.seed(42)
-
-BUFFER_SIZE = 20000
-BATCH_SIZE = 16
-MAX_LENGTH = 10
-
-batch_generator = DatasetGenerator(BATCH_SIZE)
-data_prep_train = [preprocessor(d) for d in train_data]
-data_vecs_train = [vectorizer(d) for d in data_prep_train]
-data_prep_val = [preprocessor(d) for d in val_data]
-data_vecs_val = [vectorizer(d) for d in data_prep_val]
-train_dataset = batch_generator(lambda: data_vecs_train)
-val_dataset = batch_generator(lambda: data_vecs_val)
 
 def get_angles(pos, i, d_model):
     angle_rates = 1 / np.power(10000, (2 * (i // 2)) / np.float32(d_model))
@@ -307,6 +282,34 @@ class Transformer(tf.keras.Model):
         return final_output, attention_weights
 
 
+
+tf.random.set_seed(42)
+np.random.seed(42)
+
+data_raw = read_data('/Users/cschaefe/datasets/en_ger.txt')[:10000]
+train_data, val_data = train_test_split(data_raw, test_size=100, shuffle=True, random_state=42)
+preprocessor = Preprocessor()
+train_text_encoder = (preprocessor(d)[0] for d in train_data)
+train_text_decoder = (preprocessor(d)[1] for d in train_data)
+tokenizer_encoder = Tokenizer(oov_token='<oov>', filters='', lower=False)
+tokenizer_decoder = Tokenizer(oov_token='<oov>', filters='', lower=False)
+tokenizer_encoder.fit_on_texts(train_text_encoder)
+tokenizer_decoder.fit_on_texts(train_text_decoder)
+vectorizer = Vectorizer(tokenizer_encoder, tokenizer_decoder)
+
+BUFFER_SIZE = 20000
+BATCH_SIZE = 16
+MAX_LENGTH = 10
+batch_generator = DatasetGenerator(BATCH_SIZE)
+data_prep_train = [preprocessor(d) for d in train_data]
+data_vecs_train = [vectorizer(d) for d in data_prep_train]
+data_prep_val = [preprocessor(d) for d in val_data]
+data_vecs_val = [vectorizer(d) for d in data_prep_val]
+train_dataset = batch_generator(lambda: data_vecs_train)
+val_dataset = batch_generator(lambda: data_vecs_val)
+
+
+
 num_layers = 1
 d_model = 128
 dff = 512
@@ -433,6 +436,7 @@ def translate(sentence, target=''):
     print('(input) {}'.format(sentence))
     print('(target) {}'.format(target))
     print('(predicted) {}'.format(predicted_sentence))
+    return attention_weights
 
 
 
@@ -447,10 +451,17 @@ for epoch in range(EPOCHS):
         train_step(inp, tar)
 
         if batch % 50 == 0:
+            if batch == 50:
+                res = float(train_loss.result())
+                assert abs(res - 6.362922191619873) < 1e-6, 'train loss result does not match!'
+                attention_weights = translate(val_data[0][0])
+                sum_weight = np.sum(np.squeeze(attention_weights['decoder_layer1_block1'].numpy()), axis=1)
+                assert abs(sum_weight[0][0] - 3.0068233) < 1e-6, 'attention weight result does not match!'
+
             print()
             for l in range(5):
-                translate(train_data[l][0], target=train_data[l][1])
-            print('Epoch {} Batch {} Loss {:.4f} Accuracy {:.4f}'.format(
+                translate(val_data[l][0], target=val_data[l][1])
+            print('Epoch {} Batch {} Loss {:.10f} Accuracy {:.4f}'.format(
                 epoch + 1, batch, train_loss.result(), train_accuracy.result()))
 
 
