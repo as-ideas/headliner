@@ -334,6 +334,13 @@ class SummarizerTransformer:
         self.embedding_shape_in = None
         self.embedding_shape_out = None
 
+    def __getstate__(self):
+        """ Prevents pickle from serializing encoder and decoder """
+        state = self.__dict__.copy()
+        del state['transformer']
+        del state['optimizer']
+        return state
+
     def init_model(self,
                    preprocessor: Preprocessor,
                    vectorizer: Vectorizer,
@@ -458,7 +465,7 @@ class SummarizerTransformer:
         optimizer = summarizer.new_optimizer()
         summarizer.transformer.compile(optimizer=optimizer)
         summarizer.transformer.load_weights(transformer_path)
-        summarizer.optimizer = summarizer.encoder.optimizer
+        summarizer.optimizer = summarizer.transformer.optimizer
         return summarizer
 
     def new_optimizer(self):
