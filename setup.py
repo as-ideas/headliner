@@ -23,7 +23,7 @@ setup(
     license='MIT',
     install_requires=['scikit-learn==0.21.3', 'nltk==3.4.5', 'pyyaml==5.1.2'],
     extras_require={
-        'tests': ['pytest==5.2.0', 'pytest-cov==2.7.1', 'tensorflow==2.0.0'],
+        'tests': ['pytest==5.2.0', 'pytest-cov==2.7.1', 'codecov==2.0.15', 'tensorflow==2.0.0'],
         'docs': ['mkdocs==1.0.4', 'mkdocs-material==4.4.3'],
         'dev': ['bumpversion==0.5.3']
     },
