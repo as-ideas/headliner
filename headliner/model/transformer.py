@@ -388,7 +388,6 @@ class SummarizerTransformer:
                  embedding_encoder_trainable=True,
                  embedding_decoder_trainable=True):
 
-        self.transformer = Transformer(num_layers, d_model, num_heads, dff, input_vocab_size, target_vocab_size, dropout_rate)
         self.max_prediction_len = max_prediction_len
         self.embedding_size = embedding_size
         self.embedding_encoder_trainable = embedding_encoder_trainable
@@ -411,6 +410,7 @@ class SummarizerTransformer:
         self.vectorizer = vectorizer
         self.embedding_shape_in = (self.vectorizer.encoding_dim, self.embedding_size)
         self.embedding_shape_out = (self.vectorizer.decoding_dim, self.embedding_size)
+        self.transformer = Transformer(num_layers, d_model, num_heads, dff, self.vectorizer.encoding_dim, self.vectorizer.decoding_dim, dropout_rate)
 
 
     def new_train_step(self, loss_func, batch_size, apply_gradients=False):
@@ -456,12 +456,12 @@ class SummarizerTransformer:
 
         # inp sentence is portuguese, hence adding the start and end token
         text_prerpcessed = self.preprocessor((input_text, target_text))
-        inp_sentence, output_sentence = vectorizer(text_prerpcessed)
+        inp_sentence, output_sentence = self.vectorizer(text_prerpcessed)
         encoder_input = tf.expand_dims(inp_sentence, 0)
 
         # as the target is english, the first word to the transformer should be the
         # english start token.
-        decoder_input = vectorizer.encode_output(preprocessor.start_token)
+        decoder_input = self.vectorizer.encode_output(self.preprocessor.start_token)
         decoder_output = tf.expand_dims(decoder_input, 0)
         output = {'preprocessed_text': text_prerpcessed,
                   'logits': [],
@@ -479,7 +479,7 @@ class SummarizerTransformer:
 
             predictions = predictions[:, -1:, :]  # (batch_size, 1, vocab_size)
             pred_token_index = tf.cast(tf.argmax(predictions, axis=-1), tf.int32)
-            end_index = vectorizer.encode_output(preprocessor.end_token)
+            end_index = self.vectorizer.encode_output(self.preprocessor.end_token)
             decoder_output = tf.concat([decoder_output, pred_token_index], axis=-1)
             if pred_token_index != 0:
                 output['logits'].append(np.squeeze(predictions.numpy()))
@@ -522,6 +522,9 @@ class SummarizerTransformer:
 
         return tf.squeeze(output, axis=0), attention_weights
 
+    def save(self, path):
+        pass
+
 
     def translate(self, sentence, target=''):
         result, attention_weights = self.evaluate(sentence)
@@ -536,7 +539,7 @@ if __name__ == '__main__':
 
     summarizer_transformer = SummarizerTransformer()
     summarizer_transformer.init_model(preprocessor, vectorizer)
-    train_step = summarizer_transformer.new_train_step()
+    train_step = summarizer_transformer.new_train_step(BATCH_SIZE, loss_function)
 
     for epoch in range(EPOCHS):
         start = time.time()

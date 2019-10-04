@@ -29,7 +29,7 @@ if __name__ == '__main__':
 
     tf.get_logger().setLevel(logging.ERROR)
 
-    data_raw = read_data('/Users/cschaefe/datasets/en_ger.txt')[:5000]
+    data_raw = read_data('/Users/cschaefe/datasets/en_ger.txt')[:10000]
     train_data, val_data = train_test_split(data_raw, test_size=100, shuffle=True, random_state=42)
     #summarizer = SummarizerAttention(lstm_size=16,
     #                                 embedding_size=50,
@@ -41,7 +41,8 @@ if __name__ == '__main__':
     trainer = Trainer(steps_per_epoch=500,
                       batch_size=16,
                       steps_to_log=5,
-                      max_output_len=10)
+                      max_output_len=10,
+                      tensorboard_dir='/tmp/transformer')
 
     trainer.train(summarizer, train_data, val_data=val_data)
 
