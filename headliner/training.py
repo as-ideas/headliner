@@ -35,9 +35,8 @@ if __name__ == '__main__':
     train_data, val_data = train_test_split(data_raw, test_size=100, shuffle=True, random_state=42)
     #summarizer = SummarizerAttention(max_prediction_len=12, lstm_size=256, embedding_size=50)
 
-#    summarizer = SummarizerTransformer(max_prediction_len=12)
+    summarizer = SummarizerTransformer(max_prediction_len=12)
 
-    summarizer = SummarizerTransformer.load('/tmp/summarizer_20191004_162931')
 
     trainer = Trainer(steps_per_epoch=500,
                       batch_size=16,

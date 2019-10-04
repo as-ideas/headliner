@@ -450,46 +450,6 @@ class SummarizerTransformer:
         learning_rate = CustomSchedule(self.model_dim)
         return tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
 
-    def translate(self, sentence, target=''):
-        result, attention_weights = self.evaluate(sentence)
-        predicted_sentence = vectorizer.decode_output([int(i) for i in result if i < len(tokenizer_decoder.word_index)])
-        print('(input) {}'.format(sentence))
-        print('(target) {}'.format(target))
-        print('(predicted) {}'.format(predicted_sentence))
-        return attention_weights
-
-
-
-    def evaluate(self, inp_sentence):
-
-        # inp sentence is portuguese, hence adding the start and end token
-        inp_preproc = preprocessor((inp_sentence, ''))
-        inp_sentence, output_sentence = vectorizer(inp_preproc)
-        encoder_input = tf.expand_dims(inp_sentence, 0)
-
-        # as the target is english, the first word to the transformer should be the
-        # english start token.
-        decoder_input = vectorizer.encode_output(preprocessor.start_token)
-        output = tf.expand_dims(decoder_input, 0)
-
-        for i in range(MAX_LENGTH):
-            enc_padding_mask, combined_mask, dec_padding_mask = create_masks(
-                encoder_input, output)
-            predictions, attention_weights = self.transformer(encoder_input,
-                                                         output,
-                                                         False,
-                                                         enc_padding_mask,
-                                                         combined_mask,
-                                                         dec_padding_mask)
-
-            predictions = predictions[:, -1:, :]  # (batch_size, 1, vocab_size)
-            predicted_id = tf.cast(tf.argmax(predictions, axis=-1), tf.int32)
-            end_index = vectorizer.encode_output(preprocessor.end_token)
-            output = tf.concat([output, predicted_id], axis=-1)
-            if predicted_id == end_index:
-                return tf.squeeze(output, axis=0), attention_weights
-
-        return tf.squeeze(output, axis=0), attention_weights
 
 if __name__ == '__main__':
 
@@ -517,7 +477,7 @@ if __name__ == '__main__':
     input_vocab_size = len(tokenizer_encoder.word_index) + 1
     target_vocab_size = len(tokenizer_decoder.word_index) + 1
 
-    summarizer_transformer = SummarizerTransformer()
+    summarizer_transformer = SummarizerTransformer(max_prediction_len=MAX_LENGTH)
     summarizer_transformer.init_model(preprocessor, vectorizer)
     loss_function = masked_crossentropy
     train_step = summarizer_transformer.new_train_step(loss_function, BATCH_SIZE)
@@ -537,14 +497,12 @@ if __name__ == '__main__':
                 if batch == 50:
                     res = float(train_loss.result())
                     assert abs(res - 6.362922191619873) < 1e-6, 'train loss result does not match!'
-                    attention_weights = summarizer_transformer.translate(val_data[0][0])
+                    attention_weights = summarizer_transformer.predict_vectors(val_data[0][0], '')['alignment'][-1]
                     sum_weight = np.sum(np.squeeze(attention_weights['decoder_layer1_block1'].numpy()), axis=1)
                     assert abs(sum_weight[0][0] - 3.0068233) < 1e-6, 'attention weight result does not match!'
 
-
                 print()
                 for l in range(5):
-                    summarizer_transformer.translate(val_data[l][0], target=val_data[l][1])
                     pred_vecs = summarizer_transformer.predict_vectors(val_data[l][0], val_data[l][1])
                     print('pred text vec: ' + pred_vecs['predicted_text'])
 
