@@ -296,36 +296,15 @@ class Transformer(tf.keras.Model):
 tf.random.set_seed(42)
 np.random.seed(42)
 
-data_raw = read_data('/Users/cschaefe/datasets/en_ger.txt')[:10000]
-train_data, val_data = train_test_split(data_raw, test_size=100, shuffle=True, random_state=42)
-preprocessor = Preprocessor()
-train_text_encoder = (preprocessor(d)[0] for d in train_data)
-train_text_decoder = (preprocessor(d)[1] for d in train_data)
-tokenizer_encoder = Tokenizer(oov_token='<oov>', filters='', lower=False)
-tokenizer_decoder = Tokenizer(oov_token='<oov>', filters='', lower=False)
-tokenizer_encoder.fit_on_texts(train_text_encoder)
-tokenizer_decoder.fit_on_texts(train_text_decoder)
-vectorizer = Vectorizer(tokenizer_encoder, tokenizer_decoder)
-
-BUFFER_SIZE = 20000
-BATCH_SIZE = 16
-MAX_LENGTH = 10
-batch_generator = DatasetGenerator(BATCH_SIZE)
-data_prep_train = [preprocessor(d) for d in train_data]
-data_vecs_train = [vectorizer(d) for d in data_prep_train]
-data_prep_val = [preprocessor(d) for d in val_data]
-data_vecs_val = [vectorizer(d) for d in data_prep_val]
-train_dataset = batch_generator(lambda: data_vecs_train)
-val_dataset = batch_generator(lambda: data_vecs_val)
-
 
 num_layers = 1
 d_model = 128
 dff = 512
 num_heads = 2
-input_vocab_size = len(tokenizer_encoder.word_index) + 1
-target_vocab_size = len(tokenizer_decoder.word_index) + 1
+
 dropout_rate = 0
+
+
 
 
 class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
@@ -536,6 +515,30 @@ class SummarizerTransformer:
 
 
 if __name__ == '__main__':
+
+    data_raw = read_data('/Users/cschaefe/datasets/en_ger.txt')[:10000]
+    train_data, val_data = train_test_split(data_raw, test_size=100, shuffle=True, random_state=42)
+    preprocessor = Preprocessor()
+    train_text_encoder = (preprocessor(d)[0] for d in train_data)
+    train_text_decoder = (preprocessor(d)[1] for d in train_data)
+    tokenizer_encoder = Tokenizer(oov_token='<oov>', filters='', lower=False)
+    tokenizer_decoder = Tokenizer(oov_token='<oov>', filters='', lower=False)
+    tokenizer_encoder.fit_on_texts(train_text_encoder)
+    tokenizer_decoder.fit_on_texts(train_text_decoder)
+    vectorizer = Vectorizer(tokenizer_encoder, tokenizer_decoder)
+
+    BUFFER_SIZE = 20000
+    BATCH_SIZE = 16
+    MAX_LENGTH = 10
+    batch_generator = DatasetGenerator(BATCH_SIZE)
+    data_prep_train = [preprocessor(d) for d in train_data]
+    data_vecs_train = [vectorizer(d) for d in data_prep_train]
+    data_prep_val = [preprocessor(d) for d in val_data]
+    data_vecs_val = [vectorizer(d) for d in data_prep_val]
+    train_dataset = batch_generator(lambda: data_vecs_train)
+    val_dataset = batch_generator(lambda: data_vecs_val)
+    input_vocab_size = len(tokenizer_encoder.word_index) + 1
+    target_vocab_size = len(tokenizer_decoder.word_index) + 1
 
     summarizer_transformer = SummarizerTransformer()
     summarizer_transformer.init_model(preprocessor, vectorizer)

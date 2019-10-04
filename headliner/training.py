@@ -3,6 +3,8 @@ import logging
 import tensorflow as tf
 from typing import Tuple, List
 from sklearn.model_selection import train_test_split
+
+from headliner.evaluation import BleuScorer
 from headliner.model.summarizer_attention import SummarizerAttention
 from headliner.model.transformer import SummarizerTransformer
 from headliner.trainer import Trainer
@@ -31,20 +33,17 @@ if __name__ == '__main__':
 
     data_raw = read_data('/Users/cschaefe/datasets/en_ger.txt')[:10000]
     train_data, val_data = train_test_split(data_raw, test_size=100, shuffle=True, random_state=42)
-    #summarizer = SummarizerAttention(lstm_size=16,
-    #                                 embedding_size=50,
-    #                                 embedding_encoder_trainable=False,
-    #                                 embedding_decoder_trainable=False)
+    #summarizer = SummarizerAttention(max_prediction_len=12, lstm_size=256, embedding_size=50)
 
-    summarizer = SummarizerTransformer()
+    summarizer = SummarizerTransformer(max_prediction_len=12)
 
     trainer = Trainer(steps_per_epoch=500,
                       batch_size=16,
                       steps_to_log=5,
                       max_output_len=10,
-                      tensorboard_dir='/tmp/transformer')
+                      tensorboard_dir='/tmp/attention')
 
-    trainer.train(summarizer, train_data, val_data=val_data)
+    trainer.train(summarizer, train_data, val_data=val_data, scorers={'bleu': BleuScorer(weights=(1, 0, 0, 0))})
 
 
 
