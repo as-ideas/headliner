@@ -30,15 +30,13 @@ if __name__ == '__main__':
 
     data_raw = read_data('/Users/cschaefe/datasets/en_ger.txt')[:5000]
     train_data, val_data = train_test_split(data_raw, test_size=100, shuffle=True, random_state=42)
-    summarizer = SummarizerAttention(lstm_size=16,
+    summarizer = SummarizerAttention(lstm_size=256,
                                      embedding_size=50,
                                      embedding_encoder_trainable=False,
                                      embedding_decoder_trainable=False)
     trainer = Trainer(steps_per_epoch=500,
-                      batch_size=100,
+                      batch_size=16,
                       steps_to_log=5,
-                      glove_path_encoder='/Users/cschaefe/datasets/desc_vec_2_50.txt',
-                      glove_path_decoder='/Users/cschaefe/datasets/desc_vec_2_50.txt',
                       max_output_len=10)
     trainer.train(summarizer, train_data, val_data=val_data)
 
