@@ -1,5 +1,6 @@
-import numpy as np
 from typing import Dict
+
+import numpy as np
 
 
 def read_glove(file_path: str, vector_dim: int) -> Dict[str, np.array]:

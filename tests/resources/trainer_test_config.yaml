@@ -1,3 +1,4 @@
+max_output_len: 9
 batch_size: 1
 max_vocab_size: 2
 glove_path: 'glove.txt'

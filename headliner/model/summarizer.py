@@ -1,8 +1,10 @@
 import os
 import pickle
+from typing import Tuple, Callable, Dict, Union
+
 import numpy as np
 import tensorflow as tf
-from typing import Tuple, Callable, Dict, Union
+
 from headliner.preprocessing.preprocessor import Preprocessor
 from headliner.preprocessing.vectorizer import Vectorizer
 
@@ -63,11 +65,11 @@ class Summarizer:
 
     def __init__(self,
                  lstm_size=50,
-                 max_head_len=20,
+                 max_prediction_len=20,
                  embedding_size=50):
         self.lstm_size = lstm_size
-        self.max_head_len = max_head_len
         self.embedding_size = embedding_size
+        self.max_prediction_len = max_prediction_len
         self.preprocessor = None
         self.vectorizer = None
         self.encoder = None
@@ -124,7 +126,7 @@ class Summarizer:
                   'logits': [],
                   'alignment': [],
                   'predicted_sequence': []}
-        for _ in range(self.max_head_len):
+        for _ in range(self.max_prediction_len):
             de_output, de_state_h, de_state_c = self.decoder(de_input, (de_state_h, de_state_c))
             de_input = tf.argmax(de_output, -1)
             pred_token_index = de_input.numpy()[0][0]
@@ -136,25 +138,41 @@ class Summarizer:
         output['predicted_text'] = self.vectorizer.decode_output(output['predicted_sequence'])
         return output
 
-    def train_step(self,
-                   source_seq: tf.Tensor,
-                   target_seq: tf.Tensor,
-                   loss_function: Callable[[tf.Tensor, tf.Tensor], tf.Tensor],
-                   apply_gradients=True) -> tf.Tensor:
+    def new_train_step(self,
+                       loss_function,
+                       batch_size,
+                       apply_gradients=True) -> Callable[[tf.Tensor, tf.Tensor], float]:
 
-        en_initial_states = self.encoder.init_states(source_seq.get_shape()[0])
-        with tf.GradientTape() as tape:
-            en_outputs = self.encoder(source_seq, en_initial_states)
-            en_states = en_outputs[1:]
-            de_states = en_states
-            de_outputs = self.decoder(target_seq[:, :-1], de_states)
-            logits = de_outputs[0]
-            loss = loss_function(target_seq[:, 1:], logits)
-        if apply_gradients is True:
-            variables = self.encoder.trainable_variables + self.decoder.trainable_variables
-            gradients = tape.gradient(loss, variables)
-            self.optimizer.apply_gradients(zip(gradients, variables))
-        return loss
+        train_step_signature = [
+            tf.TensorSpec(shape=(batch_size, None), dtype=tf.int32),
+            tf.TensorSpec(shape=(batch_size, self.vectorizer.max_output_len), dtype=tf.int32),
+        ]
+        encoder = self.encoder
+        decoder = self.decoder
+        optimizer = self.optimizer
+
+        @tf.function(input_signature=train_step_signature)
+        def train_step(source_seq: tf.Tensor,
+                       target_seq: tf.Tensor) -> float:
+
+            en_initial_states = self.encoder.init_states(source_seq.get_shape()[0])
+            with tf.GradientTape() as tape:
+                en_outputs = encoder(source_seq, en_initial_states)
+                en_states = en_outputs[1:]
+                de_states = en_states
+                de_outputs = decoder(target_seq[:, :-1], de_states)
+                logits = de_outputs[0]
+                loss = loss_function(target_seq[:, 1:], logits)
+            if apply_gradients is True:
+                variables = encoder.trainable_variables + decoder.trainable_variables
+                gradients = tape.gradient(loss, variables)
+                optimizer.apply_gradients(zip(gradients, variables))
+            return float(loss)
+
+        if self.vectorizer.max_output_len is not None:
+            return tf.function(train_step, input_signature=train_step_signature)
+        else:
+            return train_step
 
     def save(self, out_path):
         if not os.path.exists(out_path):

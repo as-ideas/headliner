@@ -2,12 +2,8 @@ import tensorflow as tf
 import logging
 import os
 import unittest
-from typing import Dict, Union
-
 import numpy as np
 from tensorflow.python.keras.callbacks import Callback
-
-from headliner.evaluation.scorer import Scorer
 from headliner.model import SummarizerAttention
 from headliner.preprocessing.preprocessor import Preprocessor
 from headliner.trainer import Trainer
@@ -24,6 +20,7 @@ class TestTrainer(unittest.TestCase):
         config_path = os.path.join(current_dir, 'resources/trainer_test_config.yaml')
         preprocessor = Preprocessor(start_token='<custom_start_token>')
         trainer = Trainer.from_config(config_path, preprocessor=preprocessor)
+        self.assertEqual(9, trainer.max_output_len)
         self.assertEqual(1, trainer.batch_size)
         self.assertEqual(2, trainer.max_vocab_size)
         self.assertEqual('glove.txt', trainer.glove_path)
@@ -38,7 +35,8 @@ class TestTrainer(unittest.TestCase):
 
     def test_init(self) -> None:
         preprocessor = Preprocessor(start_token='<custom_start_token>', lower_case=False, hash_numbers=False)
-        trainer = Trainer(batch_size=1,
+        trainer = Trainer(max_output_len=9,
+                          batch_size=1,
                           max_vocab_size=2,
                           glove_path='glove.txt',
                           steps_per_epoch=4,
@@ -59,6 +57,7 @@ class TestTrainer(unittest.TestCase):
         self.assertEqual(5, trainer.bucketing_buffer_size_batches)
         self.assertEqual(6, trainer.bucketing_batches_to_bucket)
         self.assertEqual(7, trainer.steps_to_log)
+        self.assertEqual(9, trainer.max_output_len)
         self.assertEqual(logging.DEBUG, trainer.logger.level)
         self.assertEqual('<custom_start_token>', trainer.preprocessor.start_token)
         self.assertEqual(False, trainer.preprocessor.lower_case)
@@ -67,16 +66,19 @@ class TestTrainer(unittest.TestCase):
     def test_init_model(self) -> None:
         logging.basicConfig(level=logging.INFO)
         data = [('a b', 'a'), ('a b c', 'b')]
-        summarizer = SummarizerAttention(lstm_size=16, embedding_size=10)
+        summarizer = SummarizerAttention(lstm_size=16,
+                                         embedding_size=10)
         trainer = Trainer(batch_size=2,
                           steps_per_epoch=10,
                           max_vocab_size=10,
+                          max_output_len=3,
                           preprocessor=Preprocessor(start_token='<start_token>'))
         trainer.train(summarizer, data, num_epochs=1)
         # encoding dim and decoding dim are num unique tokens + 4 (pad, start, end, oov)
         self.assertIsNotNone(summarizer.vectorizer)
         self.assertEqual(7, summarizer.vectorizer.encoding_dim)
         self.assertEqual(6, summarizer.vectorizer.decoding_dim)
+        self.assertEqual(3, summarizer.vectorizer.max_output_len)
         self.assertEqual('<start_token>', summarizer.preprocessor.start_token)
 
     def test_train(self) -> None:
@@ -91,11 +93,13 @@ class TestTrainer(unittest.TestCase):
 
         data = [('a b', 'a'), ('a b c', 'b')]
 
-        summarizer = SummarizerAttention(lstm_size=16, embedding_size=10)
+        summarizer = SummarizerAttention(lstm_size=16,
+                                         embedding_size=10)
         log_callback = LogCallback()
         trainer = Trainer(batch_size=2,
                           steps_per_epoch=10,
-                          max_vocab_size=10)
+                          max_vocab_size=10,
+                          max_output_len=3)
 
         trainer.train(summarizer,
                       data,

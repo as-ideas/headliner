@@ -22,9 +22,10 @@ class TestSummarizer(unittest.TestCase):
     def test_serde_happy_path(self) -> None:
         preprocessor = Preprocessor()
         tokenizer = Tokenizer()
-        vectorizer = Vectorizer(tokenizer, tokenizer)
+        vectorizer = Vectorizer(tokenizer_encoder=tokenizer,
+                                tokenizer_decoder=tokenizer,
+                                max_output_len=8)
         summarizer = SummarizerAttention(lstm_size=10,
-                                         max_head_len=10,
                                          embedding_size=10)
         summarizer.init_model(preprocessor=preprocessor,
                               vectorizer=vectorizer)
@@ -32,9 +33,9 @@ class TestSummarizer(unittest.TestCase):
         summarizer.save(save_dir)
         summarizer_loaded = Summarizer.load(save_dir)
         self.assertEqual(10, summarizer_loaded.lstm_size)
-        self.assertEqual(10, summarizer_loaded.max_head_len)
         self.assertIsNotNone(summarizer_loaded.preprocessor)
         self.assertIsNotNone(summarizer_loaded.vectorizer)
         self.assertIsNotNone(summarizer_loaded.encoder)
         self.assertIsNotNone(summarizer_loaded.decoder)
         self.assertIsNotNone(summarizer_loaded.optimizer)
+        self.assertEqual(8, summarizer_loaded.vectorizer.max_output_len)
