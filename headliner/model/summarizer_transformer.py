@@ -165,6 +165,7 @@ class DecoderLayer(tf.keras.layers.Layer):
 
 
 class Encoder(tf.keras.layers.Layer):
+
     def __init__(self,
                  num_layers,
                  model_dim, num_heads,
