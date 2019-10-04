@@ -2,8 +2,9 @@
 
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/as-ideas/headliner/blob/master/notebooks/Neural_Machine_Translation_Example.ipynb)
 
-### Install the package via PyPI
+### Install TensorFlow and also our package via PyPI
 ```bash
+pip install tensorflow-gpu==2.0.0
 pip install headliner
 ```
 
@@ -14,7 +15,7 @@ unzip deu-eng.zip
 head deu.txt
 ```
 
-### Create the dataset
+### Create the dataset but only take a subset for faster training
 ```python
 import io
 
@@ -28,21 +29,25 @@ data = list(zip(ger, eng))
 ```
 
 ### Split the dataset into train and test
-````python
+```python
 from sklearn.model_selection import train_test_split
 
 train, test = train_test_split(data, test_size=0.1)
-````
+```
 
 ### Define the model and train it
-````python
+```python
 from headliner.trainer import Trainer
 from headliner.model.summarizer_attention import SummarizerAttention
 
-summarizer = SummarizerAttention(lstm_size=64, embedding_size=24)
-trainer = Trainer(batch_size=32, steps_per_epoch=100, steps_to_log=20, model_save_path='/tmp/summarizer')
+summarizer = SummarizerAttention(lstm_size=1024, embedding_size=256)
+trainer = Trainer(batch_size=64, 
+                  steps_per_epoch=100, 
+                  steps_to_log=20, 
+                  max_output_len=10, 
+                  model_save_path='/tmp/summarizer')
 trainer.train(summarizer, train, num_epochs=10, val_data=test)
-````
+```
 
 ### Do some prediction
 ```python
