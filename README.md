@@ -1,8 +1,10 @@
 # Headliner
 
 [![Build Status](https://travis-ci.org/as-ideas/headliner.svg?branch=master)](https://travis-ci.org/as-ideas/headliner)
-[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/as-ideas/headliner/blob/master/LICENSE)
+[![Docs](https://img.shields.io/badge/docs-online-brightgreen)](https://as-ideas.github.io/headliner/)
 [![codecov](https://codecov.io/gh/as-ideas/headliner/branch/master/graph/badge.svg)](https://codecov.io/gh/as-ideas/headliner)
+[![PyPI Version](https://img.shields.io/pypi/v/headliner)](https://pypi.org/project/headliner/)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/as-ideas/headliner/blob/master/LICENSE)
 
 The goal of this project is to generate headlines from news articles.
 

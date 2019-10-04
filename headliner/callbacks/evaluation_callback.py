@@ -47,6 +47,8 @@ class EvaluationCallback(tf.keras.callbacks.Callback):
                 self.logger.info('\n(input) {} \n(target) {} \n(prediction) {}\n'.format(
                     d[0], d[1], prediction['predicted_text']
                 ))
+            if len(self.scorers) == 0:
+                break
             for score_name, scorer in self.scorers.items():
                 score = scorer(prediction)
                 val_scores[score_name] += score
