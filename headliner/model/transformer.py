@@ -305,8 +305,6 @@ num_heads = 2
 dropout_rate = 0
 
 
-
-
 class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
 
     def __init__(self, d_model, warmup_steps=4000):
@@ -321,24 +319,6 @@ class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
         arg2 = step * (self.warmup_steps ** -1.5)
         return tf.math.rsqrt(self.d_model) * tf.math.minimum(arg1, arg2)
 
-learning_rate = CustomSchedule(d_model)
-optimizer = tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98,
-                                     epsilon=1e-9)
-
-loss_object = tf.keras.losses.SparseCategoricalCrossentropy(
-    from_logits=True, reduction='none')
-
-
-def loss_function(real, pred):
-    mask = tf.math.logical_not(tf.math.equal(real, 0))
-    loss_ = loss_object(real, pred)
-    mask = tf.cast(mask, dtype=loss_.dtype)
-    loss_ *= mask
-    return tf.reduce_mean(loss_)
-
-
-train_loss = tf.keras.metrics.Mean(name='train_loss')
-
 
 def create_masks(inp, tar):
     enc_padding_mask = create_padding_mask(inp)
@@ -350,12 +330,6 @@ def create_masks(inp, tar):
     return enc_padding_mask, combined_mask, dec_padding_mask
 
 
-EPOCHS = 20
-
-train_step_signature = [
-    tf.TensorSpec(shape=(None, None), dtype=tf.int32),
-    tf.TensorSpec(shape=(None, None), dtype=tf.int32),
-]
 
 
 
@@ -390,11 +364,19 @@ class SummarizerTransformer:
         self.embedding_shape_in = (self.vectorizer.encoding_dim, self.embedding_size)
         self.embedding_shape_out = (self.vectorizer.decoding_dim, self.embedding_size)
         self.transformer = Transformer(num_layers, d_model, num_heads, dff, self.vectorizer.encoding_dim, self.vectorizer.decoding_dim, dropout_rate)
-
+        learning_rate = CustomSchedule(d_model)
+        self.optimizer = tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
+        self.transformer.compile(optimizer=self.optimizer)
 
     def new_train_step(self, loss_func, batch_size, apply_gradients=False):
 
         transformer = self.transformer
+        optimizer = self.optimizer
+
+        train_step_signature = [
+            tf.TensorSpec(shape=(None, None), dtype=tf.int32),
+            tf.TensorSpec(shape=(None, None), dtype=tf.int32),
+        ]
 
         @tf.function(input_signature=train_step_signature)
         def train_step(inp, tar):
@@ -542,9 +524,11 @@ if __name__ == '__main__':
 
     summarizer_transformer = SummarizerTransformer()
     summarizer_transformer.init_model(preprocessor, vectorizer)
+    loss_function = masked_crossentropy
     train_step = summarizer_transformer.new_train_step(BATCH_SIZE, loss_function)
+    train_loss = tf.keras.metrics.Mean(name='train_loss')
 
-    for epoch in range(EPOCHS):
+    for epoch in range(20):
         start = time.time()
 
         train_loss.reset_states()
