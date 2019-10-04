@@ -31,7 +31,7 @@ if __name__ == '__main__':
 
     tf.get_logger().setLevel(logging.ERROR)
 
-    data_raw = read_data('/Users/cschaefe/datasets/en_ger.txt')[:10000]
+    data_raw = read_data('/Users/cschaefe/datasets/en_ger.txt')
     train_data, val_data = train_test_split(data_raw, test_size=100, shuffle=True, random_state=42)
     #summarizer = SummarizerAttention(max_prediction_len=12, lstm_size=256, embedding_size=50)
 

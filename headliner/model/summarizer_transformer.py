@@ -1,38 +1,20 @@
 from __future__ import absolute_import, division, print_function, unicode_literals
 
+import os
+import pickle
+import time
+from typing import List
+from typing import Tuple, Dict, Union
+
 import numpy as np
 import tensorflow as tf
 from keras_preprocessing.text import Tokenizer
+from sklearn.model_selection import train_test_split
 
 from headliner.losses import masked_crossentropy
-from headliner.model.summarizer import Summarizer
-from headliner.model.summarizer_attention import SummarizerAttention
 from headliner.preprocessing.dataset_generator import DatasetGenerator
 from headliner.preprocessing.preprocessor import Preprocessor
 from headliner.preprocessing.vectorizer import Vectorizer
-import json
-import logging
-import tensorflow as tf
-from typing import Tuple, List
-from sklearn.model_selection import train_test_split
-from headliner.model.summarizer_attention import SummarizerAttention
-from headliner.trainer import Trainer
-
-import tensorflow_datasets as tfds
-import tensorflow as tf
-
-import time
-import numpy as np
-import os
-import pickle
-from typing import Tuple, Callable, Dict, Union
-
-import numpy as np
-import tensorflow as tf
-
-from headliner.preprocessing.preprocessor import Preprocessor
-from headliner.preprocessing.vectorizer import Vectorizer
-
 
 
 def read_data(file_path: str) -> List[Tuple[str, str]]:
@@ -335,7 +317,7 @@ class SummarizerTransformer:
         self.embedding_shape_out = None
 
     def __getstate__(self):
-        """ Prevents pickle from serializing encoder and decoder """
+        """ Prevents pickle from serializing the transformer and optimizer """
         state = self.__dict__.copy()
         del state['transformer']
         del state['optimizer']
@@ -404,13 +386,9 @@ class SummarizerTransformer:
         attention alignment.
         """
 
-        # inp sentence is portuguese, hence adding the start and end token
         text_prerpcessed = self.preprocessor((input_text, target_text))
         inp_sentence, output_sentence = self.vectorizer(text_prerpcessed)
         encoder_input = tf.expand_dims(inp_sentence, 0)
-
-        # as the target is english, the first word to the transformer should be the
-        # english start token.
         decoder_input = self.vectorizer.encode_output(self.preprocessor.start_token)
         decoder_output = tf.expand_dims(decoder_input, 0)
         output = {'preprocessed_text': text_prerpcessed,
