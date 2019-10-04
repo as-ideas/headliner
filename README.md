@@ -2,6 +2,7 @@
 
 [![Build Status](https://travis-ci.org/as-ideas/headliner.svg?branch=master)](https://travis-ci.org/as-ideas/headliner)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/as-ideas/headliner/blob/master/LICENSE)
+[![codecov](https://codecov.io/gh/as-ideas/headliner/branch/master/graph/badge.svg)](https://codecov.io/gh/as-ideas/headliner)
 
 The goal of this project is to generate headlines from news articles.
 
