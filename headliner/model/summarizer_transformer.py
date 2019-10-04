@@ -151,6 +151,7 @@ class EncoderLayer(tf.keras.layers.Layer):
 
 
 class DecoderLayer(tf.keras.layers.Layer):
+    
     def __init__(self, model_dim, num_heads, feed_forward_dim, rate=0.1):
         super(DecoderLayer, self).__init__()
         self.mha1 = MultiHeadAttention(model_dim, num_heads)
@@ -249,23 +250,23 @@ class Decoder(tf.keras.layers.Layer):
 
 
 class Transformer(tf.keras.Model):
-    
+
     def __init__(self, num_layers, model_dim, num_heads, feed_forward_dim, input_vocab_size,
                  target_vocab_size, rate=0.1):
         super(Transformer, self).__init__()
 
-        self.encoder = Encoder(num_layers, 
-                               model_dim, 
-                               num_heads, 
+        self.encoder = Encoder(num_layers,
+                               model_dim,
+                               num_heads,
                                feed_forward_dim,
-                               input_vocab_size, 
+                               input_vocab_size,
                                rate)
 
-        self.decoder = Decoder(num_layers, 
-                               model_dim, 
-                               num_heads, 
+        self.decoder = Decoder(num_layers,
+                               model_dim,
+                               num_heads,
                                feed_forward_dim,
-                               target_vocab_size, 
+                               target_vocab_size,
                                rate)
 
         self.final_layer = tf.keras.layers.Dense(target_vocab_size)
@@ -378,7 +379,6 @@ class SummarizerTransformer:
             if apply_gradients:
                 gradients = tape.gradient(loss, transformer.trainable_variables)
                 optimizer.apply_gradients(zip(gradients, transformer.trainable_variables))
-            train_loss(loss)
             return loss
 
         return train_step
@@ -433,6 +433,47 @@ class SummarizerTransformer:
         output['predicted_text'] = self.vectorizer.decode_output(output['predicted_sequence'])
         return output
 
+    def save(self, out_path):
+        if not os.path.exists(out_path):
+            os.mkdir(out_path)
+        summarizer_path = os.path.join(out_path, 'summarizer.pkl')
+        transformer_path = os.path.join(out_path, 'transformer')
+        with open(summarizer_path, 'wb+') as handle:
+            pickle.dump(self, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        self.transformer.save_weights(transformer_path, save_format='tf')
+
+    @staticmethod
+    def load(in_path):
+        summarizer_path = os.path.join(in_path, 'summarizer.pkl')
+        transformer_path = os.path.join(in_path, 'transformer')
+        with open(summarizer_path, 'rb') as handle:
+            summarizer = pickle.load(handle)
+        summarizer.transformer = Transformer(summarizer.num_layers,
+                                             summarizer.model_dim,
+                                             summarizer.num_heads,
+                                             summarizer.feed_forward_dim,
+                                             summarizer.vectorizer.encoding_dim,
+                                             summarizer.vectorizer.decoding_dim,
+                                             summarizer.dropout_rate)
+        optimizer = summarizer.new_optimizer()
+        summarizer.transformer.compile(optimizer=optimizer)
+        summarizer.transformer.load_weights(transformer_path)
+        summarizer.optimizer = summarizer.encoder.optimizer
+        return summarizer
+
+    def new_optimizer(self):
+        learning_rate = CustomSchedule(self.model_dim)
+        return tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
+
+    def translate(self, sentence, target=''):
+        result, attention_weights = self.evaluate(sentence)
+        predicted_sentence = vectorizer.decode_output([int(i) for i in result if i < len(tokenizer_decoder.word_index)])
+        print('(input) {}'.format(sentence))
+        print('(target) {}'.format(target))
+        print('(predicted) {}'.format(predicted_sentence))
+        return attention_weights
+
+
 
     def evaluate(self, inp_sentence):
 
@@ -464,28 +505,6 @@ class SummarizerTransformer:
                 return tf.squeeze(output, axis=0), attention_weights
 
         return tf.squeeze(output, axis=0), attention_weights
-
-    def save(self, out_path):
-        if not os.path.exists(out_path):
-            os.mkdir(out_path)
-        summarizer_path = os.path.join(out_path, 'summarizer.pkl')
-        transformer_path = os.path.join(out_path, 'transformer')
-        with open(summarizer_path, 'wb+') as handle:
-            pickle.dump(self, handle, protocol=pickle.HIGHEST_PROTOCOL)
-        self.transformer.save_weights(transformer_path, save_format='tf')
-
-    def new_optimizer(self):
-        learning_rate = CustomSchedule(self.model_dim)
-        return tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
-
-    def translate(self, sentence, target=''):
-        result, attention_weights = self.evaluate(sentence)
-        predicted_sentence = vectorizer.decode_output([int(i) for i in result if i < len(tokenizer_decoder.word_index)])
-        print('(input) {}'.format(sentence))
-        print('(target) {}'.format(target))
-        print('(predicted) {}'.format(predicted_sentence))
-        return attention_weights
-
 
 if __name__ == '__main__':
 
@@ -526,7 +545,8 @@ if __name__ == '__main__':
 
         # inp -> portuguese, tar -> english
         for (batch, (inp, tar)) in enumerate(train_dataset):
-            train_step(inp, tar)
+            loss = train_step(inp, tar)
+            train_loss(loss)
 
             if batch % 50 == 0:
                 if batch == 50:

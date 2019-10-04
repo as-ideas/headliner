@@ -33,11 +33,13 @@ if __name__ == '__main__':
 
     data_raw = read_data('/Users/cschaefe/datasets/en_ger.txt')[:10000]
     train_data, val_data = train_test_split(data_raw, test_size=100, shuffle=True, random_state=42)
-    summarizer = SummarizerAttention(max_prediction_len=12, lstm_size=256, embedding_size=50)
+    #summarizer = SummarizerAttention(max_prediction_len=12, lstm_size=256, embedding_size=50)
 
-#    summarizer = SummarizerTransformer(max_prediction_len=12)
+    summarizer = SummarizerTransformer(max_prediction_len=12)
 
-    trainer = Trainer(steps_per_epoch=500,
+#    summarizer = SummarizerTransformer.load('/tmp/')
+
+    trainer = Trainer(steps_per_epoch=100,
                       batch_size=16,
                       steps_to_log=5,
                       max_output_len=10,
