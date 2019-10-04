@@ -34,7 +34,7 @@ if __name__ == '__main__':
                                      embedding_size=50,
                                      embedding_encoder_trainable=False,
                                      embedding_decoder_trainable=False)
-    trainer = Trainer(steps_per_epoch=500,
+    trainer = Trainer(steps_per_epoch=50,
                       batch_size=16,
                       steps_to_log=5,
                       max_output_len=10)
