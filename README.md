@@ -26,7 +26,10 @@ Read the documentation at: [https://as-ideas.github.io/headliner/](https://as-id
 Headliner is compatible with Python 3.6 and is distributed under the MIT license.
 
 ## Installation
-There are two ways to install Headliner:
+⚠️ Before installing Headliner, you need to install TensorFlow as we use this as our deep learning framework. For more 
+details on how to install it, have a look at the [TensorFlow installation instructions](https://www.tensorflow.org/install/).
+
+Then you can install Headliner itself. There are two ways to install Headliner:
 
 * Install Headliner from PyPI (recommended):
 ```
