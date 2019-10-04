@@ -23,6 +23,16 @@ import tensorflow as tf
 
 import time
 import numpy as np
+import os
+import pickle
+from typing import Tuple, Callable, Dict, Union
+
+import numpy as np
+import tensorflow as tf
+
+from headliner.preprocessing.preprocessor import Preprocessor
+from headliner.preprocessing.vectorizer import Vectorizer
+
 
 
 def read_data(file_path: str) -> List[Tuple[str, str]]:
@@ -309,11 +319,6 @@ train_dataset = batch_generator(lambda: data_vecs_train)
 val_dataset = batch_generator(lambda: data_vecs_val)
 
 
-
-
-
-
-
 num_layers = 1
 d_model = 128
 dff = 512
@@ -324,18 +329,17 @@ dropout_rate = 0
 
 
 class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
+
     def __init__(self, d_model, warmup_steps=4000):
         super(CustomSchedule, self).__init__()
 
         self.d_model = d_model
         self.d_model = tf.cast(self.d_model, tf.float32)
-
         self.warmup_steps = warmup_steps
 
     def __call__(self, step):
         arg1 = tf.math.rsqrt(step)
         arg2 = step * (self.warmup_steps ** -1.5)
-
         return tf.math.rsqrt(self.d_model) * tf.math.minimum(arg1, arg2)
 
 learning_rate = CustomSchedule(d_model)
@@ -355,8 +359,6 @@ def loss_function(real, pred):
 
 
 train_loss = tf.keras.metrics.Mean(name='train_loss')
-train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(
-    name='train_accuracy')
 
 
 def create_masks(inp, tar):
@@ -380,9 +382,32 @@ train_step_signature = [
 
 class SummarizerTransformer:
 
-    def __init__(self):
+    def __init__(self,
+                 max_prediction_len=20,
+                 embedding_size=50,
+                 embedding_encoder_trainable=True,
+                 embedding_decoder_trainable=True):
 
         self.transformer = Transformer(num_layers, d_model, num_heads, dff, input_vocab_size, target_vocab_size, dropout_rate)
+        self.max_prediction_len = max_prediction_len
+        self.embedding_size = embedding_size
+        self.embedding_encoder_trainable = embedding_encoder_trainable
+        self.embedding_decoder_trainable = embedding_decoder_trainable
+        self.preprocessor = None
+        self.vectorizer = None
+        self.encoder = None
+        self.decoder = None
+        self.optimizer = None
+        self.embedding_shape_in = None
+        self.embedding_shape_out = None
+
+    def init_model(self,
+                   preprocessor: Preprocessor,
+                   vectorizer: Vectorizer) -> None:
+        self.preprocessor = preprocessor
+        self.vectorizer = vectorizer
+        self.embedding_shape_in = (self.vectorizer.encoding_dim, self.embedding_size)
+        self.embedding_shape_out = (self.vectorizer.decoding_dim, self.embedding_size)
 
 
     def new_train_step(self):
@@ -408,9 +433,59 @@ class SummarizerTransformer:
             optimizer.apply_gradients(zip(gradients, transformer.trainable_variables))
 
             train_loss(loss)
-            train_accuracy(tar_real, predictions)
+            return loss
 
         return train_step
+
+    def predict(self, text: str) -> str:
+        """
+        Predicts summary of an input text.
+        """
+
+        return self.predict_vectors(text, '')['predicted_text']
+
+    def predict_vectors(self, input_text: str, target_text: str) -> Dict[str, Union[str, np.array]]:
+        """
+        Predicts summary of an input text and outputs information needed for evaluation:
+        output logits, input tokens, output tokens, predicted tokens, preprocessed text,
+        attention alignment.
+        """
+
+        # inp sentence is portuguese, hence adding the start and end token
+        text_prerpcessed = self.preprocessor((input_text, target_text))
+        inp_sentence, output_sentence = vectorizer(text_prerpcessed)
+        encoder_input = tf.expand_dims(inp_sentence, 0)
+
+        # as the target is english, the first word to the transformer should be the
+        # english start token.
+        decoder_input = vectorizer.encode_output(preprocessor.start_token)
+        decoder_output = tf.expand_dims(decoder_input, 0)
+        output = {'preprocessed_text': text_prerpcessed,
+                  'logits': [],
+                  'alignment': [],
+                  'predicted_sequence': []}
+        for i in range(self.max_prediction_len):
+            enc_padding_mask, combined_mask, dec_padding_mask = create_masks(
+                encoder_input, decoder_output)
+            predictions, alignment = self.transformer(encoder_input,
+                                                              decoder_output,
+                                                              False,
+                                                              enc_padding_mask,
+                                                              combined_mask,
+                                                              dec_padding_mask)
+
+            predictions = predictions[:, -1:, :]  # (batch_size, 1, vocab_size)
+            pred_token_index = tf.cast(tf.argmax(predictions, axis=-1), tf.int32)
+            end_index = vectorizer.encode_output(preprocessor.end_token)
+            decoder_output = tf.concat([decoder_output, pred_token_index], axis=-1)
+            if pred_token_index != 0:
+                output['logits'].append(np.squeeze(predictions.numpy()))
+                output['alignment'].append(alignment)
+                output['predicted_sequence'].append(int(pred_token_index))
+                if pred_token_index == end_index:
+                    break
+        output['predicted_text'] = self.vectorizer.decode_output(output['predicted_sequence'])
+        return output
 
 
     def evaluate(self, inp_sentence):
@@ -454,37 +529,38 @@ class SummarizerTransformer:
         return attention_weights
 
 
+if __name__ == '__main__':
 
-summarizer_transformer = SummarizerTransformer()
-train_step = summarizer_transformer.new_train_step()
+    summarizer_transformer = SummarizerTransformer()
+    summarizer_transformer.init_model(preprocessor, vectorizer)
+    train_step = summarizer_transformer.new_train_step()
 
-for epoch in range(EPOCHS):
-    start = time.time()
+    for epoch in range(EPOCHS):
+        start = time.time()
 
-    train_loss.reset_states()
-    train_accuracy.reset_states()
+        train_loss.reset_states()
 
-    # inp -> portuguese, tar -> english
-    for (batch, (inp, tar)) in enumerate(train_dataset):
-        train_step(inp, tar)
+        # inp -> portuguese, tar -> english
+        for (batch, (inp, tar)) in enumerate(train_dataset):
+            train_step(inp, tar)
 
-        if batch % 50 == 0:
-            if batch == 50:
-                res = float(train_loss.result())
-                assert abs(res - 6.362922191619873) < 1e-6, 'train loss result does not match!'
-                attention_weights = summarizer_transformer.translate(val_data[0][0])
-                sum_weight = np.sum(np.squeeze(attention_weights['decoder_layer1_block1'].numpy()), axis=1)
-                assert abs(sum_weight[0][0] - 3.0068233) < 1e-6, 'attention weight result does not match!'
-
-            print()
-            for l in range(5):
-                summarizer_transformer.translate(val_data[l][0], target=val_data[l][1])
-            print('Epoch {} Batch {} Loss {:.10f} Accuracy {:.4f}'.format(
-                epoch + 1, batch, train_loss.result(), train_accuracy.result()))
+            if batch % 50 == 0:
+                if batch == 50:
+                    res = float(train_loss.result())
+                    assert abs(res - 6.362922191619873) < 1e-6, 'train loss result does not match!'
+                    attention_weights = summarizer_transformer.translate(val_data[0][0])
+                    sum_weight = np.sum(np.squeeze(attention_weights['decoder_layer1_block1'].numpy()), axis=1)
+                    assert abs(sum_weight[0][0] - 3.0068233) < 1e-6, 'attention weight result does not match!'
 
 
-    print('Epoch {} Loss {:.4f} Accuracy {:.4f}'.format(epoch + 1,
-                                                        train_loss.result(),
-                                                        train_accuracy.result()))
+                print()
+                for l in range(5):
+                    summarizer_transformer.translate(val_data[l][0], target=val_data[l][1])
+                    pred_vecs = summarizer_transformer.predict_vectors(val_data[l][0], val_data[l][1])
+                    print('pred text vec: ' + pred_vecs['predicted_text'])
 
-    print('Time taken for 1 epoch: {} secs\n'.format(time.time() - start))
+                print('Epoch {} Batch {} Loss {:.10f}'.format(epoch + 1, batch, train_loss.result()))
+
+
+        print('Epoch {} Loss {:.4f}'.format(epoch + 1, train_loss.result()))
+        print('Time taken for 1 epoch: {} secs\n'.format(time.time() - start))
