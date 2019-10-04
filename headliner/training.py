@@ -1,9 +1,8 @@
 import json
+import logging
+import tensorflow as tf
 from typing import Tuple, List
-
 from sklearn.model_selection import train_test_split
-
-from headliner.evaluation import BleuScorer
 from headliner.model.summarizer_attention import SummarizerAttention
 from headliner.trainer import Trainer
 
@@ -26,12 +25,23 @@ def read_data(file_path: str) -> List[Tuple[str, str]]:
 
 if __name__ == '__main__':
 
-    data_raw = read_data_json('/Users/cschaefe/datasets/welt_dedup.json', 2000)
-    train_data, val_data = train_test_split(data_raw, test_size=500, shuffle=True, random_state=42)
-    summarizer = SummarizerAttention(lstm_size=64, embedding_size=50)
-    trainer = Trainer(steps_per_epoch=500, batch_size=16, steps_to_log=5, tensorboard_dir='/tmp/welt_dedup_large', max_output_len=20,
-                      glove_path='/Users/cschaefe/datasets/glove_welt_dedup.txt')
-    trainer.train(summarizer, train_data, val_data=val_data, scorers={'bleu': BleuScorer(weights=(1, 0, 0, 0))})
+
+    tf.get_logger().setLevel(logging.ERROR)
+
+    data_raw = read_data('/Users/cschaefe/datasets/en_ger.txt')[:5000]
+    train_data, val_data = train_test_split(data_raw, test_size=100, shuffle=True, random_state=42)
+    summarizer = SummarizerAttention(lstm_size=16,
+                                     embedding_size=50,
+                                     embedding_encoder_trainable=False,
+                                     embedding_decoder_trainable=False)
+    trainer = Trainer(steps_per_epoch=500,
+                      batch_size=100,
+                      steps_to_log=5,
+                      glove_path_encoder='/Users/cschaefe/datasets/desc_vec_2_50.txt',
+                      glove_path_decoder='/Users/cschaefe/datasets/desc_vec_2_50.txt',
+                      max_output_len=10)
+    trainer.train(summarizer, train_data, val_data=val_data)
+
 
     """
     logging.basicConfig(level=logging.INFO)

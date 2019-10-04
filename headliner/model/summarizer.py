@@ -14,15 +14,15 @@ class Encoder(tf.keras.Model):
     def __init__(self,
                  embedding_shape: Tuple[int, int],
                  lstm_size=50,
-                 embedding_weights=None) -> None:
+                 embedding_weights=None,
+                 embedding_trainable=True) -> None:
         super(Encoder, self).__init__()
         vocab_size, vec_dim = embedding_shape
-        if embedding_weights is not None:
-            self.embedding = tf.keras.layers.Embedding(vocab_size, vec_dim,
-                                                       weights=[embedding_weights],
-                                                       trainable=False)
-        else:
-            self.embedding = tf.keras.layers.Embedding(vocab_size, vec_dim, trainable=True)
+        weights = None if embedding_weights is None else [embedding_weights]
+        self.embedding = tf.keras.layers.Embedding(vocab_size,
+                                                   vec_dim,
+                                                   weights=weights,
+                                                   trainable=embedding_trainable)
         self.lstm = tf.keras.layers.LSTM(lstm_size, return_sequences=True, return_state=True, go_backwards=True)
         self.lstm_size = lstm_size
 
@@ -42,15 +42,16 @@ class Decoder(tf.keras.Model):
     def __init__(self,
                  embedding_shape: Tuple[int, int],
                  lstm_size=50,
-                 embedding_weights=None) -> None:
+                 embedding_weights=None,
+                 embedding_trainable=True) -> None:
         super(Decoder, self).__init__()
         self.lstm_size = lstm_size
         vocab_size, vec_dim = embedding_shape
-        if embedding_weights is not None:
-            self.embedding = tf.keras.layers.Embedding(vocab_size, vec_dim, weights=[embedding_weights],
-                                                       trainable=False)
-        else:
-            self.embedding = tf.keras.layers.Embedding(vocab_size, vec_dim, trainable=True)
+        weights = None if embedding_weights is None else [embedding_weights]
+        self.embedding = tf.keras.layers.Embedding(vocab_size,
+                                                   vec_dim,
+                                                   weights=weights,
+                                                   trainable=embedding_trainable)
         self.lstm = tf.keras.layers.LSTM(lstm_size, return_sequences=True, return_state=True)
         self.dense = tf.keras.layers.Dense(vocab_size)
 
@@ -66,10 +67,15 @@ class Summarizer:
     def __init__(self,
                  lstm_size=50,
                  max_prediction_len=20,
-                 embedding_size=50):
+                 embedding_size=50,
+                 embedding_encoder_trainable=True,
+                 embedding_decoder_trainable=True):
+
         self.lstm_size = lstm_size
-        self.embedding_size = embedding_size
         self.max_prediction_len = max_prediction_len
+        self.embedding_size = embedding_size
+        self.embedding_encoder_trainable = embedding_encoder_trainable
+        self.embedding_decoder_trainable = embedding_decoder_trainable
         self.preprocessor = None
         self.vectorizer = None
         self.encoder = None
@@ -87,8 +93,14 @@ class Summarizer:
         self.vectorizer = vectorizer
         self.embedding_shape_in = (self.vectorizer.encoding_dim, self.embedding_size)
         self.embedding_shape_out = (self.vectorizer.decoding_dim, self.embedding_size)
-        self.encoder = Encoder(self.embedding_shape_in, self.lstm_size, embedding_weights=embedding_weights_encoder)
-        self.decoder = Decoder(self.embedding_shape_out, self.lstm_size, embedding_weights=embedding_weights_decoder)
+        self.encoder = Encoder(self.embedding_shape_in,
+                               self.lstm_size,
+                               embedding_trainable=self.embedding_encoder_trainable,
+                               embedding_weights=embedding_weights_encoder)
+        self.decoder = Decoder(self.embedding_shape_out,
+                               self.lstm_size,
+                               embedding_trainable=self.embedding_decoder_trainable,
+                               embedding_weights=embedding_weights_decoder)
         self.optimizer = Summarizer._new_optimizer()
         self.encoder.compile(optimizer=self.optimizer)
         self.decoder.compile(optimizer=self.optimizer)
@@ -193,9 +205,11 @@ class Summarizer:
         with open(summarizer_path, 'rb') as handle:
             summarizer = pickle.load(handle)
         summarizer.encoder = Encoder(summarizer.embedding_shape_in,
-                                     summarizer.lstm_size)
+                                     summarizer.lstm_size,
+                                     embedding_trainable=summarizer.embedding_encoder_trainable)
         summarizer.decoder = Decoder(summarizer.embedding_shape_out,
-                                     summarizer.lstm_size)
+                                     summarizer.lstm_size,
+                                     embedding_trainable=summarizer.embedding_decoder_trainable)
         optimizer = Summarizer._new_optimizer()
         summarizer.encoder.compile(optimizer=optimizer)
         summarizer.decoder.compile(optimizer=optimizer)
