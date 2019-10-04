@@ -32,7 +32,7 @@ class Trainer:
                  max_output_len=None,
                  batch_size=16,
                  max_vocab_size_encoder=200000,
-                 max_vocab_size_decoder=100000,
+                 max_vocab_size_decoder=200000,
                  glove_path_encoder=None,
                  glove_path_decoder=None,
                  steps_per_epoch=500,
