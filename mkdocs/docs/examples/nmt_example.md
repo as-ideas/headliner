@@ -51,5 +51,5 @@ trainer.train(summarizer, train, num_epochs=10, val_data=test)
 
 ### Do some prediction
 ```python
-summarizer.predict('Hi.')
+summarizer.predict('Hallo mir geht es gut.')
 ```
