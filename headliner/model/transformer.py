@@ -310,6 +310,10 @@ val_dataset = batch_generator(lambda: data_vecs_val)
 
 
 
+
+
+
+
 num_layers = 1
 d_model = 128
 dff = 512
@@ -337,7 +341,7 @@ class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
 learning_rate = CustomSchedule(d_model)
 optimizer = tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98,
                                      epsilon=1e-9)
-temp_learning_rate_schedule = CustomSchedule(d_model)
+
 loss_object = tf.keras.losses.SparseCategoricalCrossentropy(
     from_logits=True, reduction='none')
 
@@ -354,9 +358,6 @@ train_loss = tf.keras.metrics.Mean(name='train_loss')
 train_accuracy = tf.keras.metrics.SparseCategoricalAccuracy(
     name='train_accuracy')
 
-transformer = Transformer(num_layers, d_model, num_heads, dff,
-                          input_vocab_size, target_vocab_size, dropout_rate)
-
 
 def create_masks(inp, tar):
     enc_padding_mask = create_padding_mask(inp)
@@ -371,74 +372,91 @@ def create_masks(inp, tar):
 EPOCHS = 20
 
 train_step_signature = [
-    tf.TensorSpec(shape=(None, None), dtype=tf.int64),
-    tf.TensorSpec(shape=(None, None), dtype=tf.int64),
+    tf.TensorSpec(shape=(None, None), dtype=tf.int32),
+    tf.TensorSpec(shape=(None, None), dtype=tf.int32),
 ]
 
-@tf.function(input_signature=train_step_signature)
-def train_step(inp, tar):
-    tar_inp = tar[:, :-1]
-    tar_real = tar[:, 1:]
-
-    enc_padding_mask, combined_mask, dec_padding_mask = create_masks(inp, tar_inp)
-
-    with tf.GradientTape() as tape:
-        predictions, _ = transformer(inp, tar_inp,
-                                     True,
-                                     enc_padding_mask,
-                                     combined_mask,
-                                     dec_padding_mask)
-        loss = loss_function(tar_real, predictions)
-
-    gradients = tape.gradient(loss, transformer.trainable_variables)
-    optimizer.apply_gradients(zip(gradients, transformer.trainable_variables))
-
-    train_loss(loss)
-    train_accuracy(tar_real, predictions)
 
 
+class SummarizerTransformer:
 
-def evaluate(inp_sentence):
+    def __init__(self):
 
-    # inp sentence is portuguese, hence adding the start and end token
-    inp_preproc = preprocessor((inp_sentence, ''))
-    inp_sentence, output_sentence = vectorizer(inp_preproc)
-    encoder_input = tf.expand_dims(inp_sentence, 0)
-
-    # as the target is english, the first word to the transformer should be the
-    # english start token.
-    decoder_input = vectorizer.encode_output(preprocessor.start_token)
-    output = tf.expand_dims(decoder_input, 0)
-
-    for i in range(MAX_LENGTH):
-        enc_padding_mask, combined_mask, dec_padding_mask = create_masks(
-            encoder_input, output)
-        predictions, attention_weights = transformer(encoder_input,
-                                                     output,
-                                                     False,
-                                                     enc_padding_mask,
-                                                     combined_mask,
-                                                     dec_padding_mask)
-
-        predictions = predictions[:, -1:, :]  # (batch_size, 1, vocab_size)
-        predicted_id = tf.cast(tf.argmax(predictions, axis=-1), tf.int32)
-        end_index = vectorizer.encode_output(preprocessor.end_token)
-        output = tf.concat([output, predicted_id], axis=-1)
-        if predicted_id == end_index:
-            return tf.squeeze(output, axis=0), attention_weights
-
-    return tf.squeeze(output, axis=0), attention_weights
+        self.transformer = Transformer(num_layers, d_model, num_heads, dff, input_vocab_size, target_vocab_size, dropout_rate)
 
 
-def translate(sentence, target=''):
-    result, attention_weights = evaluate(sentence)
-    predicted_sentence = vectorizer.decode_output([int(i) for i in result if i < len(tokenizer_decoder.word_index)])
-    print('(input) {}'.format(sentence))
-    print('(target) {}'.format(target))
-    print('(predicted) {}'.format(predicted_sentence))
-    return attention_weights
+    def new_train_step(self):
+
+        transformer = self.transformer
+
+        @tf.function(input_signature=train_step_signature)
+        def train_step(inp, tar):
+            tar_inp = tar[:, :-1]
+            tar_real = tar[:, 1:]
+
+            enc_padding_mask, combined_mask, dec_padding_mask = create_masks(inp, tar_inp)
+
+            with tf.GradientTape() as tape:
+                predictions, _ = transformer(inp, tar_inp,
+                                             True,
+                                             enc_padding_mask,
+                                             combined_mask,
+                                             dec_padding_mask)
+                loss = loss_function(tar_real, predictions)
+
+            gradients = tape.gradient(loss, transformer.trainable_variables)
+            optimizer.apply_gradients(zip(gradients, transformer.trainable_variables))
+
+            train_loss(loss)
+            train_accuracy(tar_real, predictions)
+
+        return train_step
 
 
+    def evaluate(self, inp_sentence):
+
+        # inp sentence is portuguese, hence adding the start and end token
+        inp_preproc = preprocessor((inp_sentence, ''))
+        inp_sentence, output_sentence = vectorizer(inp_preproc)
+        encoder_input = tf.expand_dims(inp_sentence, 0)
+
+        # as the target is english, the first word to the transformer should be the
+        # english start token.
+        decoder_input = vectorizer.encode_output(preprocessor.start_token)
+        output = tf.expand_dims(decoder_input, 0)
+
+        for i in range(MAX_LENGTH):
+            enc_padding_mask, combined_mask, dec_padding_mask = create_masks(
+                encoder_input, output)
+            predictions, attention_weights = self.transformer(encoder_input,
+                                                         output,
+                                                         False,
+                                                         enc_padding_mask,
+                                                         combined_mask,
+                                                         dec_padding_mask)
+
+            predictions = predictions[:, -1:, :]  # (batch_size, 1, vocab_size)
+            predicted_id = tf.cast(tf.argmax(predictions, axis=-1), tf.int32)
+            end_index = vectorizer.encode_output(preprocessor.end_token)
+            output = tf.concat([output, predicted_id], axis=-1)
+            if predicted_id == end_index:
+                return tf.squeeze(output, axis=0), attention_weights
+
+        return tf.squeeze(output, axis=0), attention_weights
+
+
+    def translate(self, sentence, target=''):
+        result, attention_weights = self.evaluate(sentence)
+        predicted_sentence = vectorizer.decode_output([int(i) for i in result if i < len(tokenizer_decoder.word_index)])
+        print('(input) {}'.format(sentence))
+        print('(target) {}'.format(target))
+        print('(predicted) {}'.format(predicted_sentence))
+        return attention_weights
+
+
+
+summarizer_transformer = SummarizerTransformer()
+train_step = summarizer_transformer.new_train_step()
 
 for epoch in range(EPOCHS):
     start = time.time()
@@ -454,13 +472,13 @@ for epoch in range(EPOCHS):
             if batch == 50:
                 res = float(train_loss.result())
                 assert abs(res - 6.362922191619873) < 1e-6, 'train loss result does not match!'
-                attention_weights = translate(val_data[0][0])
+                attention_weights = summarizer_transformer.translate(val_data[0][0])
                 sum_weight = np.sum(np.squeeze(attention_weights['decoder_layer1_block1'].numpy()), axis=1)
                 assert abs(sum_weight[0][0] - 3.0068233) < 1e-6, 'attention weight result does not match!'
 
             print()
             for l in range(5):
-                translate(val_data[l][0], target=val_data[l][1])
+                summarizer_transformer.translate(val_data[l][0], target=val_data[l][1])
             print('Epoch {} Batch {} Loss {:.10f} Accuracy {:.4f}'.format(
                 epoch + 1, batch, train_loss.result(), train_accuracy.result()))
 
@@ -470,7 +488,3 @@ for epoch in range(EPOCHS):
                                                         train_accuracy.result()))
 
     print('Time taken for 1 epoch: {} secs\n'.format(time.time() - start))
-
-
-translate("este é um problema que temos que resolver.")
-print("Real translation: this is a problem we have to solve .")
