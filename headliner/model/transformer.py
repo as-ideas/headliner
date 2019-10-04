@@ -403,14 +403,17 @@ class SummarizerTransformer:
 
     def init_model(self,
                    preprocessor: Preprocessor,
-                   vectorizer: Vectorizer) -> None:
+                   vectorizer: Vectorizer,
+                   embedding_weights_encoder=None,
+                   embedding_weights_decoder=None
+                   ) -> None:
         self.preprocessor = preprocessor
         self.vectorizer = vectorizer
         self.embedding_shape_in = (self.vectorizer.encoding_dim, self.embedding_size)
         self.embedding_shape_out = (self.vectorizer.decoding_dim, self.embedding_size)
 
 
-    def new_train_step(self):
+    def new_train_step(self, loss_func, batch_size, apply_gradients=False):
 
         transformer = self.transformer
 

@@ -38,13 +38,18 @@ if __name__ == '__main__':
 
     summarizer = SummarizerTransformer()
 
-
-
     trainer = Trainer(steps_per_epoch=500,
                       batch_size=16,
                       steps_to_log=5,
                       max_output_len=10)
+
     trainer.train(summarizer, train_data, val_data=val_data)
+
+
+
+
+
+
 
 
     """
