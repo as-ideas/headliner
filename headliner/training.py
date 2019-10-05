@@ -31,18 +31,18 @@ if __name__ == '__main__':
 
     tf.get_logger().setLevel(logging.ERROR)
 
-    data_raw = read_data_json('resources/welt_dedup.json', 2000)
-    train_data, val_data = train_test_split(data_raw, test_size=100, shuffle=True, random_state=42)
+    data_raw = read_data_json('/Users/cschaefe/datasets/welt_dedup.json', 2000)
+    train_data, val_data = train_test_split(data_raw, test_size=500, shuffle=True, random_state=42)
     #summarizer = SummarizerAttention(max_prediction_len=12, lstm_size=256, embedding_size=50)
 
-    summarizer = SummarizerTransformer(max_prediction_len=20)
+    summarizer = SummarizerTransformer(num_heads=2, max_prediction_len=20)
 
 
-    trainer = Trainer(steps_per_epoch=500,
-                      batch_size=16,
+    trainer = Trainer(steps_per_epoch=2000,
+                      batch_size=8,
                       steps_to_log=5,
-                      max_output_len=10,
-                      tensorboard_dir='/tmp/attention')
+                      max_output_len=20,
+                      tensorboard_dir='/tmp/trans_2')
 
     trainer.train(summarizer, train_data, val_data=val_data, scorers={'bleu': BleuScorer(weights=(1, 0, 0, 0))})
 
