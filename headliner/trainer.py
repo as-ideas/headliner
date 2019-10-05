@@ -269,13 +269,10 @@ class Trainer:
 
         counter_encoder = Counter()
         counter_decoder = Counter()
-        train_text_encoder = (self.preprocessor(d)[0] for d in train_data)
-        train_text_decoder = (self.preprocessor(d)[1] for d in train_data)
-        for text_encoder in train_text_encoder:
+        train_preprocessed = (self.preprocessor(d) for d in train_data)
+        for text_encoder, text_decoder in train_preprocessed:
             counter_encoder.update(text_encoder.split())
-        for text_decoder in train_text_decoder:
             counter_decoder.update(text_decoder.split())
-
         tokens_encoder = {token_count[0] for token_count in counter_encoder.most_common(self.max_vocab_size_encoder)}
         tokens_decoder = {token_count[0] for token_count in counter_decoder.most_common(self.max_vocab_size_decoder)}
         tokens_encoder.update({self.preprocessor.start_token, self.preprocessor.end_token})
