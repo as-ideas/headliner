@@ -163,7 +163,6 @@ class Summarizer:
         decoder = self.decoder
         optimizer = self.optimizer
 
-        @tf.function(input_signature=train_step_signature)
         def train_step(source_seq: tf.Tensor,
                        target_seq: tf.Tensor) -> float:
 
