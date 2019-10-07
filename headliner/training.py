@@ -28,7 +28,7 @@ if __name__ == '__main__':
 
     tf.get_logger().setLevel(logging.ERROR)
 
-    data_raw = read_data_json('/Users/cschaefe/datasets/welt_dedup.json', 2000)
+    data_raw = read_data_json('resources/welt_dedup.json', 2000)
     train_data, val_data = train_test_split(data_raw, test_size=100, shuffle=True, random_state=42)
     summarizer = SummarizerAttention(lstm_size=256,
                                      embedding_size=50,
