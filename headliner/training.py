@@ -3,6 +3,8 @@ import logging
 import tensorflow as tf
 from typing import Tuple, List
 from sklearn.model_selection import train_test_split
+
+from headliner.model import Summarizer
 from headliner.model.summarizer_attention import SummarizerAttention
 from headliner.trainer import Trainer
 
@@ -28,7 +30,7 @@ if __name__ == '__main__':
 
     tf.get_logger().setLevel(logging.ERROR)
 
-    data_raw = read_data_json('resources/welt_dedup.json', 2000)
+    data_raw = read_data('/Users/cschaefe/datasets/en_ger.txt')
     train_data, val_data = train_test_split(data_raw, test_size=100, shuffle=True, random_state=42)
     summarizer = SummarizerAttention(lstm_size=256,
                                      embedding_size=50,
@@ -37,7 +39,7 @@ if __name__ == '__main__':
     trainer = Trainer(steps_per_epoch=50,
                       batch_size=16,
                       steps_to_log=5,
-                      max_output_len=20)
+                      max_output_len=None)
     trainer.train(summarizer, train_data, val_data=val_data)
 
 
