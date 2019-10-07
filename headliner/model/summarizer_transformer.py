@@ -63,6 +63,7 @@ def scaled_dot_product_attention(q, k, v, mask):
 
     return output, attention_weights
 
+
 def point_wise_feed_forward_network(embedding_size, feed_forward_dim):
   return tf.keras.Sequential([
       tf.keras.layers.Dense(feed_forward_dim, activation='relu'),  # (batch_size, seq_len, feed_forward_dim)
@@ -90,8 +91,6 @@ class MultiHeadAttention(tf.keras.layers.Layer):
         assert embedding_size % self.num_heads == 0
         self.depth = embedding_size // self.num_heads
         self.wq = tf.keras.layers.Dense(embedding_size)
-
-
         self.wk = tf.keras.layers.Dense(embedding_size)
         self.wv = tf.keras.layers.Dense(embedding_size)
         self.dense = tf.keras.layers.Dense(embedding_size)
