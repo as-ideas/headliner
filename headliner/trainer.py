@@ -6,7 +6,6 @@ from typing import Tuple, List, Iterable, Union, Callable, Dict
 import yaml
 from keras_preprocessing.text import Tokenizer
 from tensorflow.python.keras.callbacks import TensorBoard, Callback
-
 from headliner.callbacks.evaluation_callback import EvaluationCallback
 from headliner.callbacks.model_checkpoint_callback import ModelCheckpointCallback
 from headliner.callbacks.validation_callback import ValidationCallback
@@ -29,7 +28,6 @@ OOV_TOKEN = '<unk>'
 class Trainer:
 
     def __init__(self,
-                 max_output_len=None,
                  batch_size=16,
                  max_vocab_size_encoder=200000,
                  max_vocab_size_decoder=200000,
@@ -49,8 +47,6 @@ class Trainer:
         Initializes the trainer.
 
         Args:
-            max_output_len: Maximum length of output sequences. Default None, then eager mode will be enabled,
-                else static.
             batch_size: Size of mini-batches for stochastic gradient descent.
             max_vocab_size_encoder: Maximum number of unique tokens to consider for encoder embeddings.
             max_vocab_size_decoder: Maximum number of unique tokens to consider for decoder embeddings.
@@ -68,7 +64,6 @@ class Trainer:
             vectorizer (optional): custom vectorizer, if None a standard vectorizer will be created.
         """
 
-        self.max_output_len = max_output_len
         self.batch_size = batch_size
         self.max_vocab_size_encoder = max_vocab_size_encoder
         self.max_vocab_size_decoder = max_vocab_size_decoder
@@ -111,7 +106,6 @@ class Trainer:
             steps_to_log = cfg['steps_to_log']
             logging_level = logging.INFO
             logging_level_string = cfg['logging_level']
-            max_output_len = cfg['max_output_len']
             if logging_level_string == 'debug':
                 logging_level = logging.DEBUG
             elif logging_level_string == 'error':
@@ -128,7 +122,6 @@ class Trainer:
                            bucketing_batches_to_bucket=bucketing_batches_to_bucket,
                            logging_level=logging_level,
                            steps_to_log=steps_to_log,
-                           max_output_len=max_output_len,
                            **kwargs)
 
     def train(self,
@@ -220,8 +213,7 @@ class Trainer:
             self.logger.info('vocab encoder: {vocab_enc}, vocab decoder: {vocab_dec}'.format(
                 vocab_enc=len(tokenizer_encoder.word_index), vocab_dec=len(tokenizer_decoder.word_index)))
             vectorizer = Vectorizer(tokenizer_encoder,
-                                    tokenizer_decoder,
-                                    self.max_output_len)
+                                    tokenizer_decoder)
             embedding_weights_encoder, embedding_weights_decoder = None, None
 
             if self.glove_path_encoder is not None:

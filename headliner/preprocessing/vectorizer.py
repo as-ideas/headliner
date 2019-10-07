@@ -10,11 +10,9 @@ class Vectorizer:
 
     def __init__(self,
                  tokenizer_encoder: Tokenizer,
-                 tokenizer_decoder: Tokenizer,
-                 max_output_len=None) -> None:
+                 tokenizer_decoder: Tokenizer) -> None:
         self.encoding_dim = len(tokenizer_encoder.index_word) + 1
         self.decoding_dim = len(tokenizer_decoder.index_word) + 1
-        self.max_output_len = max_output_len
         self._tokenizer_encoder = tokenizer_encoder
         self._tokenizer_decoder = tokenizer_decoder
 
@@ -25,12 +23,6 @@ class Vectorizer:
         text_encoder, text_decoder = data[0], data[1]
         vec_encoder = self._tokenizer_encoder.texts_to_sequences([text_encoder])[0]
         vec_decoder = self._tokenizer_decoder.texts_to_sequences([text_decoder])[0]
-        if self.max_output_len is not None:
-            if len(vec_decoder) > self.max_output_len:
-                vec_decoder = vec_decoder[:self.max_output_len-1] + [vec_decoder[-1]]
-            else:
-                vec_decoder = vec_decoder + [0] * (self.max_output_len - len(vec_decoder))
-
         return vec_encoder, vec_decoder
 
     def encode_input(self, text: str) -> List[int]:

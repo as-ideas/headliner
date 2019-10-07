@@ -25,8 +25,7 @@ class TestTraining(unittest.TestCase):
         tokenizer_encoder.fit_on_texts(['a b c <start> <end>'])
         tokenizer_decoder.fit_on_texts(['c d <start> <end>'])
         vectorizer = Vectorizer(tokenizer_encoder=tokenizer_encoder,
-                                tokenizer_decoder=tokenizer_decoder,
-                                max_output_len=3)
+                                tokenizer_decoder=tokenizer_decoder)
         preprocessor = Preprocessor()
         batch_generator = DatasetGenerator(2)
         data_prep = [preprocessor(d) for d in data]
