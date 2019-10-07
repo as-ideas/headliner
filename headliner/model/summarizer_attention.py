@@ -186,20 +186,24 @@ class SummarizerAttention:
 
         train_step_signature = [
             tf.TensorSpec(shape=(batch_size, None), dtype=tf.int32),
-            tf.TensorSpec(shape=(batch_size, self.vectorizer.max_output_len), dtype=tf.int32),
+            tf.TensorSpec(shape=(batch_size, None), dtype=tf.int32),
         ]
         encoder = self.encoder
         decoder = self.decoder
         optimizer = self.optimizer
 
         def train_step(source_seq, target_seq):
-            loss = 0
+            loss = tf.zeros(shape=(), dtype=tf.float32)
             en_initial_states = encoder.init_states(batch_size)
+            target_seq_shape = tf.shape(target_seq)
+            loss_norm = target_seq_shape[1] - 1
+            loss_norm = tf.cast(loss_norm, tf.float32)
+
             with tf.GradientTape() as tape:
                 en_outputs = encoder(source_seq, en_initial_states)
                 en_states = en_outputs[1:]
                 de_state_h, de_state_c = en_states
-                for i in range(target_seq.shape[1] - 1):
+                for i in range(target_seq_shape[1] - 1):
                     decoder_in = tf.expand_dims(target_seq[:, i], 1)
                     logit, de_state_h, de_state_c, _ = decoder(
                         decoder_in, (de_state_h, de_state_c), en_outputs[0])
@@ -208,7 +212,7 @@ class SummarizerAttention:
                 variables = encoder.trainable_variables + decoder.trainable_variables
                 gradients = tape.gradient(loss, variables)
                 optimizer.apply_gradients(zip(gradients, variables))
-            return loss / (target_seq.shape[1] - 1)
+            return loss / loss_norm
 
         if self.vectorizer.max_output_len is not None:
             return tf.function(train_step, input_signature=train_step_signature)
