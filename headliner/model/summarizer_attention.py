@@ -192,7 +192,6 @@ class SummarizerAttention:
         decoder = self.decoder
         optimizer = self.optimizer
 
-        @tf.function(input_signature=train_step_signature)
         def train_step(source_seq, target_seq):
             loss = 0
             en_initial_states = encoder.init_states(batch_size)
