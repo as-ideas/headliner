@@ -46,7 +46,8 @@ if __name__ == '__main__':
                       steps_to_log=5,
                       glove_path_encoder='/Users/cschaefe/datasets/glove_welt_dedup.txt',
                       glove_path_decoder='/Users/cschaefe/datasets/glove_welt_dedup.txt',
-                      tensorboard_dir='/tmp/trans_emb')
+                      tensorboard_dir='/tmp/trans_emb',
+                      max_output_len=20)
 
     trainer.train(summarizer, train_data, val_data=val_data, scorers={'bleu': BleuScorer(weights=(1, 0, 0, 0))})
 

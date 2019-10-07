@@ -180,8 +180,8 @@ class SummarizerAttention:
         return output
 
     def new_train_step(self,
-                       loss_function,
-                       batch_size,
+                       loss_function: Callable[[tf.Tensor], tf.Tensor],
+                       batch_size: int,
                        apply_gradients=True) -> Callable[[tf.Tensor, tf.Tensor], float]:
 
         train_step_signature = [

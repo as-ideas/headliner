@@ -3,7 +3,7 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 import os
 import pickle
 import time
-from typing import List
+from typing import List, Callable
 from typing import Tuple, Dict, Union
 
 import numpy as np
@@ -384,7 +384,10 @@ class SummarizerTransformer:
         self.optimizer = self.new_optimizer()
         self.transformer.compile(optimizer=self.optimizer)
 
-    def new_train_step(self, loss_function, batch_size, apply_gradients=True):
+    def new_train_step(self,
+                       loss_function: Callable[[tf.Tensor], tf.Tensor],
+                       batch_size: int,
+                       apply_gradients=True):
 
         transformer = self.transformer
         optimizer = self.optimizer
