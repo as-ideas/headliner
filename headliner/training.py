@@ -31,21 +31,21 @@ if __name__ == '__main__':
 
     tf.get_logger().setLevel(logging.ERROR)
 
-    data_raw = read_data_json('/Users/cschaefe/datasets/welt_dedup.json', 2000)
+    data_raw = read_data('/Users/cschaefe/datasets/en_ger.txt')[:5000]
     train_data, val_data = train_test_split(data_raw, test_size=500, shuffle=True, random_state=42)
     #summarizer = SummarizerAttention(max_prediction_len=12, lstm_size=256, embedding_size=50)
 
     summarizer = SummarizerTransformer(num_heads=1,
                                        embedding_size=50,
-                                       embedding_encoder_trainable=False,
-                                       embedding_decoder_trainable=False,
+                                       embedding_encoder_trainable=True,
+                                       embedding_decoder_trainable=True,
                                        max_prediction_len=20)
 
     trainer = Trainer(steps_per_epoch=500,
                       batch_size=8,
                       steps_to_log=5,
-                      glove_path_encoder='/Users/cschaefe/datasets/glove_welt_dedup.txt',
-                      glove_path_decoder='/Users/cschaefe/datasets/glove_welt_dedup.txt',
+                     # glove_path_encoder='/Users/cschaefe/datasets/glove_welt_dedup.txt',
+                    #  glove_path_decoder='/Users/cschaefe/datasets/glove_welt_dedup.txt',
                       tensorboard_dir='/tmp/trans_emb',
                       max_output_len=20)
 
