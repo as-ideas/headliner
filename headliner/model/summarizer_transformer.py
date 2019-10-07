@@ -2,28 +2,14 @@ from __future__ import absolute_import, division, print_function, unicode_litera
 
 import os
 import pickle
-import time
-from typing import List, Callable
+from typing import Callable
 from typing import Tuple, Dict, Union
 
 import numpy as np
 import tensorflow as tf
-from keras_preprocessing.text import Tokenizer
-from sklearn.model_selection import train_test_split
 
-from headliner.losses import masked_crossentropy
-from headliner.preprocessing.dataset_generator import DatasetGenerator
 from headliner.preprocessing.preprocessor import Preprocessor
 from headliner.preprocessing.vectorizer import Vectorizer
-
-
-def read_data(file_path: str) -> List[Tuple[str, str]]:
-    data_out = []
-    with open(file_path, 'r', encoding='utf-8') as f:
-        for l in f.readlines():
-            x, y = l.strip().split('\t')
-            data_out.append((x, y))
-        return data_out
 
 
 def get_angles(pos, i, embedding_size):
@@ -491,67 +477,4 @@ class SummarizerTransformer:
         return summarizer
 
     def new_optimizer(self):
-        learning_rate = CustomSchedule(self.embedding_size)
-        return tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.98, epsilon=1e-9)
-
-
-if __name__ == '__main__':
-
-    data_raw = read_data('/Users/cschaefe/datasets/en_ger.txt')[:10000]
-    train_data, val_data = train_test_split(data_raw, test_size=100, shuffle=True, random_state=42)
-    preprocessor = Preprocessor()
-    train_text_encoder = (preprocessor(d)[0] for d in train_data)
-    train_text_decoder = (preprocessor(d)[1] for d in train_data)
-    tokenizer_encoder = Tokenizer(oov_token='<oov>', filters='', lower=False)
-    tokenizer_decoder = Tokenizer(oov_token='<oov>', filters='', lower=False)
-    tokenizer_encoder.fit_on_texts(train_text_encoder)
-    tokenizer_decoder.fit_on_texts(train_text_decoder)
-    vectorizer = Vectorizer(tokenizer_encoder, tokenizer_decoder)
-
-    BUFFER_SIZE = 20000
-    BATCH_SIZE = 16
-    MAX_LENGTH = 10
-    batch_generator = DatasetGenerator(BATCH_SIZE)
-    data_prep_train = [preprocessor(d) for d in train_data]
-    data_vecs_train = [vectorizer(d) for d in data_prep_train]
-    data_prep_val = [preprocessor(d) for d in val_data]
-    data_vecs_val = [vectorizer(d) for d in data_prep_val]
-    train_dataset = batch_generator(lambda: data_vecs_train)
-    val_dataset = batch_generator(lambda: data_vecs_val)
-    input_vocab_size = len(tokenizer_encoder.word_index) + 1
-    target_vocab_size = len(tokenizer_decoder.word_index) + 1
-
-    summarizer_transformer = SummarizerTransformer(max_prediction_len=MAX_LENGTH)
-    summarizer_transformer.init_model(preprocessor, vectorizer)
-    loss_function = masked_crossentropy
-    train_step = summarizer_transformer.new_train_step(loss_function, BATCH_SIZE)
-    train_loss = tf.keras.metrics.Mean(name='train_loss')
-
-    for epoch in range(20):
-        start = time.time()
-
-        train_loss.reset_states()
-
-        # inp -> portuguese, tar -> english
-        for (batch, (inp, tar)) in enumerate(train_dataset):
-            loss = train_step(inp, tar)
-            train_loss(loss)
-
-            if batch % 50 == 0:
-                if batch == 50:
-                    res = float(train_loss.result())
-                    assert abs(res - 6.362922191619873) < 1e-6, 'train loss result does not match!'
-                    attention_weights = summarizer_transformer.predict_vectors(val_data[0][0], '')['alignment'][-1]
-                    sum_weight = np.sum(np.squeeze(attention_weights['decoder_layer1_block1'].numpy()), axis=1)
-                    assert abs(sum_weight[0][0] - 3.0068233) < 1e-6, 'attention weight result does not match!'
-
-                print()
-                for l in range(5):
-                    pred_vecs = summarizer_transformer.predict_vectors(val_data[l][0], val_data[l][1])
-                    print('pred text vec: ' + pred_vecs['predicted_text'])
-
-                print('Epoch {} Batch {} Loss {:.10f}'.format(epoch + 1, batch, train_loss.result()))
-
-
-        print('Epoch {} Loss {:.4f}'.format(epoch + 1, train_loss.result()))
-        print('Time taken for 1 epoch: {} secs\n'.format(time.time() - start))
+        return tf.keras.optimizers.Adam()
