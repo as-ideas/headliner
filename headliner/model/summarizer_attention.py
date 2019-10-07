@@ -192,6 +192,7 @@ class SummarizerAttention:
         decoder = self.decoder
         optimizer = self.optimizer
 
+        @tf.function(input_signature=train_step_signature)
         def train_step(source_seq, target_seq):
             loss = tf.zeros(shape=(), dtype=tf.float32)
             en_initial_states = encoder.init_states(batch_size)
@@ -214,10 +215,7 @@ class SummarizerAttention:
                 optimizer.apply_gradients(zip(gradients, variables))
             return loss / loss_norm
 
-        if self.vectorizer.max_output_len is not None:
-            return tf.function(train_step, input_signature=train_step_signature)
-        else:
-            return train_step
+        return train_step
 
     def save(self, out_path):
         if not os.path.exists(out_path):
