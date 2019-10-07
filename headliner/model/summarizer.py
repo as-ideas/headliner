@@ -157,7 +157,7 @@ class Summarizer:
 
         train_step_signature = [
             tf.TensorSpec(shape=(batch_size, None), dtype=tf.int32),
-            tf.TensorSpec(shape=(batch_size, self.vectorizer.max_output_len), dtype=tf.int32),
+            tf.TensorSpec(shape=(batch_size, None), dtype=tf.int32),
         ]
         encoder = self.encoder
         decoder = self.decoder
@@ -181,10 +181,7 @@ class Summarizer:
                 optimizer.apply_gradients(zip(gradients, variables))
             return float(loss)
 
-        if self.vectorizer.max_output_len is not None:
-            return tf.function(train_step, input_signature=train_step_signature)
-        else:
-            return train_step
+        return train_step
 
     def save(self, out_path):
         if not os.path.exists(out_path):
