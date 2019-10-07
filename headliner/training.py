@@ -28,16 +28,16 @@ if __name__ == '__main__':
 
     tf.get_logger().setLevel(logging.ERROR)
 
-    data_raw = read_data('/Users/cschaefe/datasets/en_ger.txt')[:5000]
+    data_raw = read_data_json('resources/welt_dedup.json', 2000)
     train_data, val_data = train_test_split(data_raw, test_size=100, shuffle=True, random_state=42)
     summarizer = SummarizerAttention(lstm_size=256,
                                      embedding_size=50,
-                                     embedding_encoder_trainable=False,
-                                     embedding_decoder_trainable=False)
+                                     embedding_encoder_trainable=True,
+                                     embedding_decoder_trainable=True)
     trainer = Trainer(steps_per_epoch=50,
                       batch_size=16,
                       steps_to_log=5,
-                      max_output_len=10)
+                      max_output_len=20)
     trainer.train(summarizer, train_data, val_data=val_data)
 
 
