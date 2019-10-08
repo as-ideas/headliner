@@ -92,19 +92,14 @@ class Decoder(tf.keras.Model):
 
 class SummarizerAttention(Summarizer):
 
-    def __init__(self,
-                 lstm_size=50,
-                 max_prediction_len=20,
-                 embedding_size=50,
-                 embedding_encoder_trainable=True,
+    def __init__(self, lstm_size=50, max_prediction_len=20, embedding_size=50, embedding_encoder_trainable=True,
                  embedding_decoder_trainable=True):
+        super().__init__()
         self.lstm_size = lstm_size
         self.max_prediction_len = max_prediction_len
         self.embedding_size = embedding_size
         self.embedding_encoder_trainable = embedding_encoder_trainable
         self.embedding_decoder_trainable = embedding_decoder_trainable
-        self.preprocessor = None
-        self.vectorizer = None
         self.encoder = None
         self.decoder = None
         self.optimizer = None

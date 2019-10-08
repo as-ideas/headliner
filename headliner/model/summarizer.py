@@ -10,6 +10,10 @@ from headliner.preprocessing import Preprocessor, Vectorizer
 
 class Summarizer(abc.ABC):
 
+    def __init__(self):
+        self.vectorizer = None
+        self.preprocessor = None
+
     @abstractmethod
     def init_model(self,
                    preprocessor: Preprocessor,
