@@ -1,12 +1,11 @@
 import numpy as np
 
 from headliner.model.summarizer_attention import SummarizerAttention
+from headliner.model.summarizer_transformer import SummarizerTransformer
 
 if __name__ == '__main__':
-    path_to_model = '//Users/cschaefe/saved_models/mod4'
-    summarizer = SummarizerAttention.load(path_to_model)
-    summarizer.vectorizer.max_output_len = 20
-    summarizer.max_prediction_len=20
+    path_to_model = '/tmp/summarizer_20191008_151826'
+    summarizer = SummarizerTransformer.load(path_to_model)
 
     while True:
         text = input('\nEnter text: ')

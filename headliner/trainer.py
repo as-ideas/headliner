@@ -14,7 +14,6 @@ from headliner.embeddings import read_glove, embedding_to_matrix
 from headliner.evaluation.scorer import Scorer
 from headliner.losses import masked_crossentropy
 from headliner.model.summarizer import Summarizer
-from headliner.model.summarizer_attention import SummarizerAttention
 from headliner.preprocessing.bucket_generator import BucketGenerator
 from headliner.preprocessing.dataset_generator import DatasetGenerator
 from headliner.preprocessing.preprocessor import Preprocessor
@@ -132,7 +131,7 @@ class Trainer:
                            **kwargs)
 
     def train(self,
-              summarizer: Union[Summarizer, SummarizerAttention],
+              summarizer: Summarizer,
               train_data: Iterable[Tuple[str, str]],
               val_data: Iterable[Tuple[str, str]] = None,
               num_epochs=2500,
@@ -207,7 +206,7 @@ class Trainer:
                 raise ValueError('Iterating over the dataset yielded zero batches!')
 
     def _init_model(self,
-                    summarizer: Union[Summarizer, SummarizerAttention],
+                    summarizer: Summarizer,
                     train_data: Iterable[Tuple[str, str]]) -> None:
 
         if self.vectorizer is not None:
