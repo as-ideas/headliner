@@ -228,7 +228,8 @@ class Decoder(tf.keras.layers.Layer):
              x,
              enc_output,
              training,
-             look_ahead_mask, padding_mask):
+             look_ahead_mask,
+             padding_mask):
         seq_len = tf.shape(x)[1]
         attention_weights = {}
 
@@ -401,12 +402,12 @@ class SummarizerTransformer(Summarizer):
         decoder_output = tf.expand_dims(decoder_input, 0)
         output = {'preprocessed_text': text_preprocessed,
                   'logits': [],
-                  'alignment': [],
+                  'attention_weights': [],
                   'predicted_sequence': []}
         for i in range(self.max_prediction_len):
             enc_padding_mask, combined_mask, dec_padding_mask = create_masks(
                 encoder_input, decoder_output)
-            predictions, alignment = self.transformer(encoder_input,
+            predictions, attention_weights = self.transformer(encoder_input,
                                                       decoder_output,
                                                       False,
                                                       enc_padding_mask,
@@ -419,7 +420,7 @@ class SummarizerTransformer(Summarizer):
             decoder_output = tf.concat([decoder_output, pred_token_index], axis=-1)
             if pred_token_index != 0:
                 output['logits'].append(np.squeeze(predictions.numpy()))
-                output['alignment'].append(alignment)
+                output['attention_weights'].append(attention_weights)
                 output['predicted_sequence'].append(int(pred_token_index))
                 if pred_token_index == end_index:
                     break
