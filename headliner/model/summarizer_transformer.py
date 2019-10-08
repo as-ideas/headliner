@@ -8,6 +8,7 @@ from typing import Tuple, Dict, Union
 import numpy as np
 import tensorflow as tf
 
+from headliner.model.summarizer import Summarizer
 from headliner.preprocessing.preprocessor import Preprocessor
 from headliner.preprocessing.vectorizer import Vectorizer
 
@@ -288,7 +289,7 @@ class Transformer(tf.keras.Model):
         return final_output, attention_weights
 
 
-class SummarizerTransformer:
+class SummarizerTransformer(Summarizer):
 
     def __init__(self,
                  max_prediction_len=20,
@@ -443,8 +444,10 @@ class SummarizerTransformer:
         summarizer.transformer = Transformer(num_layers=summarizer.num_layers,
                                              num_heads=summarizer.num_heads,
                                              feed_forward_dim=summarizer.feed_forward_dim,
-                                             embedding_shape_encoder=(summarizer.vectorizer.encoding_dim, summarizer.embedding_size),
-                                             embedding_shape_decoder=(summarizer.vectorizer.decoding_dim, summarizer.embedding_size),
+                                             embedding_shape_encoder=(summarizer.vectorizer.encoding_dim,
+                                                                      summarizer.embedding_size),
+                                             embedding_shape_decoder=(summarizer.vectorizer.decoding_dim,
+                                                                      summarizer.embedding_size),
                                              embedding_encoder_trainable=summarizer.embedding_encoder_trainable,
                                              embedding_decoder_trainable=summarizer.embedding_decoder_trainable,
                                              dropout_rate=summarizer.dropout_rate)

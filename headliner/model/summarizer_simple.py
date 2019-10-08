@@ -15,8 +15,8 @@ class Encoder(tf.keras.Model):
     def __init__(self,
                  embedding_shape: Tuple[int, int],
                  lstm_size=50,
-                 embedding_trainable=True,
-                 embedding_weights=None) -> None:
+                 embedding_weights=None,
+                 embedding_trainable=True) -> None:
         super(Encoder, self).__init__()
         vocab_size, vec_dim = embedding_shape
         weights = None if embedding_weights is None else [embedding_weights]
@@ -24,9 +24,7 @@ class Encoder(tf.keras.Model):
                                                    vec_dim,
                                                    weights=weights,
                                                    trainable=embedding_trainable)
-        self.lstm = tf.keras.layers.LSTM(lstm_size,
-                                         return_sequences=True,
-                                         return_state=True)
+        self.lstm = tf.keras.layers.LSTM(lstm_size, return_sequences=True, return_state=True, go_backwards=True)
         self.lstm_size = lstm_size
 
     def call(self,
@@ -37,21 +35,7 @@ class Encoder(tf.keras.Model):
         return output, state_h, state_c
 
     def init_states(self, batch_size: int) -> Tuple[tf.Tensor, tf.Tensor]:
-        return tf.zeros([batch_size, self.lstm_size]), \
-               tf.zeros([batch_size, self.lstm_size])
-
-
-class LuongAttention(tf.keras.Model):
-
-    def __init__(self, rnn_size):
-        super(LuongAttention, self).__init__()
-        self.wa = tf.keras.layers.Dense(rnn_size)
-
-    def call(self, decoder_output, encoder_output):
-        score = tf.matmul(decoder_output, self.wa(encoder_output), transpose_b=True)
-        alignment = tf.nn.softmax(score, axis=2)
-        context = tf.matmul(alignment, encoder_output)
-        return context, alignment
+        return tf.zeros([batch_size, self.lstm_size]), tf.zeros([batch_size, self.lstm_size])
 
 
 class Decoder(tf.keras.Model):
@@ -59,38 +43,27 @@ class Decoder(tf.keras.Model):
     def __init__(self,
                  embedding_shape: Tuple[int, int],
                  lstm_size=50,
-                 embedding_trainable=True,
-                 embedding_weights=None) -> None:
+                 embedding_weights=None,
+                 embedding_trainable=True) -> None:
         super(Decoder, self).__init__()
         self.lstm_size = lstm_size
         vocab_size, vec_dim = embedding_shape
         weights = None if embedding_weights is None else [embedding_weights]
-        self.embedding = tf.keras.layers.Embedding(vocab_size, vec_dim,
+        self.embedding = tf.keras.layers.Embedding(vocab_size,
+                                                   vec_dim,
                                                    weights=weights,
                                                    trainable=embedding_trainable)
-        self.lstm_size = lstm_size
-        self.attention = LuongAttention(lstm_size)
-        self.lstm = tf.keras.layers.LSTM(lstm_size,
-                                         return_sequences=True,
-                                         return_state=True)
-        self.wc = tf.keras.layers.Dense(lstm_size, activation='tanh')
-        self.ws = tf.keras.layers.Dense(vocab_size)
+        self.lstm = tf.keras.layers.LSTM(lstm_size, return_sequences=True, return_state=True)
+        self.dense = tf.keras.layers.Dense(vocab_size)
 
-    def call(self, sequence, state, encoder_output):
+    def call(self, sequence: tf.Tensor, state: tf.Tensor) -> Tuple[tf.Tensor, tf.Tensor, tf.Tensor]:
         embed = self.embedding(sequence)
-        lstm_out, state_h, state_c = self.lstm(embed, initial_state=state)
-        context, alignment = self.attention(lstm_out, encoder_output)
-        lstm_out = tf.concat([tf.squeeze(context, 1), tf.squeeze(lstm_out, 1)], 1)
-        lstm_out = self.wc(lstm_out)
-        logits = self.ws(lstm_out)
-        return logits, state_h, state_c, alignment
-
-    def init_states(self, batch_size):
-        return (tf.zeros([batch_size, self.lstm_size]),
-                tf.zeros([batch_size, self.lstm_size]))
+        lstm_out, state_h, state_c = self.lstm(embed, state)
+        logits = self.dense(lstm_out)
+        return logits, state_h, state_c
 
 
-class SummarizerAttention(Summarizer):
+class SummarizerSimple(Summarizer):
 
     def __init__(self,
                  lstm_size=50,
@@ -98,6 +71,7 @@ class SummarizerAttention(Summarizer):
                  embedding_size=50,
                  embedding_encoder_trainable=True,
                  embedding_decoder_trainable=True):
+
         self.lstm_size = lstm_size
         self.max_prediction_len = max_prediction_len
         self.embedding_size = embedding_size
@@ -128,12 +102,12 @@ class SummarizerAttention(Summarizer):
                                self.lstm_size,
                                embedding_trainable=self.embedding_decoder_trainable,
                                embedding_weights=embedding_weights_decoder)
-        self.optimizer = SummarizerAttention._new_optimizer()
+        self.optimizer = SummarizerSimple._new_optimizer()
         self.encoder.compile(optimizer=self.optimizer)
         self.decoder.compile(optimizer=self.optimizer)
 
     def __getstate__(self):
-        """ Prevents pickle from serializing encoder and decoder """
+        """ Prevents pickle from serializing encoder and decoder. """
         state = self.__dict__.copy()
         del state['encoder']
         del state['decoder']
@@ -157,13 +131,11 @@ class SummarizerAttention(Summarizer):
                   'alignment': [],
                   'predicted_sequence': []}
         for _ in range(self.max_prediction_len):
-            de_output, de_state_h, de_state_c, alignment = self.decoder(de_input, (de_state_h, de_state_c),
-                                                                        en_outputs[0])
-            de_input = tf.expand_dims(tf.argmax(de_output, -1), 0)
+            de_output, de_state_h, de_state_c = self.decoder(de_input, (de_state_h, de_state_c))
+            de_input = tf.argmax(de_output, -1)
             pred_token_index = de_input.numpy()[0][0]
             if pred_token_index != 0:
                 output['logits'].append(np.squeeze(de_output.numpy()))
-                output['alignment'].append(np.squeeze(alignment.numpy()))
                 output['predicted_sequence'].append(pred_token_index)
                 if pred_token_index == de_end_index:
                     break
@@ -177,34 +149,31 @@ class SummarizerAttention(Summarizer):
 
         train_step_signature = [
             tf.TensorSpec(shape=(batch_size, None), dtype=tf.int32),
-            tf.TensorSpec(shape=(batch_size, self.vectorizer.max_output_len), dtype=tf.int32),
+            tf.TensorSpec(shape=(batch_size, None), dtype=tf.int32),
         ]
         encoder = self.encoder
         decoder = self.decoder
         optimizer = self.optimizer
 
-        def train_step(source_seq, target_seq):
-            loss = 0
-            en_initial_states = encoder.init_states(batch_size)
+        @tf.function(input_signature=train_step_signature)
+        def train_step(source_seq: tf.Tensor,
+                       target_seq: tf.Tensor) -> float:
+
+            en_initial_states = self.encoder.init_states(source_seq.get_shape()[0])
             with tf.GradientTape() as tape:
                 en_outputs = encoder(source_seq, en_initial_states)
                 en_states = en_outputs[1:]
-                de_state_h, de_state_c = en_states
-                for i in range(target_seq.shape[1] - 1):
-                    decoder_in = tf.expand_dims(target_seq[:, i], 1)
-                    logit, de_state_h, de_state_c, _ = decoder(
-                        decoder_in, (de_state_h, de_state_c), en_outputs[0])
-                    loss += loss_function(target_seq[:, i + 1], logit)
+                de_states = en_states
+                de_outputs = decoder(target_seq[:, :-1], de_states)
+                logits = de_outputs[0]
+                loss = loss_function(target_seq[:, 1:], logits)
             if apply_gradients is True:
                 variables = encoder.trainable_variables + decoder.trainable_variables
                 gradients = tape.gradient(loss, variables)
                 optimizer.apply_gradients(zip(gradients, variables))
-            return loss / (target_seq.shape[1] - 1)
+            return float(loss)
 
-        if self.vectorizer.max_output_len is not None:
-            return tf.function(train_step, input_signature=train_step_signature)
-        else:
-            return train_step
+        return train_step
 
     def save(self, out_path):
         if not os.path.exists(out_path):
@@ -230,7 +199,7 @@ class SummarizerAttention(Summarizer):
         summarizer.decoder = Decoder(summarizer.embedding_shape_out,
                                      summarizer.lstm_size,
                                      embedding_trainable=summarizer.embedding_decoder_trainable)
-        optimizer = SummarizerAttention._new_optimizer()
+        optimizer = SummarizerSimple._new_optimizer()
         summarizer.encoder.compile(optimizer=optimizer)
         summarizer.decoder.compile(optimizer=optimizer)
         summarizer.encoder.load_weights(encoder_path)

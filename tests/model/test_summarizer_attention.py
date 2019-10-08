@@ -57,4 +57,3 @@ class TestSummarizerAttention(unittest.TestCase):
         pred = summarizer.predict_vectors('a c', '')
         pred_loaded = summarizer_loaded.predict_vectors('a c', '')
         np.testing.assert_almost_equal(pred['logits'], pred_loaded['logits'], decimal=6)
-        
