@@ -292,16 +292,10 @@ class Transformer(tf.keras.Model):
 
 class SummarizerTransformer(Summarizer):
 
-    def __init__(self,
-                 max_prediction_len=20,
-                 num_layers=1,
-                 num_heads=2,
-                 feed_forward_dim=512,
-                 dropout_rate=0,
-                 embedding_size=128,
-                 embedding_encoder_trainable=True,
-                 embedding_decoder_trainable=True):
+    def __init__(self, max_prediction_len=20, num_layers=1, num_heads=2, feed_forward_dim=512, dropout_rate=0,
+                 embedding_size=128, embedding_encoder_trainable=True, embedding_decoder_trainable=True):
 
+        super().__init__()
         self.max_prediction_len = max_prediction_len
         self.embedding_size = embedding_size
         self.num_layers = num_layers
@@ -310,8 +304,6 @@ class SummarizerTransformer(Summarizer):
         self.feed_forward_dim = feed_forward_dim
         self.embedding_encoder_trainable = embedding_encoder_trainable
         self.embedding_decoder_trainable = embedding_decoder_trainable
-        self.preprocessor = None
-        self.vectorizer = None
         self.transformer = None
         self.optimizer = None
         self.embedding_shape_in = None
