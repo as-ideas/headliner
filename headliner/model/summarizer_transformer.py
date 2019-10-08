@@ -382,19 +382,9 @@ class SummarizerTransformer(Summarizer):
         return train_step
 
     def predict(self, text: str) -> str:
-        """
-        Predicts summary of an input text.
-        """
-
         return self.predict_vectors(text, '')['predicted_text']
 
     def predict_vectors(self, input_text: str, target_text: str) -> Dict[str, Union[str, np.array]]:
-        """
-        Predicts summary of an input text and outputs information needed for evaluation:
-        output logits, input tokens, output tokens, predicted tokens, preprocessed text,
-        attention alignment.
-        """
-
         text_preprocessed = self.preprocessor((input_text, target_text))
         inp_sentence, output_sentence = self.vectorizer(text_preprocessed)
         encoder_input = tf.expand_dims(inp_sentence, 0)
@@ -427,7 +417,7 @@ class SummarizerTransformer(Summarizer):
         output['predicted_text'] = self.vectorizer.decode_output(output['predicted_sequence'])
         return output
 
-    def save(self, out_path):
+    def save(self, out_path: str) -> None:
         if not os.path.exists(out_path):
             os.mkdir(out_path)
         summarizer_path = os.path.join(out_path, 'summarizer.pkl')
@@ -437,7 +427,7 @@ class SummarizerTransformer(Summarizer):
         self.transformer.save_weights(transformer_path, save_format='tf')
 
     @staticmethod
-    def load(in_path):
+    def load(in_path: str):
         summarizer_path = os.path.join(in_path, 'summarizer.pkl')
         transformer_path = os.path.join(in_path, 'transformer')
         with open(summarizer_path, 'rb') as handle:
@@ -459,5 +449,5 @@ class SummarizerTransformer(Summarizer):
         return summarizer
 
     @staticmethod
-    def new_optimizer():
+    def new_optimizer() -> tf.keras.optimizers.Optimizer:
         return tf.keras.optimizers.Adam()

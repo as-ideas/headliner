@@ -208,5 +208,5 @@ class SummarizerBasic(Summarizer):
         return summarizer
 
     @staticmethod
-    def _new_optimizer():
+    def _new_optimizer() -> tf.keras.optimizers.Optimizer:
         return tf.keras.optimizers.Adam()

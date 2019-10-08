@@ -206,7 +206,7 @@ class SummarizerAttention(Summarizer):
         else:
             return train_step
 
-    def save(self, out_path):
+    def save(self, out_path: str) -> None:
         if not os.path.exists(out_path):
             os.mkdir(out_path)
         summarizer_path = os.path.join(out_path, 'summarizer.pkl')
@@ -218,7 +218,7 @@ class SummarizerAttention(Summarizer):
         self.decoder.save_weights(decoder_path, save_format='tf')
 
     @staticmethod
-    def load(in_path):
+    def load(in_path: str):
         summarizer_path = os.path.join(in_path, 'summarizer.pkl')
         encoder_path = os.path.join(in_path, 'encoder')
         decoder_path = os.path.join(in_path, 'decoder')
@@ -239,5 +239,5 @@ class SummarizerAttention(Summarizer):
         return summarizer
 
     @staticmethod
-    def _new_optimizer():
+    def _new_optimizer() -> tf.keras.optimizers.Optimizer:
         return tf.keras.optimizers.Adam()
