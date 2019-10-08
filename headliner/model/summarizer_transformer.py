@@ -34,8 +34,8 @@ def create_padding_mask(seq):
 
 
 def create_look_ahead_mask(size):
-  mask = 1 - tf.linalg.band_part(tf.ones((size, size)), -1, 0)
-  return mask
+    mask = 1 - tf.linalg.band_part(tf.ones((size, size)), -1, 0)
+    return mask
 
 
 def scaled_dot_product_attention(q, k, v, mask):
@@ -51,10 +51,10 @@ def scaled_dot_product_attention(q, k, v, mask):
 
 
 def point_wise_feed_forward_network(embedding_size, feed_forward_dim):
-  return tf.keras.Sequential([
-      tf.keras.layers.Dense(feed_forward_dim, activation='relu'),  # (batch_size, seq_len, feed_forward_dim)
-      tf.keras.layers.Dense(embedding_size)  # (batch_size, seq_len, embedding_size)
-  ])
+    return tf.keras.Sequential([
+        tf.keras.layers.Dense(feed_forward_dim, activation='relu'),  # (batch_size, seq_len, feed_forward_dim)
+        tf.keras.layers.Dense(embedding_size)  # (batch_size, seq_len, embedding_size)
+    ])
 
 
 def create_masks(inp, tar):
@@ -126,7 +126,7 @@ class EncoderLayer(tf.keras.layers.Layer):
 
 
 class DecoderLayer(tf.keras.layers.Layer):
-    
+
     def __init__(self,
                  embedding_size: int,
                  num_heads: int,
@@ -208,7 +208,6 @@ class Decoder(tf.keras.layers.Layer):
                  embedding_trainable=True,
                  embedding_weights=None,
                  dropout_rate=0.1) -> None:
-
         super(Decoder, self).__init__()
 
         self.num_layers = num_layers
@@ -221,7 +220,7 @@ class Decoder(tf.keras.layers.Layer):
                                                    trainable=embedding_trainable)
         self.pos_encoding = positional_encoding(vocab_size, vec_dim)
         self.dec_layers = [DecoderLayer(vec_dim, num_heads, feed_forward_dim, dropout_rate)
-                          for _ in range(num_layers)]
+                           for _ in range(num_layers)]
         self.dropout = tf.keras.layers.Dropout(dropout_rate)
 
     def call(self,
@@ -281,34 +280,12 @@ class Transformer(tf.keras.Model):
 
     def call(self, inp, tar, training, enc_padding_mask,
              look_ahead_mask, dec_padding_mask):
-        enc_output = self.encoder(inp, training, enc_padding_mask)  # (batch_size, inp_seq_len, embedding_size)
+        enc_output = self.encoder(inp, training, enc_padding_mask)
 
-        # dec_output.shape == (batch_size, tar_seq_len, embedding_size)
         dec_output, attention_weights = self.decoder(
             tar, enc_output, training, look_ahead_mask, dec_padding_mask)
-
         final_output = self.final_layer(dec_output)  # (batch_size, tar_seq_len, target_vocab_size)
-
         return final_output, attention_weights
-
-
-
-tf.random.set_seed(42)
-np.random.seed(42)
-
-class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
-
-    def __init__(self, embedding_size, warmup_steps=4000):
-        super(CustomSchedule, self).__init__()
-
-        self.embedding_size = embedding_size
-        self.embedding_size = tf.cast(self.embedding_size, tf.float32)
-        self.warmup_steps = warmup_steps
-
-    def __call__(self, step):
-        arg1 = tf.math.rsqrt(step)
-        arg2 = step * (self.warmup_steps ** -1.5)
-        return tf.math.rsqrt(self.embedding_size) * tf.math.minimum(arg1, arg2)
 
 
 class SummarizerTransformer:
@@ -325,17 +302,17 @@ class SummarizerTransformer:
 
         self.max_prediction_len = max_prediction_len
         self.embedding_size = embedding_size
-        self.num_layers=num_layers
-        self.num_heads=num_heads
+        self.num_layers = num_layers
+        self.num_heads = num_heads
         self.dropout_rate = dropout_rate
         self.feed_forward_dim = feed_forward_dim
-        self.embedding_size = embedding_size
         self.embedding_encoder_trainable = embedding_encoder_trainable
         self.embedding_decoder_trainable = embedding_decoder_trainable
         self.preprocessor = None
         self.vectorizer = None
         self.encoder = None
         self.decoder = None
+        self.transformer = None
         self.optimizer = None
         self.embedding_shape_in = None
         self.embedding_shape_out = None
@@ -416,12 +393,12 @@ class SummarizerTransformer:
         attention alignment.
         """
 
-        text_prerpcessed = self.preprocessor((input_text, target_text))
-        inp_sentence, output_sentence = self.vectorizer(text_prerpcessed)
+        text_preprocessed = self.preprocessor((input_text, target_text))
+        inp_sentence, output_sentence = self.vectorizer(text_preprocessed)
         encoder_input = tf.expand_dims(inp_sentence, 0)
         decoder_input = self.vectorizer.encode_output(self.preprocessor.start_token)
         decoder_output = tf.expand_dims(decoder_input, 0)
-        output = {'preprocessed_text': text_prerpcessed,
+        output = {'preprocessed_text': text_preprocessed,
                   'logits': [],
                   'alignment': [],
                   'predicted_sequence': []}
@@ -429,13 +406,13 @@ class SummarizerTransformer:
             enc_padding_mask, combined_mask, dec_padding_mask = create_masks(
                 encoder_input, decoder_output)
             predictions, alignment = self.transformer(encoder_input,
-                                                              decoder_output,
-                                                              False,
-                                                              enc_padding_mask,
-                                                              combined_mask,
-                                                              dec_padding_mask)
+                                                      decoder_output,
+                                                      False,
+                                                      enc_padding_mask,
+                                                      combined_mask,
+                                                      dec_padding_mask)
 
-            predictions = predictions[:, -1:, :]  # (batch_size, 1, vocab_size)
+            predictions = predictions[:, -1:, :]
             pred_token_index = tf.cast(tf.argmax(predictions, axis=-1), tf.int32)
             end_index = self.vectorizer.encode_output(self.preprocessor.end_token)
             decoder_output = tf.concat([decoder_output, pred_token_index], axis=-1)
@@ -463,18 +440,20 @@ class SummarizerTransformer:
         transformer_path = os.path.join(in_path, 'transformer')
         with open(summarizer_path, 'rb') as handle:
             summarizer = pickle.load(handle)
-        summarizer.transformer = Transformer(summarizer.num_layers,
-                                             summarizer.embedding_size,
-                                             summarizer.num_heads,
-                                             summarizer.feed_forward_dim,
-                                             summarizer.vectorizer.encoding_dim,
-                                             summarizer.vectorizer.decoding_dim,
-                                             summarizer.dropout_rate)
-        optimizer = summarizer.new_optimizer()
+        summarizer.transformer = Transformer(num_layers=summarizer.num_layers,
+                                             num_heads=summarizer.num_heads,
+                                             feed_forward_dim=summarizer.feed_forward_dim,
+                                             embedding_shape_encoder=(summarizer.vectorizer.encoding_dim, summarizer.embedding_size),
+                                             embedding_shape_decoder=(summarizer.vectorizer.decoding_dim, summarizer.embedding_size),
+                                             embedding_encoder_trainable=summarizer.embedding_encoder_trainable,
+                                             embedding_decoder_trainable=summarizer.embedding_decoder_trainable,
+                                             dropout_rate=summarizer.dropout_rate)
+        optimizer = SummarizerTransformer.new_optimizer()
         summarizer.transformer.compile(optimizer=optimizer)
         summarizer.transformer.load_weights(transformer_path)
         summarizer.optimizer = summarizer.transformer.optimizer
         return summarizer
 
-    def new_optimizer(self):
+    @staticmethod
+    def new_optimizer():
         return tf.keras.optimizers.Adam()
