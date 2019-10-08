@@ -1,8 +1,8 @@
 import abc
-import numpy as np
 from abc import abstractmethod
 from typing import Callable, Dict, Union
 
+import numpy as np
 import tensorflow as tf
 
 from headliner.preprocessing import Preprocessor, Vectorizer

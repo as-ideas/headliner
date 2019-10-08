@@ -1,11 +1,11 @@
 import json
 import logging
-import tensorflow as tf
 from typing import Tuple, List
+
+import tensorflow as tf
 from sklearn.model_selection import train_test_split
 
 from headliner.evaluation import BleuScorer
-from headliner.model.summarizer_attention import SummarizerAttention
 from headliner.model.summarizer_transformer import SummarizerTransformer
 from headliner.trainer import Trainer
 
@@ -31,15 +31,15 @@ if __name__ == '__main__':
 
     tf.get_logger().setLevel(logging.ERROR)
 
-    data_raw = read_data_json('/Users/cschaefe/datasets/welt_dedup.json', 2000)
+    data_raw = read_data_json('/Users/cschaefe/datasets/welt_dedup.json', 2000)[:1000]
     train_data, val_data = train_test_split(data_raw, test_size=500, shuffle=True, random_state=42)
     #summarizer = SummarizerAttention(max_prediction_len=12, lstm_size=256, embedding_size=50)
 
     summarizer = SummarizerTransformer(num_heads=1,
                                        feed_forward_dim=1024,
                                        embedding_size=50,
-                                       embedding_encoder_trainable=True,
-                                       embedding_decoder_trainable=True,
+                                       embedding_encoder_trainable=False,
+                                       embedding_decoder_trainable=False,
                                        max_prediction_len=20)
 
     trainer = Trainer(steps_per_epoch=500,

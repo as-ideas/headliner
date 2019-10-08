@@ -5,7 +5,7 @@ import tensorflow as tf
 from keras_preprocessing.text import Tokenizer
 
 from headliner.losses import masked_crossentropy
-from headliner.model.summarizer_simple import SummarizerSimple
+from headliner.model.summarizer_basic import SummarizerBasic
 from headliner.model.summarizer_attention import SummarizerAttention
 from headliner.model.summarizer_transformer import SummarizerTransformer
 from headliner.preprocessing.dataset_generator import DatasetGenerator
@@ -54,8 +54,8 @@ class TestTraining(unittest.TestCase):
                                         embedding_weights_encoder=None,
                                         embedding_weights_decoder=None)
 
-        summarizer = SummarizerSimple(lstm_size=10,
-                                      embedding_size=10)
+        summarizer = SummarizerBasic(lstm_size=10,
+                                     embedding_size=10)
 
         summarizer.init_model(preprocessor=preprocessor,
                               vectorizer=vectorizer,

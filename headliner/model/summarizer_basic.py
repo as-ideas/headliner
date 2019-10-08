@@ -63,7 +63,7 @@ class Decoder(tf.keras.Model):
         return logits, state_h, state_c
 
 
-class SummarizerSimple(Summarizer):
+class SummarizerBasic(Summarizer):
 
     def __init__(self,
                  lstm_size=50,
@@ -102,7 +102,7 @@ class SummarizerSimple(Summarizer):
                                self.lstm_size,
                                embedding_trainable=self.embedding_decoder_trainable,
                                embedding_weights=embedding_weights_decoder)
-        self.optimizer = SummarizerSimple._new_optimizer()
+        self.optimizer = SummarizerBasic._new_optimizer()
         self.encoder.compile(optimizer=self.optimizer)
         self.decoder.compile(optimizer=self.optimizer)
 
@@ -199,7 +199,7 @@ class SummarizerSimple(Summarizer):
         summarizer.decoder = Decoder(summarizer.embedding_shape_out,
                                      summarizer.lstm_size,
                                      embedding_trainable=summarizer.embedding_decoder_trainable)
-        optimizer = SummarizerSimple._new_optimizer()
+        optimizer = SummarizerBasic._new_optimizer()
         summarizer.encoder.compile(optimizer=optimizer)
         summarizer.decoder.compile(optimizer=optimizer)
         summarizer.encoder.load_weights(encoder_path)

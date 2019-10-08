@@ -2,8 +2,8 @@ from typing import Union, Dict, Callable, Iterable, Tuple
 
 import tensorflow as tf
 
-from headliner.model.summarizer_simple import SummarizerSimple
 from headliner.model.summarizer_attention import SummarizerAttention
+from headliner.model.summarizer_basic import SummarizerBasic
 from headliner.utils.logger import get_logger
 
 
@@ -13,7 +13,7 @@ class EvaluationCallback(tf.keras.callbacks.Callback):
     """
 
     def __init__(self,
-                 summarizer: Union[SummarizerSimple, SummarizerAttention],
+                 summarizer: Union[SummarizerBasic, SummarizerAttention],
                  scorers: Dict[str, Callable[[Dict], float]],
                  val_data: Iterable[Tuple[str, str]],
                  print_num_examples=5) -> None:
