@@ -188,7 +188,8 @@ class Trainer:
         while epoch_count < num_epochs:
             for train_source_seq, train_target_seq in train_dataset.take(-1):
                 batch_count += 1
-                sum_loss += train_step(train_source_seq, train_target_seq)
+                current_loss = float(train_step(train_source_seq, train_target_seq))
+                sum_loss += current_loss
                 logs['loss'] = sum_loss / batch_count
                 if batch_count % self.steps_to_log == 0:
                     self.logger.info('epoch {epoch}, batch {batch}, logs: {logs}'.format(epoch=epoch_count,
