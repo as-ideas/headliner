@@ -2,8 +2,7 @@ from typing import Union, Callable
 
 import tensorflow as tf
 
-from headliner.model.summarizer_attention import SummarizerAttention
-from headliner.model.summarizer_basic import SummarizerBasic
+from headliner.model.summarizer import Summarizer
 
 
 class ValidationCallback(tf.keras.callbacks.Callback):
@@ -12,7 +11,7 @@ class ValidationCallback(tf.keras.callbacks.Callback):
     """
 
     def __init__(self,
-                 summarizer: Union[SummarizerBasic, SummarizerAttention],
+                 summarizer: Summarizer,
                  val_dataset: tf.data.Dataset,
                  loss_function: Callable[[tf.Tensor, tf.Tensor], tf.Tensor],
                  batch_size: int) -> None:

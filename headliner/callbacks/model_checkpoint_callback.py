@@ -2,8 +2,7 @@ from typing import Union
 
 import tensorflow as tf
 
-from headliner.model.summarizer_attention import SummarizerAttention
-from headliner.model.summarizer_basic import SummarizerBasic
+from headliner.model.summarizer import Summarizer
 
 
 class ModelCheckpointCallback(tf.keras.callbacks.Callback):
@@ -13,7 +12,7 @@ class ModelCheckpointCallback(tf.keras.callbacks.Callback):
 
     def __init__(self,
                  file_path: str,
-                 summarizer: Union[SummarizerBasic, SummarizerAttention],
+                 summarizer: Summarizer,
                  monitor='loss_val',
                  mode='min') -> None:
 
