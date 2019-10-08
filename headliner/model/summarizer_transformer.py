@@ -40,21 +40,21 @@ def create_look_ahead_mask(size):
 
 
 def scaled_dot_product_attention(q, k, v, mask):
-    matmul_qk = tf.matmul(q, k, transpose_b=True)  # (..., seq_len_q, seq_len_k)
+    matmul_qk = tf.matmul(q, k, transpose_b=True)
     dk = tf.cast(tf.shape(k)[-1], tf.float32)
     scaled_attention_logits = matmul_qk / tf.math.sqrt(dk)
     if mask is not None:
         scaled_attention_logits += (mask * -1e9)
-    attention_weights = tf.nn.softmax(scaled_attention_logits, axis=-1)  # (..., seq_len_q, seq_len_k)
-    output = tf.matmul(attention_weights, v)  # (..., seq_len_q, depth_v)
+    attention_weights = tf.nn.softmax(scaled_attention_logits, axis=-1)
+    output = tf.matmul(attention_weights, v)
 
     return output, attention_weights
 
 
 def point_wise_feed_forward_network(embedding_size, feed_forward_dim):
     return tf.keras.Sequential([
-        tf.keras.layers.Dense(feed_forward_dim, activation='relu'),  # (batch_size, seq_len, feed_forward_dim)
-        tf.keras.layers.Dense(embedding_size)  # (batch_size, seq_len, embedding_size)
+        tf.keras.layers.Dense(feed_forward_dim, activation='relu'),
+        tf.keras.layers.Dense(embedding_size)
     ])
 
 
@@ -233,7 +233,7 @@ class Decoder(tf.keras.layers.Layer):
         seq_len = tf.shape(x)[1]
         attention_weights = {}
 
-        x = self.embedding(x)  # (batch_size, target_seq_len, embedding_size)
+        x = self.embedding(x)
         x *= tf.math.sqrt(tf.cast(self.embedding_size, tf.float32))
         x += self.pos_encoding[:, :seq_len, :]
         x = self.dropout(x, training=training)
@@ -312,8 +312,6 @@ class SummarizerTransformer(Summarizer):
         self.embedding_decoder_trainable = embedding_decoder_trainable
         self.preprocessor = None
         self.vectorizer = None
-        self.encoder = None
-        self.decoder = None
         self.transformer = None
         self.optimizer = None
         self.embedding_shape_in = None
