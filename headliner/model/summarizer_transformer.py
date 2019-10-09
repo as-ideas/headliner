@@ -379,6 +379,7 @@ class SummarizerTransformer(Summarizer):
         inp_sentence, output_sentence = self.vectorizer(text_preprocessed)
         encoder_input = tf.expand_dims(inp_sentence, 0)
         decoder_input = self.vectorizer.encode_output(self.preprocessor.start_token)
+        end_index = self.vectorizer.encode_output(self.preprocessor.end_token)
         decoder_output = tf.expand_dims(decoder_input, 0)
         output = {'preprocessed_text': text_preprocessed,
                   'logits': [],
@@ -396,7 +397,6 @@ class SummarizerTransformer(Summarizer):
 
             predictions = predictions[:, -1:, :]
             pred_token_index = tf.cast(tf.argmax(predictions, axis=-1), tf.int32)
-            end_index = self.vectorizer.encode_output(self.preprocessor.end_token)
             decoder_output = tf.concat([decoder_output, pred_token_index], axis=-1)
             if pred_token_index != 0:
                 output['logits'].append(np.squeeze(predictions.numpy()))

@@ -4,9 +4,11 @@ from typing import Tuple, List
 
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
-
+from keras_preprocessing.text import Tokenizer
+import tensorflow_datasets as tfds
 from headliner.evaluation import BleuScorer
 from headliner.model.summarizer_transformer import SummarizerTransformer
+from headliner.preprocessing import Preprocessor, Vectorizer
 from headliner.trainer import Trainer
 
 
@@ -31,8 +33,20 @@ if __name__ == '__main__':
 
     tf.get_logger().setLevel(logging.ERROR)
 
+
     data_raw = read_data('/Users/cschaefe/datasets/en_ger.txt')[:10000]
     train_data, val_data = train_test_split(data_raw, test_size=500, shuffle=True, random_state=42)
+
+    preprocessor = Preprocessor()
+    tokenizer_encoder = tfds.features.text.SubwordTextEncoder.build_from_corpus(
+        (preprocessor(d)[0] for d in train_data), 
+        target_vocab_size=1000, 
+        reserved_tokens=[preprocessor.start_token, preprocessor.end_token])
+    tokenizer_decoder = tfds.features.text.SubwordTextEncoder.build_from_corpus(
+        (preprocessor(d)[1] for d in train_data),
+        target_vocab_size=1000, 
+        reserved_tokens=[preprocessor.start_token, preprocessor.end_token])
+    vectorizer = Vectorizer(tokenizer_encoder, tokenizer_decoder)
 
     summarizer = SummarizerTransformer(num_heads=1,
                                        feed_forward_dim=1024,
@@ -41,11 +55,13 @@ if __name__ == '__main__':
                                        embedding_decoder_trainable=True,
                                        max_prediction_len=20)
 
+    summarizer.init_model(preprocessor, vectorizer)
+
     trainer = Trainer(steps_per_epoch=500,
                       batch_size=8,
                       steps_to_log=5,
                       embedding_path_encoder='/Users/cschaefe/datasets/glove_welt_dedup.txt',
-                      #glove_path_decoder='/Users/cschaefe/datasets/glove_welt_dedup.txt',
+                      embedding_path_decoder='/Users/cschaefe/datasets/glove_welt_dedup.txt',
                       tensorboard_dir='/tmp/trans_emb',
                       max_output_len=20)
 

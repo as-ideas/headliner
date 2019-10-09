@@ -18,6 +18,3 @@ class Tokenizer(abc.ABC):
     def vocab_size(self) -> int:
         pass
 
-    @abstractmethod
-    def fit(self, texts: Iterable[str]):
-        pass

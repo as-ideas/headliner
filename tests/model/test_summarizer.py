@@ -5,7 +5,7 @@ import unittest
 
 import numpy as np
 import tensorflow as tf
-from keras_preprocessing.text import Tokenizer
+
 
 from headliner.losses import masked_crossentropy
 from headliner.model.summarizer_basic import SummarizerBasic
