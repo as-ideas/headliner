@@ -34,6 +34,7 @@ class TestTrainer(unittest.TestCase):
         self.assertEqual(logging.DEBUG, trainer.logger.level)
 
     def test_init(self) -> None:
+        preprocessor = Preprocessor(start_token='<custom_start_token>', lower_case=False, hash_numbers=False)
         trainer = Trainer(max_output_len=9,
                           batch_size=1,
                           max_vocab_size_encoder=2,
@@ -45,7 +46,8 @@ class TestTrainer(unittest.TestCase):
                           bucketing_buffer_size_batches=5,
                           bucketing_batches_to_bucket=6,
                           steps_to_log=7,
-                          logging_level=logging.DEBUG)
+                          logging_level=logging.DEBUG,
+                          preprocessor=preprocessor)
 
         self.assertEqual(1, trainer.batch_size)
         self.assertEqual(2, trainer.max_vocab_size_encoder)
@@ -60,6 +62,9 @@ class TestTrainer(unittest.TestCase):
         self.assertEqual(7, trainer.steps_to_log)
         self.assertEqual(9, trainer.max_output_len)
         self.assertEqual(logging.DEBUG, trainer.logger.level)
+        self.assertEqual('<custom_start_token>', trainer.preprocessor.start_token)
+        self.assertEqual(False, trainer.preprocessor.lower_case)
+        self.assertEqual(False, trainer.preprocessor.hash_numbers)
 
     def test_init_model(self) -> None:
         logging.basicConfig(level=logging.INFO)

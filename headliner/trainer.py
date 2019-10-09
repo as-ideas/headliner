@@ -2,7 +2,7 @@ import datetime
 import logging
 import tensorflow as tf
 from collections import Counter
-from typing import Tuple, List, Iterable, Callable, Dict
+from typing import Tuple, List, Iterable, Callable, Dict, Union
 
 import yaml
 
@@ -42,7 +42,8 @@ class Trainer:
                  bucketing_batches_to_bucket=100,
                  logging_level=logging.INFO,
                  num_print_predictions=5,
-                 steps_to_log=10) -> None:
+                 steps_to_log=10,
+                 preprocessor: Union[Preprocessor, None] = None) -> None:
         """
         Initializes the trainer.
 
@@ -63,7 +64,6 @@ class Trainer:
             num_print_predictions: Number of sample predictions to print in each evaluation.
             steps_to_log: Number of steps to wait for logging output.
             preprocessor (optional): custom preprocessor, if None a standard preprocessor will be created.
-            vectorizer (optional): custom vectorizer, if None a standard vectorizer will be created.
         """
 
         self.max_output_len = max_output_len
@@ -89,7 +89,7 @@ class Trainer:
         self.logger.setLevel(logging_level)
         self.num_print_predictions = num_print_predictions
         self.steps_to_log = steps_to_log
-        self.preprocessor = Preprocessor(start_token=START_TOKEN, end_token=END_TOKEN)
+        self.preprocessor = preprocessor or Preprocessor(start_token=START_TOKEN, end_token=END_TOKEN)
 
     @classmethod
     def from_config(cls, file_path, **kwargs):
@@ -146,7 +146,6 @@ class Trainer:
             scorers (optional): Dictionary with {score_name, scorer} to add validation scores to the logs.
             callbacks (optional): Additional custom callbacks.
         """
-
         if summarizer.preprocessor is None or summarizer.vectorizer is None:
             self.logger.info('training a bare model, preprocessing data to init model...')
             self._init_model(summarizer, train_data)
