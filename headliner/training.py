@@ -33,39 +33,24 @@ if __name__ == '__main__':
 
     tf.get_logger().setLevel(logging.ERROR)
 
-    data_raw = read_data('/Users/cschaefe/datasets/en_ger.txt')
+    data_raw = read_data_json('/Users/cschaefe/datasets/welt_dedup.json', 2000)
     train_data, val_data = train_test_split(data_raw, test_size=500, shuffle=True, random_state=42)
-    preprocessor = Preprocessor()
-
-    tokenizer_encoder = tfds.features.text.SubwordTextEncoder.build_from_corpus(
-        (preprocessor(d)[0] for d in train_data), 
-        target_vocab_size=2**13,
-        reserved_tokens=[preprocessor.start_token, preprocessor.end_token])
-
-    tokenizer_decoder = tfds.features.text.SubwordTextEncoder.build_from_corpus(
-        (preprocessor(d)[1] for d in train_data),
-        target_vocab_size=2**13,
-        reserved_tokens=[preprocessor.start_token, preprocessor.end_token])
-
-    vectorizer = Vectorizer(tokenizer_encoder, tokenizer_decoder)
 
     summarizer = SummarizerTransformer(num_heads=1,
-                                       feed_forward_dim=1024,
+                                       feed_forward_dim=2048,
                                        embedding_size=50,
-                                       embedding_encoder_trainable=True,
-                                       embedding_decoder_trainable=True,
-                                       max_prediction_len=100)
-
-    summarizer.init_model(preprocessor, vectorizer)
+                                       embedding_encoder_trainable=False,
+                                       embedding_decoder_trainable=False,
+                                       max_prediction_len=20)
 
     trainer = Trainer(steps_per_epoch=500,
                       batch_size=8,
                       steps_to_log=5,
-                      #embedding_path_encoder='/Users/cschaefe/datasets/glove_welt_dedup.txt',
-                      #embedding_path_decoder='/Users/cschaefe/datasets/glove_welt_dedup.txt',
-                      tensorboard_dir='/tmp/subword')
+                      embedding_path_encoder='/Users/cschaefe/datasets/glove_welt_dedup.txt',
+                      embedding_path_decoder='/Users/cschaefe/datasets/glove_welt_dedup.txt',
+                      tensorboard_dir='/tmp/trans_emb')
 
-    trainer.train(summarizer, train_data, val_data=val_data, scorers={'bleu': BleuScorer()})
+    trainer.train(summarizer, train_data, val_data=val_data)
 
 
 
