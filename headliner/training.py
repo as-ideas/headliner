@@ -33,7 +33,7 @@ if __name__ == '__main__':
 
     tf.get_logger().setLevel(logging.ERROR)
 
-    data_raw = read_data('/Users/cschaefe/datasets/en_ger.txt')[:1000]
+    data_raw = read_data('/Users/cschaefe/datasets/en_ger.txt')
     train_data, val_data = train_test_split(data_raw, test_size=500, shuffle=True, random_state=42)
     preprocessor = Preprocessor()
 
@@ -41,6 +41,7 @@ if __name__ == '__main__':
         (preprocessor(d)[0] for d in train_data), 
         target_vocab_size=2**13,
         reserved_tokens=[preprocessor.start_token, preprocessor.end_token])
+
     tokenizer_decoder = tfds.features.text.SubwordTextEncoder.build_from_corpus(
         (preprocessor(d)[1] for d in train_data),
         target_vocab_size=2**13,
@@ -53,7 +54,7 @@ if __name__ == '__main__':
                                        embedding_size=50,
                                        embedding_encoder_trainable=True,
                                        embedding_decoder_trainable=True,
-                                       max_prediction_len=20)
+                                       max_prediction_len=100)
 
     summarizer.init_model(preprocessor, vectorizer)
 
@@ -62,7 +63,7 @@ if __name__ == '__main__':
                       steps_to_log=5,
                       #embedding_path_encoder='/Users/cschaefe/datasets/glove_welt_dedup.txt',
                       #embedding_path_decoder='/Users/cschaefe/datasets/glove_welt_dedup.txt',
-                      tensorboard_dir='/tmp/simpletest')
+                      tensorboard_dir='/tmp/subword')
 
     trainer.train(summarizer, train_data, val_data=val_data, scorers={'bleu': BleuScorer()})
 

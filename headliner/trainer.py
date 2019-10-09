@@ -177,7 +177,7 @@ class Trainer:
                                         monitor='loss_val',
                                         mode='min'),
                 tf.keras.callbacks.TensorBoard(log_dir=self.tensorboard_dir,
-                            update_freq='epoch')
+                                               update_freq='epoch')
             ])
 
         logs = {}

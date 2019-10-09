@@ -387,11 +387,11 @@ class SummarizerTransformer(Summarizer):
             enc_padding_mask, combined_mask, dec_padding_mask = create_masks(
                 encoder_input, decoder_output)
             predictions, attention_weights = self.transformer(encoder_input,
-                                                      decoder_output,
-                                                      False,
-                                                      enc_padding_mask,
-                                                      combined_mask,
-                                                      dec_padding_mask)
+                                                              decoder_output,
+                                                              False,
+                                                              enc_padding_mask,
+                                                              combined_mask,
+                                                              dec_padding_mask)
 
             predictions = predictions[:, -1:, :]
             pred_token_index = tf.cast(tf.argmax(predictions, axis=-1), tf.int32)
