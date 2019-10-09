@@ -5,6 +5,7 @@ from typing import Tuple, List
 import tensorflow as tf
 import tensorflow_datasets as tfds
 from sklearn.model_selection import train_test_split
+from tensorflow_datasets.core.features.text import SubwordTextEncoder
 
 from headliner.evaluation import BleuScorer
 from headliner.model.summarizer_transformer import SummarizerTransformer
@@ -30,44 +31,45 @@ def read_data(file_path: str) -> List[Tuple[str, str]]:
 
 if __name__ == '__main__':
 
+    data_raw = read_data('/Users/cschaefe/datasets/en_ger.txt')[:10000]
+    train_data, val_data = train_test_split(data_raw, test_size=100, shuffle=True, random_state=42)
 
-    tf.get_logger().setLevel(logging.ERROR)
-
-    data_raw = read_data('/Users/cschaefe/datasets/en_ger.txt')
-    train_data, val_data = train_test_split(data_raw, test_size=500, shuffle=True, random_state=42)
     preprocessor = Preprocessor()
+    train_data_prep = [preprocessor(d) for d in train_data]
+    input_texts = [t[0] for t in train_data_prep]
+    output_texts = [t[1] for t in train_data_prep]
 
-    tokenizer_encoder = tfds.features.text.SubwordTextEncoder.build_from_corpus(
-        (preprocessor(d)[0] for d in train_data), 
-        target_vocab_size=2**13,
-        reserved_tokens=[preprocessor.start_token, preprocessor.end_token])
-
-    tokenizer_decoder = tfds.features.text.SubwordTextEncoder.build_from_corpus(
-        (preprocessor(d)[1] for d in train_data),
-        target_vocab_size=2**13,
-        reserved_tokens=[preprocessor.start_token, preprocessor.end_token])
+    tokenizer_encoder = SubwordTextEncoder.build_from_corpus(input_texts,
+                                                             target_vocab_size=2**13)
+    tokenizer_decoder = SubwordTextEncoder.build_from_corpus(output_texts,
+                                                             target_vocab_size=2**13,
+                                                             reserved_tokens=[preprocessor.start_token,
+                                                                              preprocessor.end_token])
+    print('vocab size encoder: {}, decoder: {}'.format(
+        tokenizer_encoder.vocab_size, tokenizer_decoder.vocab_size))
 
     vectorizer = Vectorizer(tokenizer_encoder, tokenizer_decoder)
-
     summarizer = SummarizerTransformer(num_heads=1,
                                        feed_forward_dim=1024,
-                                       embedding_size=50,
-                                       embedding_encoder_trainable=True,
-                                       embedding_decoder_trainable=True,
+                                       embedding_size=64,
+                                       dropout_rate=0.1,
                                        max_prediction_len=100)
-
     summarizer.init_model(preprocessor, vectorizer)
 
-    trainer = Trainer(steps_per_epoch=500,
-                      batch_size=8,
-                      steps_to_log=5,
-                      #embedding_path_encoder='/Users/cschaefe/datasets/glove_welt_dedup.txt',
-                      #embedding_path_decoder='/Users/cschaefe/datasets/glove_welt_dedup.txt',
-                      tensorboard_dir='/tmp/subword')
+    trainer = Trainer(steps_per_epoch=1000,
+                      batch_size=16,
+                      model_save_path='/tmp/summarizer_transformer',
+                      steps_to_log=50)
 
-    trainer.train(summarizer, train_data, val_data=val_data, scorers={'bleu': BleuScorer()})
+    trainer.train(summarizer,
+                  train_data,
+                  num_epochs=10,
+                  val_data=val_data,
+                  scorers={'bleu': BleuScorer(weights=(1, 0, 0, 0))})
 
-
+    best_summarizer = SummarizerTransformer.load('/tmp/summarizer_transformer')
+    pred_vectors = best_summarizer.predict_vectors('How are you?', '')
+    print(pred_vectors['predicted_text'])
 
 
 
