@@ -3,9 +3,9 @@ import logging
 from typing import Tuple, List
 
 import tensorflow as tf
-from sklearn.model_selection import train_test_split
-from keras_preprocessing.text import Tokenizer
 import tensorflow_datasets as tfds
+from sklearn.model_selection import train_test_split
+
 from headliner.evaluation import BleuScorer
 from headliner.model.summarizer_transformer import SummarizerTransformer
 from headliner.preprocessing import Preprocessor, Vectorizer

@@ -1,6 +1,8 @@
 from typing import List, Iterable, Dict
-from headliner.preprocessing.tokenizer import Tokenizer
+
 from keras_preprocessing.text import Tokenizer as KTokenizer
+
+from headliner.preprocessing.tokenizer import Tokenizer
 
 
 class KerasTokenizer(Tokenizer):

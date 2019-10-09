@@ -1,7 +1,7 @@
 import datetime
 import logging
 from collections import Counter
-from typing import Tuple, List, Iterable, Union, Callable, Dict
+from typing import Tuple, List, Iterable, Callable, Dict
 
 import yaml
 from tensorflow.python.keras.callbacks import TensorBoard, Callback
@@ -17,7 +17,6 @@ from headliner.preprocessing.bucket_generator import BucketGenerator
 from headliner.preprocessing.dataset_generator import DatasetGenerator
 from headliner.preprocessing.keras_tokenizer import KerasTokenizer
 from headliner.preprocessing.preprocessor import Preprocessor
-from headliner.preprocessing.tokenizer import Tokenizer
 from headliner.preprocessing.vectorizer import Vectorizer
 from headliner.utils.logger import get_logger
 

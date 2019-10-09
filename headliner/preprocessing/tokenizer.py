@@ -1,6 +1,6 @@
 import abc
 from abc import abstractmethod
-from typing import List, Iterable
+from typing import List
 
 
 class Tokenizer(abc.ABC):
