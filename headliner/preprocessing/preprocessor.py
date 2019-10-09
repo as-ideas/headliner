@@ -8,7 +8,7 @@ class Preprocessor:
                  start_token='<start>',
                  end_token='<end>',
                  punctuation_pattern='([!.?,])',
-                 filter_pattern='(["#$%&()*+/:;<=>@[\\]^_`{|}~\t\n])',
+                 filter_pattern='([„"#$%&()*+/:;<=>@[\\]^_`{|}~\t\n])',
                  lower_case=True,
                  hash_numbers=True):
         self.start_token = start_token

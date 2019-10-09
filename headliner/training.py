@@ -31,8 +31,9 @@ def read_data(file_path: str) -> List[Tuple[str, str]]:
 
 if __name__ == '__main__':
 
-    data_raw = read_data('/Users/cschaefe/datasets/en_ger.txt')[:10000]
+    data_raw = read_data('/Users/cschaefe/datasets/en_ger.txt')
     train_data, val_data = train_test_split(data_raw, test_size=100, shuffle=True, random_state=42)
+
 
     preprocessor = Preprocessor()
     train_data_prep = [preprocessor(d) for d in train_data]
@@ -43,29 +44,35 @@ if __name__ == '__main__':
                                                              target_vocab_size=2**13)
     tokenizer_decoder = SubwordTextEncoder.build_from_corpus(output_texts,
                                                              target_vocab_size=2**13,
-                                                             reserved_tokens=[preprocessor.start_token,
-                                                                              preprocessor.end_token])
+                                                             reserved_tokens=[preprocessor.end_token,
+                                                                              preprocessor.start_token])
+
+    encoded = tokenizer_decoder.encode('<start> wie geht es dir ? <end> „')
+    decoded = tokenizer_decoder.decode(encoded)
+
     print('vocab size encoder: {}, decoder: {}'.format(
         tokenizer_encoder.vocab_size, tokenizer_decoder.vocab_size))
 
     vectorizer = Vectorizer(tokenizer_encoder, tokenizer_decoder)
     summarizer = SummarizerTransformer(num_heads=1,
                                        feed_forward_dim=1024,
+                                       num_layers=1,
                                        embedding_size=64,
-                                       dropout_rate=0.1,
-                                       max_prediction_len=100)
+                                       dropout_rate=0,
+                                       max_prediction_len=50)
     summarizer.init_model(preprocessor, vectorizer)
 
-    trainer = Trainer(steps_per_epoch=1000,
-                      batch_size=16,
+    trainer = Trainer(steps_per_epoch=500,
+                      batch_size=8,
                       model_save_path='/tmp/summarizer_transformer',
-                      steps_to_log=50)
+                      steps_to_log=50,
+                      bucketing_buffer_size_batches=10000,
+                      bucketing_batches_to_bucket=10)
 
     trainer.train(summarizer,
                   train_data,
-                  num_epochs=10,
-                  val_data=val_data,
-                  scorers={'bleu': BleuScorer(weights=(1, 0, 0, 0))})
+                  num_epochs=1000,
+                  val_data=val_data)
 
     best_summarizer = SummarizerTransformer.load('/tmp/summarizer_transformer')
     pred_vectors = best_summarizer.predict_vectors('How are you?', '')
