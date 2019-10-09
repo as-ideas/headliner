@@ -3,7 +3,6 @@ from typing import Union, Dict, Callable, Iterable, Tuple
 import tensorflow as tf
 
 from headliner.model.summarizer import Summarizer
-from headliner.model.summarizer_attention import SummarizerAttention
 from headliner.utils.logger import get_logger
 
 
@@ -13,7 +12,7 @@ class EvaluationCallback(tf.keras.callbacks.Callback):
     """
 
     def __init__(self,
-                 summarizer: Union[Summarizer, SummarizerAttention],
+                 summarizer: Summarizer,
                  scorers: Dict[str, Callable[[Dict], float]],
                  val_data: Iterable[Tuple[str, str]],
                  print_num_examples=5) -> None:
@@ -47,6 +46,8 @@ class EvaluationCallback(tf.keras.callbacks.Callback):
                 self.logger.info('\n(input) {} \n(target) {} \n(prediction) {}\n'.format(
                     d[0], d[1], prediction['predicted_text']
                 ))
+            elif len(self.scorers) == 0:
+                break
             for score_name, scorer in self.scorers.items():
                 score = scorer(prediction)
                 val_scores[score_name] += score

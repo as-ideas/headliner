@@ -8,17 +8,17 @@ import tensorflow as tf
 from keras_preprocessing.text import Tokenizer
 
 from headliner.losses import masked_crossentropy
-from headliner.model.summarizer_basic import SummarizerBasic
+from headliner.model.summarizer_transformer import SummarizerTransformer
 from headliner.preprocessing.preprocessor import Preprocessor
 from headliner.preprocessing.vectorizer import Vectorizer
 
 
-class TestSummarizer(unittest.TestCase):
+class TestSummarizerTransformer(unittest.TestCase):
 
     def setUp(self) -> None:
         np.random.seed(42)
         tf.random.set_seed(42)
-        self.temp_dir = tempfile.mkdtemp(prefix='TestSummarizerTmp')
+        self.temp_dir = tempfile.mkdtemp(prefix='TestSummarizerTransformerTmp')
 
     def tearDown(self) -> None:
         shutil.rmtree(self.temp_dir, ignore_errors=True)
@@ -29,10 +29,11 @@ class TestSummarizer(unittest.TestCase):
         tokenizer.fit_on_texts(['a b c {} {}'.format(
             preprocessor.start_token, preprocessor.end_token)])
         vectorizer = Vectorizer(tokenizer, tokenizer)
-        summarizer = SummarizerBasic(lstm_size=10,
-                                     max_prediction_len=10,
-                                     embedding_decoder_trainable=False,
-                                     embedding_size=10)
+        summarizer = SummarizerTransformer(num_layers=1,
+                                           num_heads=2,
+                                           max_prediction_len=3,
+                                           embedding_size=10,
+                                           embedding_encoder_trainable=False)
         summarizer.init_model(preprocessor=preprocessor,
                               vectorizer=vectorizer)
 
@@ -43,18 +44,18 @@ class TestSummarizer(unittest.TestCase):
 
         save_dir = os.path.join(self.temp_dir, 'summarizer_serde_happy_path')
         summarizer.save(save_dir)
-        summarizer_loaded = SummarizerBasic.load(save_dir)
-        self.assertEqual(10, summarizer_loaded.lstm_size)
-        self.assertEqual(10, summarizer_loaded.max_prediction_len)
+        summarizer_loaded = SummarizerTransformer.load(save_dir)
+        self.assertEqual(1, summarizer_loaded.num_layers)
+        self.assertEqual(2, summarizer_loaded.num_heads)
+        self.assertEqual(3, summarizer_loaded.max_prediction_len)
+        self.assertEqual(10, summarizer_loaded.embedding_size)
         self.assertIsNotNone(summarizer_loaded.preprocessor)
         self.assertIsNotNone(summarizer_loaded.vectorizer)
-        self.assertIsNotNone(summarizer_loaded.encoder)
-        self.assertIsNotNone(summarizer_loaded.decoder)
-        self.assertTrue(summarizer_loaded.encoder.embedding.trainable)
-        self.assertFalse(summarizer_loaded.decoder.embedding.trainable)
+        self.assertIsNotNone(summarizer_loaded.transformer)
+        self.assertFalse(summarizer_loaded.transformer.encoder.embedding.trainable)
+        self.assertTrue(summarizer_loaded.transformer.decoder.embedding.trainable)
         self.assertIsNotNone(summarizer_loaded.optimizer)
 
         pred = summarizer.predict_vectors('a c', '')
         pred_loaded = summarizer_loaded.predict_vectors('a c', '')
-        np.testing.assert_almost_equal(
-            pred['logits'], pred_loaded['logits'], decimal=6)
+        np.testing.assert_almost_equal(pred['logits'], pred_loaded['logits'], decimal=6)

@@ -14,7 +14,6 @@ from headliner.embeddings import read_glove, embedding_to_matrix
 from headliner.evaluation.scorer import Scorer
 from headliner.losses import masked_crossentropy
 from headliner.model.summarizer import Summarizer
-from headliner.model.summarizer_attention import SummarizerAttention
 from headliner.preprocessing.bucket_generator import BucketGenerator
 from headliner.preprocessing.dataset_generator import DatasetGenerator
 from headliner.preprocessing.preprocessor import Preprocessor
@@ -132,7 +131,7 @@ class Trainer:
                            **kwargs)
 
     def train(self,
-              summarizer: Union[Summarizer, SummarizerAttention],
+              summarizer: Summarizer,
               train_data: Iterable[Tuple[str, str]],
               val_data: Iterable[Tuple[str, str]] = None,
               num_epochs=2500,
@@ -184,13 +183,14 @@ class Trainer:
             ])
 
         logs = {}
-        epoch_count, batch_count = 0, 0
+        epoch_count, batch_count, sum_loss = 0, 0, 0.
         train_step = summarizer.new_train_step(self.loss_function, self.batch_size, apply_gradients=True)
         while epoch_count < num_epochs:
             for train_source_seq, train_target_seq in train_dataset.take(-1):
                 batch_count += 1
-                train_loss = train_step(train_source_seq, train_target_seq)
-                logs['loss'] = float(train_loss)
+                current_loss = float(train_step(train_source_seq, train_target_seq))
+                sum_loss += current_loss
+                logs['loss'] = sum_loss / batch_count
                 if batch_count % self.steps_to_log == 0:
                     self.logger.info('epoch {epoch}, batch {batch}, logs: {logs}'.format(epoch=epoch_count,
                                                                                          batch=batch_count,
@@ -207,7 +207,7 @@ class Trainer:
                 raise ValueError('Iterating over the dataset yielded zero batches!')
 
     def _init_model(self,
-                    summarizer: Union[Summarizer, SummarizerAttention],
+                    summarizer: Summarizer,
                     train_data: Iterable[Tuple[str, str]]) -> None:
 
         if self.vectorizer is not None:
@@ -269,13 +269,10 @@ class Trainer:
 
         counter_encoder = Counter()
         counter_decoder = Counter()
-        train_text_encoder = (self.preprocessor(d)[0] for d in train_data)
-        train_text_decoder = (self.preprocessor(d)[1] for d in train_data)
-        for text_encoder in train_text_encoder:
+        train_preprocessed = (self.preprocessor(d) for d in train_data)
+        for text_encoder, text_decoder in train_preprocessed:
             counter_encoder.update(text_encoder.split())
-        for text_decoder in train_text_decoder:
             counter_decoder.update(text_decoder.split())
-
         tokens_encoder = {token_count[0] for token_count in counter_encoder.most_common(self.max_vocab_size_encoder)}
         tokens_decoder = {token_count[0] for token_count in counter_decoder.most_common(self.max_vocab_size_decoder)}
         tokens_encoder.update({self.preprocessor.start_token, self.preprocessor.end_token})
