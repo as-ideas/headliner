@@ -2,13 +2,14 @@ import unittest
 
 import numpy as np
 import tensorflow as tf
-from keras_preprocessing.text import Tokenizer
+
 
 from headliner.losses import masked_crossentropy
 from headliner.model.summarizer_basic import SummarizerBasic
 from headliner.model.summarizer_attention import SummarizerAttention
 from headliner.model.summarizer_transformer import SummarizerTransformer
 from headliner.preprocessing.dataset_generator import DatasetGenerator
+from headliner.preprocessing.keras_tokenizer import KerasTokenizer
 from headliner.preprocessing.preprocessor import Preprocessor
 from headliner.preprocessing.vectorizer import Vectorizer
 
@@ -21,10 +22,10 @@ class TestTraining(unittest.TestCase):
 
     def test_training(self) -> None:
         data = [('a b', 'c'), ('a b c', 'd')]
-        tokenizer_encoder = Tokenizer(filters='')
-        tokenizer_decoder = Tokenizer(filters='')
-        tokenizer_encoder.fit_on_texts(['a b c <start> <end>'])
-        tokenizer_decoder.fit_on_texts(['c d <start> <end>'])
+        tokenizer_encoder = KerasTokenizer(lower=False, filters='')
+        tokenizer_decoder = KerasTokenizer(lower=False, filters='')
+        tokenizer_encoder.fit(['a b c <start> <end>'])
+        tokenizer_decoder.fit(['c d <start> <end>'])
         vectorizer = Vectorizer(tokenizer_encoder=tokenizer_encoder,
                                 tokenizer_decoder=tokenizer_decoder,
                                 max_output_len=3)

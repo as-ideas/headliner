@@ -4,19 +4,20 @@ from collections import Counter
 from typing import Tuple, List, Iterable, Union, Callable, Dict
 
 import yaml
-from keras_preprocessing.text import Tokenizer
 from tensorflow.python.keras.callbacks import TensorBoard, Callback
 
 from headliner.callbacks.evaluation_callback import EvaluationCallback
 from headliner.callbacks.model_checkpoint_callback import ModelCheckpointCallback
 from headliner.callbacks.validation_callback import ValidationCallback
-from headliner.embeddings import read_glove, embedding_to_matrix
+from headliner.embeddings import read_embedding, embedding_to_matrix
 from headliner.evaluation.scorer import Scorer
 from headliner.losses import masked_crossentropy
 from headliner.model.summarizer import Summarizer
 from headliner.preprocessing.bucket_generator import BucketGenerator
 from headliner.preprocessing.dataset_generator import DatasetGenerator
+from headliner.preprocessing.keras_tokenizer import KerasTokenizer
 from headliner.preprocessing.preprocessor import Preprocessor
+from headliner.preprocessing.tokenizer import Tokenizer
 from headliner.preprocessing.vectorizer import Vectorizer
 from headliner.utils.logger import get_logger
 
@@ -32,8 +33,8 @@ class Trainer:
                  batch_size=16,
                  max_vocab_size_encoder=200000,
                  max_vocab_size_decoder=200000,
-                 glove_path_encoder=None,
-                 glove_path_decoder=None,
+                 embedding_path_encoder=None,
+                 embedding_path_decoder=None,
                  steps_per_epoch=500,
                  tensorboard_dir='/tmp/train_tens_' + datetime.datetime.now().strftime('%Y%m%d_%H%M%S'),
                  model_save_path='/tmp/summarizer_' + datetime.datetime.now().strftime('%Y%m%d_%H%M%S'),
@@ -53,8 +54,8 @@ class Trainer:
             batch_size: Size of mini-batches for stochastic gradient descent.
             max_vocab_size_encoder: Maximum number of unique tokens to consider for encoder embeddings.
             max_vocab_size_decoder: Maximum number of unique tokens to consider for decoder embeddings.
-            glove_path_encoder: Path to glove embedding file for the encoder.
-            glove_path_decoder: Path to glove embedding file for the decoder.
+            embedding_path_encoder: Path to embedding file for the encoder.
+            embedding_path_decoder: Path to embedding file for the decoder.
             steps_per_epoch: Number of steps to train until callbacks are invoked.
             tensorboard_dir: Directory for saving tensorboard logs.
             model_save_path: Directory for saving the best model.
@@ -73,8 +74,8 @@ class Trainer:
         self.max_vocab_size_decoder = max_vocab_size_decoder
         self.bucketing_buffer_size_batches = bucketing_buffer_size_batches
         self.bucketing_batches_to_bucket = bucketing_batches_to_bucket
-        self.glove_path_encoder = glove_path_encoder
-        self.glove_path_decoder = glove_path_decoder
+        self.embedding_path_encoder = embedding_path_encoder
+        self.embedding_path_decoder = embedding_path_decoder
         self.steps_per_epoch = steps_per_epoch
         self.tensorboard_dir = tensorboard_dir
         self.model_save_path = model_save_path
@@ -100,8 +101,8 @@ class Trainer:
             batch_size = cfg['batch_size']
             max_vocab_size_encoder = cfg['max_vocab_size_encoder']
             max_vocab_size_decoder = cfg['max_vocab_size_decoder']
-            glove_path_encoder = cfg['glove_path_encoder']
-            glove_path_decoder = cfg['glove_path_decoder']
+            glove_path_encoder = cfg['embedding_path_encoder']
+            glove_path_decoder = cfg['embedding_path_decoder']
             steps_per_epoch = cfg['steps_per_epoch']
             tensorboard_dir = cfg['tensorboard_dir']
             model_save_path = cfg['model_save_path']
@@ -118,8 +119,8 @@ class Trainer:
             return Trainer(batch_size=batch_size,
                            max_vocab_size_encoder=max_vocab_size_encoder,
                            max_vocab_size_decoder=max_vocab_size_decoder,
-                           glove_path_encoder=glove_path_encoder,
-                           glove_path_decoder=glove_path_decoder,
+                           embedding_path_encoder=glove_path_encoder,
+                           embedding_path_decoder=glove_path_decoder,
                            steps_per_epoch=steps_per_epoch,
                            tensorboard_dir=tensorboard_dir,
                            model_save_path=model_save_path,
@@ -218,29 +219,29 @@ class Trainer:
         else:
             tokenizer_encoder, tokenizer_decoder = self._create_tokenizers(train_data)
             self.logger.info('vocab encoder: {vocab_enc}, vocab decoder: {vocab_dec}'.format(
-                vocab_enc=len(tokenizer_encoder.word_index), vocab_dec=len(tokenizer_decoder.word_index)))
+                vocab_enc=tokenizer_encoder.vocab_size, vocab_dec=tokenizer_decoder.vocab_size))
             vectorizer = Vectorizer(tokenizer_encoder,
                                     tokenizer_decoder,
                                     self.max_output_len)
             embedding_weights_encoder, embedding_weights_decoder = None, None
 
-            if self.glove_path_encoder is not None:
-                print('loading encoder embedding from {}'.format(self.glove_path_encoder))
-                embedding = read_glove(self.glove_path_encoder, summarizer.embedding_size)
+            if self.embedding_path_encoder is not None:
+                self.logger.info('loading encoder embedding from {}'.format(self.embedding_path_encoder))
+                embedding = read_embedding(self.embedding_path_encoder, summarizer.embedding_size)
                 embedding_weights_encoder = embedding_to_matrix(embedding=embedding,
-                                                                token_index=tokenizer_encoder.word_index,
+                                                                token_index=tokenizer_encoder.token_index,
                                                                 embedding_dim=summarizer.embedding_size)
-                unknown_tokens_encoder = tokenizer_encoder.word_index.keys() - embedding.keys()
-                print('unknown vocab encoder embedding: {}'.format(len(unknown_tokens_encoder)))
+                num_unknown_encoder = tokenizer_encoder.vocab_size - len(embedding.keys())
+                self.logger.info('unknown vocab encoder embedding: {}'.format(num_unknown_encoder))
 
-            if self.glove_path_decoder is not None:
-                print('loading decoder embedding from {}'.format(self.glove_path_decoder))
-                embedding = read_glove(self.glove_path_decoder, summarizer.embedding_size)
+            if self.embedding_path_decoder is not None:
+                self.logger.info('loading decoder embedding from {}'.format(self.embedding_path_decoder))
+                embedding = read_embedding(self.embedding_path_decoder, summarizer.embedding_size)
                 embedding_weights_decoder = embedding_to_matrix(embedding=embedding,
-                                                                token_index=tokenizer_decoder.word_index,
+                                                                token_index=tokenizer_decoder.token_index,
                                                                 embedding_dim=summarizer.embedding_size)
-                unknown_tokens_decoder = tokenizer_decoder.word_index.keys() - embedding.keys()
-                print('unknown vocab decoder embedding: {}'.format(len(unknown_tokens_decoder)))
+                num_unknown_decoder = tokenizer_encoder.vocab_size - len(embedding.keys())
+                self.logger.info('unknown vocab encoder embedding: {}'.format(num_unknown_decoder))
 
             summarizer.init_model(preprocessor=self.preprocessor,
                                   vectorizer=vectorizer,
@@ -265,7 +266,7 @@ class Trainer:
 
     def _create_tokenizers(self,
                            train_data: Iterable[Tuple[str, str]]
-                           ) -> Tuple[Tokenizer, Tokenizer]:
+                           ) -> Tuple[KerasTokenizer, KerasTokenizer]:
 
         counter_encoder = Counter()
         counter_decoder = Counter()
@@ -277,8 +278,8 @@ class Trainer:
         tokens_decoder = {token_count[0] for token_count in counter_decoder.most_common(self.max_vocab_size_decoder)}
         tokens_encoder.update({self.preprocessor.start_token, self.preprocessor.end_token})
         tokens_decoder.update({self.preprocessor.start_token, self.preprocessor.end_token})
-        tokenizer_encoder = Tokenizer(oov_token=OOV_TOKEN, filters='', lower=False)
-        tokenizer_decoder = Tokenizer(oov_token=OOV_TOKEN, filters='', lower=False)
-        tokenizer_encoder.fit_on_texts(sorted(list(tokens_encoder)))
-        tokenizer_decoder.fit_on_texts(sorted(list(tokens_decoder)))
+        tokenizer_encoder = KerasTokenizer(oov_token=OOV_TOKEN, lower=False, filters='')
+        tokenizer_decoder = KerasTokenizer(oov_token=OOV_TOKEN, lower=False, filters='')
+        tokenizer_encoder.fit(sorted(list(tokens_encoder)))
+        tokenizer_decoder.fit(sorted(list(tokens_decoder)))
         return tokenizer_encoder, tokenizer_decoder

@@ -9,6 +9,7 @@ from keras_preprocessing.text import Tokenizer
 
 from headliner.losses import masked_crossentropy
 from headliner.model.summarizer_basic import SummarizerBasic
+from headliner.preprocessing.keras_tokenizer import KerasTokenizer
 from headliner.preprocessing.preprocessor import Preprocessor
 from headliner.preprocessing.vectorizer import Vectorizer
 
@@ -25,8 +26,8 @@ class TestSummarizer(unittest.TestCase):
 
     def test_serde_happy_path(self) -> None:
         preprocessor = Preprocessor()
-        tokenizer = Tokenizer(oov_token='<unk>')
-        tokenizer.fit_on_texts(['a b c {} {}'.format(
+        tokenizer = KerasTokenizer(oov_token='<unk>')
+        tokenizer.fit(['a b c {} {}'.format(
             preprocessor.start_token, preprocessor.end_token)])
         vectorizer = Vectorizer(tokenizer, tokenizer)
         summarizer = SummarizerBasic(lstm_size=10,

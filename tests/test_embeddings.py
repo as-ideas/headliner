@@ -5,15 +5,15 @@ import numpy as np
 from numpy import array
 from numpy.testing import assert_array_equal
 
-from headliner.embeddings import read_glove, embedding_to_matrix
+from headliner.embeddings import read_embedding, embedding_to_matrix
 
 
 class TestEmbeddings(unittest.TestCase):
 
-    def test_read_glove(self):
+    def test_read_embedding(self):
         current_dir = os.path.dirname(os.path.abspath(__file__))
         file_path = os.path.join(current_dir, 'resources/small_glove.txt')
-        glove = read_glove(file_path, vector_dim=3)
+        glove = read_embedding(file_path, vector_dim=3)
         assert_array_equal(array([1, 2, 3]), glove['a'])
 
     def test_embedding_to_matrix(self):

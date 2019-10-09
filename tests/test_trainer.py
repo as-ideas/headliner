@@ -24,8 +24,8 @@ class TestTrainer(unittest.TestCase):
         self.assertEqual(1, trainer.batch_size)
         self.assertEqual(7, trainer.max_vocab_size_encoder)
         self.assertEqual(6, trainer.max_vocab_size_decoder)
-        self.assertEqual('glove.txt', trainer.glove_path_encoder)
-        self.assertEqual(None, trainer.glove_path_decoder)
+        self.assertEqual('glove.txt', trainer.embedding_path_encoder)
+        self.assertEqual(None, trainer.embedding_path_decoder)
         self.assertEqual(4, trainer.steps_per_epoch)
         self.assertEqual('tensor_dir', trainer.tensorboard_dir)
         self.assertEqual('model_save_path', trainer.model_save_path)
@@ -41,7 +41,7 @@ class TestTrainer(unittest.TestCase):
                           batch_size=1,
                           max_vocab_size_encoder=2,
                           max_vocab_size_decoder=3,
-                          glove_path_encoder='glove.txt',
+                          embedding_path_encoder='glove.txt',
                           steps_per_epoch=4,
                           tensorboard_dir='tensor_dir',
                           model_save_path='model_save_path',
@@ -54,8 +54,8 @@ class TestTrainer(unittest.TestCase):
         self.assertEqual(1, trainer.batch_size)
         self.assertEqual(2, trainer.max_vocab_size_encoder)
         self.assertEqual(3, trainer.max_vocab_size_decoder)
-        self.assertEqual('glove.txt', trainer.glove_path_encoder)
-        self.assertIsNone(trainer.glove_path_decoder)
+        self.assertEqual('glove.txt', trainer.embedding_path_encoder)
+        self.assertIsNone(trainer.embedding_path_decoder)
         self.assertEqual(4, trainer.steps_per_epoch)
         self.assertEqual('tensor_dir', trainer.tensorboard_dir)
         self.assertEqual('model_save_path', trainer.model_save_path)

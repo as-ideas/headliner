@@ -44,7 +44,7 @@ if __name__ == '__main__':
     trainer = Trainer(steps_per_epoch=500,
                       batch_size=8,
                       steps_to_log=5,
-                      #glove_path_encoder='/Users/cschaefe/datasets/glove_welt_dedup.txt',
+                      embedding_path_encoder='/Users/cschaefe/datasets/glove_welt_dedup.txt',
                       #glove_path_decoder='/Users/cschaefe/datasets/glove_welt_dedup.txt',
                       tensorboard_dir='/tmp/trans_emb',
                       max_output_len=20)
