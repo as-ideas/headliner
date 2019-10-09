@@ -33,7 +33,7 @@ if __name__ == '__main__':
 
     tf.get_logger().setLevel(logging.ERROR)
 
-    data_raw = read_data('/Users/cschaefe/datasets/en_ger.txt')
+    data_raw = read_data('/Users/cschaefe/datasets/en_ger.txt')[:1000]
     train_data, val_data = train_test_split(data_raw, test_size=500, shuffle=True, random_state=42)
     preprocessor = Preprocessor()
 
@@ -62,7 +62,7 @@ if __name__ == '__main__':
                       steps_to_log=5,
                       #embedding_path_encoder='/Users/cschaefe/datasets/glove_welt_dedup.txt',
                       #embedding_path_decoder='/Users/cschaefe/datasets/glove_welt_dedup.txt',
-                      tensorboard_dir='/tmp/nosubword')
+                      tensorboard_dir='/tmp/simpletest')
 
     trainer.train(summarizer, train_data, val_data=val_data, scorers={'bleu': BleuScorer()})
 

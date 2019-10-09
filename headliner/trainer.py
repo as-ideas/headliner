@@ -1,10 +1,11 @@
 import datetime
 import logging
+import tensorflow as tf
 from collections import Counter
 from typing import Tuple, List, Iterable, Callable, Dict
 
 import yaml
-from tensorflow.python.keras.callbacks import TensorBoard, Callback
+
 
 from headliner.callbacks.evaluation_callback import EvaluationCallback
 from headliner.callbacks.model_checkpoint_callback import ModelCheckpointCallback
@@ -133,7 +134,7 @@ class Trainer:
               val_data: Iterable[Tuple[str, str]] = None,
               num_epochs=2500,
               scorers: Dict[str, Scorer] = None,
-              callbacks: List[Callback] = None) -> None:
+              callbacks: List[tf.keras.callbacks.Callback] = None) -> None:
         """
         Trains a summarizer or resumes training of a previously initialized summarizer.
 
@@ -175,7 +176,7 @@ class Trainer:
                                         summarizer=summarizer,
                                         monitor='loss_val',
                                         mode='min'),
-                TensorBoard(log_dir=self.tensorboard_dir,
+                tf.keras.callbacks.TensorBoard(log_dir=self.tensorboard_dir,
                             update_freq='epoch')
             ])
 
