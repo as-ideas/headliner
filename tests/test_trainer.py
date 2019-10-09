@@ -18,8 +18,7 @@ class TestTrainer(unittest.TestCase):
     def test_init_from_config(self) -> None:
         current_dir = os.path.dirname(os.path.abspath(__file__))
         config_path = os.path.join(current_dir, 'resources/trainer_test_config.yaml')
-        preprocessor = Preprocessor(start_token='<custom_start_token>')
-        trainer = Trainer.from_config(config_path, preprocessor=preprocessor)
+        trainer = Trainer.from_config(config_path)
         self.assertEqual(9, trainer.max_output_len)
         self.assertEqual(1, trainer.batch_size)
         self.assertEqual(7, trainer.max_vocab_size_encoder)
@@ -33,10 +32,8 @@ class TestTrainer(unittest.TestCase):
         self.assertEqual(6, trainer.bucketing_batches_to_bucket)
         self.assertEqual(7, trainer.steps_to_log)
         self.assertEqual(logging.DEBUG, trainer.logger.level)
-        self.assertEqual('<custom_start_token>', trainer.preprocessor.start_token)
 
     def test_init(self) -> None:
-        preprocessor = Preprocessor(start_token='<custom_start_token>', lower_case=False, hash_numbers=False)
         trainer = Trainer(max_output_len=9,
                           batch_size=1,
                           max_vocab_size_encoder=2,
@@ -48,8 +45,7 @@ class TestTrainer(unittest.TestCase):
                           bucketing_buffer_size_batches=5,
                           bucketing_batches_to_bucket=6,
                           steps_to_log=7,
-                          logging_level=logging.DEBUG,
-                          preprocessor=preprocessor)
+                          logging_level=logging.DEBUG)
 
         self.assertEqual(1, trainer.batch_size)
         self.assertEqual(2, trainer.max_vocab_size_encoder)
@@ -64,9 +60,6 @@ class TestTrainer(unittest.TestCase):
         self.assertEqual(7, trainer.steps_to_log)
         self.assertEqual(9, trainer.max_output_len)
         self.assertEqual(logging.DEBUG, trainer.logger.level)
-        self.assertEqual('<custom_start_token>', trainer.preprocessor.start_token)
-        self.assertEqual(False, trainer.preprocessor.lower_case)
-        self.assertEqual(False, trainer.preprocessor.hash_numbers)
 
     def test_init_model(self) -> None:
         logging.basicConfig(level=logging.INFO)
@@ -77,15 +70,13 @@ class TestTrainer(unittest.TestCase):
                           steps_per_epoch=10,
                           max_vocab_size_encoder=10,
                           max_vocab_size_decoder=10,
-                          max_output_len=3,
-                          preprocessor=Preprocessor(start_token='<start_token>'))
+                          max_output_len=3)
         trainer.train(summarizer, data, num_epochs=1)
         # encoding dim and decoding dim are num unique tokens + 4 (pad, start, end, oov)
         self.assertIsNotNone(summarizer.vectorizer)
         self.assertEqual(7, summarizer.vectorizer.encoding_dim)
         self.assertEqual(6, summarizer.vectorizer.decoding_dim)
         self.assertEqual(3, summarizer.vectorizer.max_output_len)
-        self.assertEqual('<start_token>', summarizer.preprocessor.start_token)
 
     def test_train(self) -> None:
 

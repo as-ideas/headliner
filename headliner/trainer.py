@@ -42,9 +42,7 @@ class Trainer:
                  bucketing_batches_to_bucket=100,
                  logging_level=logging.INFO,
                  num_print_predictions=5,
-                 steps_to_log=10,
-                 preprocessor=None,
-                 vectorizer=None) -> None:
+                 steps_to_log=10) -> None:
         """
         Initializes the trainer.
 
@@ -91,8 +89,7 @@ class Trainer:
         self.logger.setLevel(logging_level)
         self.num_print_predictions = num_print_predictions
         self.steps_to_log = steps_to_log
-        self.preprocessor = preprocessor or Preprocessor(start_token=START_TOKEN, end_token=END_TOKEN)
-        self.vectorizer = vectorizer
+        self.preprocessor = Preprocessor(start_token=START_TOKEN, end_token=END_TOKEN)
 
     @classmethod
     def from_config(cls, file_path, **kwargs):
@@ -211,42 +208,36 @@ class Trainer:
                     summarizer: Summarizer,
                     train_data: Iterable[Tuple[str, str]]) -> None:
 
-        if self.vectorizer is not None:
-            summarizer.init_model(preprocessor=self.preprocessor,
-                                  vectorizer=self.vectorizer,
-                                  embedding_weights_encoder=None,
-                                  embedding_weights_decoder=None)
-        else:
-            tokenizer_encoder, tokenizer_decoder = self._create_tokenizers(train_data)
-            self.logger.info('vocab encoder: {vocab_enc}, vocab decoder: {vocab_dec}'.format(
-                vocab_enc=tokenizer_encoder.vocab_size, vocab_dec=tokenizer_decoder.vocab_size))
-            vectorizer = Vectorizer(tokenizer_encoder,
-                                    tokenizer_decoder,
-                                    self.max_output_len)
-            embedding_weights_encoder, embedding_weights_decoder = None, None
+        tokenizer_encoder, tokenizer_decoder = self._create_tokenizers(train_data)
+        self.logger.info('vocab encoder: {vocab_enc}, vocab decoder: {vocab_dec}'.format(
+            vocab_enc=tokenizer_encoder.vocab_size, vocab_dec=tokenizer_decoder.vocab_size))
+        vectorizer = Vectorizer(tokenizer_encoder,
+                                tokenizer_decoder,
+                                self.max_output_len)
+        embedding_weights_encoder, embedding_weights_decoder = None, None
 
-            if self.embedding_path_encoder is not None:
-                self.logger.info('loading encoder embedding from {}'.format(self.embedding_path_encoder))
-                embedding = read_embedding(self.embedding_path_encoder, summarizer.embedding_size)
-                embedding_weights_encoder = embedding_to_matrix(embedding=embedding,
-                                                                token_index=tokenizer_encoder.token_index,
-                                                                embedding_dim=summarizer.embedding_size)
-                num_unknown_encoder = tokenizer_encoder.vocab_size - len(embedding.keys())
-                self.logger.info('unknown vocab encoder embedding: {}'.format(num_unknown_encoder))
+        if self.embedding_path_encoder is not None:
+            self.logger.info('loading encoder embedding from {}'.format(self.embedding_path_encoder))
+            embedding = read_embedding(self.embedding_path_encoder, summarizer.embedding_size)
+            embedding_weights_encoder = embedding_to_matrix(embedding=embedding,
+                                                            token_index=tokenizer_encoder.token_index,
+                                                            embedding_dim=summarizer.embedding_size)
+            num_unknown_encoder = tokenizer_encoder.vocab_size - len(embedding.keys())
+            self.logger.info('unknown vocab encoder embedding: {}'.format(num_unknown_encoder))
 
-            if self.embedding_path_decoder is not None:
-                self.logger.info('loading decoder embedding from {}'.format(self.embedding_path_decoder))
-                embedding = read_embedding(self.embedding_path_decoder, summarizer.embedding_size)
-                embedding_weights_decoder = embedding_to_matrix(embedding=embedding,
-                                                                token_index=tokenizer_decoder.token_index,
-                                                                embedding_dim=summarizer.embedding_size)
-                num_unknown_decoder = tokenizer_encoder.vocab_size - len(embedding.keys())
-                self.logger.info('unknown vocab encoder embedding: {}'.format(num_unknown_decoder))
+        if self.embedding_path_decoder is not None:
+            self.logger.info('loading decoder embedding from {}'.format(self.embedding_path_decoder))
+            embedding = read_embedding(self.embedding_path_decoder, summarizer.embedding_size)
+            embedding_weights_decoder = embedding_to_matrix(embedding=embedding,
+                                                            token_index=tokenizer_decoder.token_index,
+                                                            embedding_dim=summarizer.embedding_size)
+            num_unknown_decoder = tokenizer_encoder.vocab_size - len(embedding.keys())
+            self.logger.info('unknown vocab encoder embedding: {}'.format(num_unknown_decoder))
 
-            summarizer.init_model(preprocessor=self.preprocessor,
-                                  vectorizer=vectorizer,
-                                  embedding_weights_encoder=embedding_weights_encoder,
-                                  embedding_weights_decoder=embedding_weights_decoder)
+        summarizer.init_model(preprocessor=self.preprocessor,
+                              vectorizer=vectorizer,
+                              embedding_weights_encoder=embedding_weights_encoder,
+                              embedding_weights_decoder=embedding_weights_decoder)
 
     def _vectorize_data(self,
                         preprocessor: Preprocessor,
@@ -268,6 +259,7 @@ class Trainer:
                            train_data: Iterable[Tuple[str, str]]
                            ) -> Tuple[KerasTokenizer, KerasTokenizer]:
 
+        self.logger.info('fitting tokenizers...')
         counter_encoder = Counter()
         counter_decoder = Counter()
         train_preprocessed = (self.preprocessor(d) for d in train_data)
