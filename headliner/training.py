@@ -3,10 +3,12 @@ import logging
 from typing import Tuple, List
 
 import tensorflow as tf
+import tensorflow_datasets as tfds
 from sklearn.model_selection import train_test_split
 
 from headliner.evaluation import BleuScorer
 from headliner.model.summarizer_transformer import SummarizerTransformer
+from headliner.preprocessing import Preprocessor, Vectorizer
 from headliner.trainer import Trainer
 
 
@@ -31,23 +33,22 @@ if __name__ == '__main__':
 
     tf.get_logger().setLevel(logging.ERROR)
 
-    data_raw = read_data('/Users/cschaefe/datasets/en_ger.txt')[:10000]
+    data_raw = read_data_json('/Users/cschaefe/datasets/welt_dedup.json', 2000)
     train_data, val_data = train_test_split(data_raw, test_size=500, shuffle=True, random_state=42)
 
     summarizer = SummarizerTransformer(num_heads=1,
-                                       feed_forward_dim=1024,
+                                       feed_forward_dim=2048,
                                        embedding_size=50,
-                                       embedding_encoder_trainable=True,
-                                       embedding_decoder_trainable=True,
+                                       embedding_encoder_trainable=False,
+                                       embedding_decoder_trainable=False,
                                        max_prediction_len=20)
 
     trainer = Trainer(steps_per_epoch=500,
                       batch_size=8,
                       steps_to_log=5,
-                      #glove_path_encoder='/Users/cschaefe/datasets/glove_welt_dedup.txt',
-                      #glove_path_decoder='/Users/cschaefe/datasets/glove_welt_dedup.txt',
-                      tensorboard_dir='/tmp/trans_emb',
-                      max_output_len=20)
+                      embedding_path_encoder='/Users/cschaefe/datasets/glove_welt_dedup.txt',
+                      embedding_path_decoder='/Users/cschaefe/datasets/glove_welt_dedup.txt',
+                      tensorboard_dir='/tmp/trans_emb')
 
     trainer.train(summarizer, train_data, val_data=val_data)
 

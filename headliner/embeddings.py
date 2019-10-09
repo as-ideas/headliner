@@ -3,7 +3,7 @@ from typing import Dict
 import numpy as np
 
 
-def read_glove(file_path: str, vector_dim: int) -> Dict[str, np.array]:
+def read_embedding(file_path: str, vector_dim: int) -> Dict[str, np.array]:
     """
     Reads an embedding file in glove format into a dictionary mapping tokens to vectors.
     """

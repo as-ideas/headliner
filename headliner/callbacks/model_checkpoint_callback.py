@@ -1,5 +1,3 @@
-from typing import Union
-
 import tensorflow as tf
 
 from headliner.model.summarizer import Summarizer

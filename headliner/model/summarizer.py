@@ -11,8 +11,9 @@ from headliner.preprocessing import Preprocessor, Vectorizer
 class Summarizer(abc.ABC):
 
     def __init__(self):
-        self.vectorizer = None
-        self.preprocessor = None
+        self.vectorizer: Union[Vectorizer, None] = None
+        self.preprocessor: Union[Preprocessor, None] = None
+        self.embedding_size: Union[int, None] = None
 
     @abstractmethod
     def init_model(self,

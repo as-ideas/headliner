@@ -1,6 +1,3 @@
-import numpy as np
-
-from headliner.model.summarizer_attention import SummarizerAttention
 from headliner.model.summarizer_transformer import SummarizerTransformer
 
 if __name__ == '__main__':

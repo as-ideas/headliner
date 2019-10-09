@@ -1,5 +1,3 @@
-from __future__ import absolute_import, division, print_function, unicode_literals
-
 import os
 import pickle
 from typing import Callable
@@ -379,6 +377,7 @@ class SummarizerTransformer(Summarizer):
         inp_sentence, output_sentence = self.vectorizer(text_preprocessed)
         encoder_input = tf.expand_dims(inp_sentence, 0)
         decoder_input = self.vectorizer.encode_output(self.preprocessor.start_token)
+        end_index = self.vectorizer.encode_output(self.preprocessor.end_token)
         decoder_output = tf.expand_dims(decoder_input, 0)
         output = {'preprocessed_text': text_preprocessed,
                   'logits': [],
@@ -388,15 +387,14 @@ class SummarizerTransformer(Summarizer):
             enc_padding_mask, combined_mask, dec_padding_mask = create_masks(
                 encoder_input, decoder_output)
             predictions, attention_weights = self.transformer(encoder_input,
-                                                      decoder_output,
-                                                      False,
-                                                      enc_padding_mask,
-                                                      combined_mask,
-                                                      dec_padding_mask)
+                                                              decoder_output,
+                                                              False,
+                                                              enc_padding_mask,
+                                                              combined_mask,
+                                                              dec_padding_mask)
 
             predictions = predictions[:, -1:, :]
             pred_token_index = tf.cast(tf.argmax(predictions, axis=-1), tf.int32)
-            end_index = self.vectorizer.encode_output(self.preprocessor.end_token)
             decoder_output = tf.concat([decoder_output, pred_token_index], axis=-1)
             if pred_token_index != 0:
                 output['logits'].append(np.squeeze(predictions.numpy()))

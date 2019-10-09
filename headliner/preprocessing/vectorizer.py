@@ -1,6 +1,6 @@
 from typing import Tuple, List
 
-from keras_preprocessing.text import Tokenizer
+from headliner.preprocessing.tokenizer import Tokenizer
 
 
 class Vectorizer:
@@ -12,8 +12,8 @@ class Vectorizer:
                  tokenizer_encoder: Tokenizer,
                  tokenizer_decoder: Tokenizer,
                  max_output_len=None) -> None:
-        self.encoding_dim = len(tokenizer_encoder.index_word) + 1
-        self.decoding_dim = len(tokenizer_decoder.index_word) + 1
+        self.encoding_dim = tokenizer_encoder.vocab_size + 1
+        self.decoding_dim = tokenizer_decoder.vocab_size + 1
         self.max_output_len = max_output_len
         self._tokenizer_encoder = tokenizer_encoder
         self._tokenizer_decoder = tokenizer_decoder
@@ -23,8 +23,8 @@ class Vectorizer:
         Encodes preprocessed strings into sequences of one-hot indices.
         """
         text_encoder, text_decoder = data[0], data[1]
-        vec_encoder = self._tokenizer_encoder.texts_to_sequences([text_encoder])[0]
-        vec_decoder = self._tokenizer_decoder.texts_to_sequences([text_decoder])[0]
+        vec_encoder = self._tokenizer_encoder.encode(text_encoder)
+        vec_decoder = self._tokenizer_decoder.encode(text_decoder)
         if self.max_output_len is not None:
             if len(vec_decoder) > self.max_output_len:
                 vec_decoder = vec_decoder[:self.max_output_len-1] + [vec_decoder[-1]]
@@ -34,13 +34,13 @@ class Vectorizer:
         return vec_encoder, vec_decoder
 
     def encode_input(self, text: str) -> List[int]:
-        return self._tokenizer_encoder.texts_to_sequences([text])[0]
+        return self._tokenizer_encoder.encode(text)
 
     def encode_output(self, text: str) -> List[int]:
-        return self._tokenizer_decoder.texts_to_sequences([text])[0]
+        return self._tokenizer_decoder.encode(text)
 
     def decode_input(self, sequence: List[int]) -> str:
-        return self._tokenizer_encoder.sequences_to_texts([sequence])[0]
+        return self._tokenizer_encoder.decode(sequence)
 
     def decode_output(self, sequence: List[int]) -> str:
-        return self._tokenizer_decoder.sequences_to_texts([sequence])[0]
+        return self._tokenizer_decoder.decode(sequence)

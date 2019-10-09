@@ -1,4 +1,4 @@
-from typing import Union, Dict, Callable, Iterable, Tuple
+from typing import Dict, Callable, Iterable, Tuple
 
 import tensorflow as tf
 
