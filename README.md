@@ -121,6 +121,8 @@ summarizer_loaded.save('/tmp/summarizer_retrained')
 
 ### Custom preprocessing
 
+A model can be initialized with custom string cleanup and tokenization:
+
 ```
 from headliner.preprocessing import Preprocessor
 
