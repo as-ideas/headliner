@@ -406,7 +406,7 @@ class SummarizerTransformer(Summarizer):
             decoder_output = tf.concat([decoder_output, pred_token_index], axis=-1)
             if pred_token_index != 0:
                 output['logits'].append(np.squeeze(predictions.numpy()))
-                output['attention_weights'].append(attention_weights)
+                output['attention_weights'] = attention_weights
                 output['predicted_sequence'].append(int(pred_token_index))
                 if pred_token_index == de_end_index:
                     break
