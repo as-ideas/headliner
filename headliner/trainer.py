@@ -230,7 +230,7 @@ class Trainer:
             embedding_weights_decoder = embedding_to_matrix(embedding=embedding,
                                                             token_index=tokenizer_decoder.token_index,
                                                             embedding_dim=summarizer.embedding_size)
-            num_unknown_decoder = tokenizer_encoder.vocab_size - len(embedding.keys())
+            num_unknown_decoder = tokenizer_decoder.vocab_size - len(embedding.keys())
             self.logger.info('unknown vocab encoder embedding: {}'.format(num_unknown_decoder))
 
         summarizer.init_model(preprocessor=self.preprocessor,

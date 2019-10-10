@@ -3,8 +3,8 @@ import logging
 from typing import Tuple, List
 
 import tensorflow as tf
-import tensorflow_datasets as tfds
 from sklearn.model_selection import train_test_split
+from tensorflow_datasets.core.features.text import SubwordTextEncoder
 
 from headliner.evaluation import BleuScorer
 from headliner.model.summarizer_transformer import SummarizerTransformer
@@ -30,22 +30,35 @@ def read_data(file_path: str) -> List[Tuple[str, str]]:
 
 if __name__ == '__main__':
 
+    data_raw = read_data('/Users/cschaefe/datasets/en_ger.txt')
+    train_data, val_data = train_test_split(data_raw, test_size=200, shuffle=True, random_state=42)
+    preprocessor = Preprocessor(start_token='<start>', end_token='<end>')
+    train_data_prep = [preprocessor(d) for d in train_data]
 
-    tf.get_logger().setLevel(logging.ERROR)
+    input_texts = [t[0] for t in train_data_prep]
+    output_texts = [t[1] for t in train_data_prep]
 
-    def read_data_iteratively():
-        return (('Some a b inputs.', 'Some a b c d e outputs.') for _ in range(10))
+    tokenizer_encoder = SubwordTextEncoder.build_from_corpus(input_texts,
+                                                             target_vocab_size=2**13)
+    tokenizer_decoder = SubwordTextEncoder.build_from_corpus(output_texts,
+                                                             target_vocab_size=2**13,
+                                                             reserved_tokens=[preprocessor.start_token,
+                                                                              preprocessor.end_token])
+    summarizer = SummarizerTransformer(num_heads=1,
+                                       feed_forward_dim=1024,
+                                       embedding_size=64,
+                                       embedding_encoder_trainable=True,
+                                       embedding_decoder_trainable=True,
+                                       dropout_rate=0.1,
+                                       max_prediction_len=20)
 
-    class DataIterator:
-        def __iter__(self):
-            return read_data_iteratively()
+    trainer = Trainer(steps_per_epoch=500,
+                      batch_size=64,
+                      steps_to_log=5,
+                      tensorboard_dir='/tmp/trans_emb',
+                      num_print_predictions=10)
 
-
-    data_iter = DataIterator()
-    summarizer = SummarizerTransformer(embedding_size=12, max_prediction_len=20)
-    trainer = Trainer(batch_size=1, steps_per_epoch=100)
-    trainer.train(summarizer, data_iter, num_epochs=2)
-    summarizer.save('/tmp/summarizer')
+    trainer.train(summarizer, train_data, val_data=val_data)
 
     summarizer = SummarizerTransformer.load('/tmp/summarizer')
     pred = summarizer.predict('Some input new')
