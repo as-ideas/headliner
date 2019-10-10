@@ -157,7 +157,6 @@ trainer.train(summarizer, train_data, num_epochs=3)
 
 Large datasets can be handled by using an iterator:
 ```
-
 def read_data_iteratively():
     return (('Some inputs.', 'Some outputs.') for _ in range(1000))
 
