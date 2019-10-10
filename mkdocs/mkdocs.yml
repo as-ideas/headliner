@@ -24,7 +24,6 @@ nav:
             - Vectorizer: preprocessing/vectorizer.md
             - Tokenizer: preprocessing/tokenizer.md
         - Trainer: trainer.md
-        - Training: training.md
         - Losses: losses.md
         - Embeddings: embeddings.md
     - Contribution: CONTRIBUTING.md
