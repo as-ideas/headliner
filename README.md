@@ -52,23 +52,23 @@ python setup.py install
 
 ```
 from headliner.trainer import Trainer
-from headliner.model.summarizer_attention import SummarizerAttention
+from headliner.model.summarizer_transformer import SummarizerTransformer
 
 data = [('You are the stars, earth and sky for me!', 'I love you.'),
         ('You are great, but I have other plans.', 'I like you.')]
 
-summarizer = SummarizerAttention(lstm_size=16, embedding_size=10)
-trainer = Trainer(batch_size=2, steps_per_epoch=100, model_save_path='/tmp/summarizer')
-
+summarizer = SummarizerTransformer(embedding_size=64, max_prediction_len=20)
+trainer = Trainer(batch_size=2, steps_per_epoch=100)
 trainer.train(summarizer, data, num_epochs=2)
+summarizer.save('/tmp/summarizer')
 ```
 
 ### Prediction
 
 ```
-from headliner.model.summarizer_attention import SummarizerAttention
+from headliner.model.summarizer_transformer import SummarizerTransformer
 
-summarizer = SummarizerAttention.load('/tmp/summarizer')
+summarizer = SummarizerTransformer.load('/tmp/summarizer')
 summarizer.predict('You are the stars, earth and sky for me!')
 ```
 
@@ -77,15 +77,18 @@ summarizer.predict('You are the stars, earth and sky for me!')
 Training using a validation split and model checkpointing:
 
 ```
+from headliner.model.summarizer_attention import SummarizerTransformer
 from headliner.trainer import Trainer
-from headliner.model.summarizer_attention import SummarizerAttention
 
 train_data = [('You are the stars, earth and sky for me!', 'I love you.'),
               ('You are great, but I have other plans.', 'I like you.')]*1000
 val_data = [('You are great, but I have other plans.', 'I like you.')] * 8
 
-summarizer = SummarizerAttention(lstm_size=16, 
-                                 embedding_size=10)
+summarizer = SummarizerTransformer(num_heads=1,
+                                   feed_forward_dim=512,
+                                   num_layers=1,
+                                   embedding_size=64,
+                                   max_prediction_len=50)
 trainer = Trainer(batch_size=8,
                   steps_per_epoch=50,
                   max_vocab_size=10000,
@@ -98,9 +101,9 @@ trainer.train(summarizer, train_data, val_data=val_data, num_epochs=3)
 ### Advanced prediction
 Prediction information such as attention weights and logits can be accessed via predict_vectors returning a dictionary:
 ```
-from headliner.model.summarizer_attention import SummarizerAttention
+from headliner.model.summarizer_attention import SummarizerTransformer
 
-summarizer = SummarizerAttention.load('/tmp/summarizer')
+summarizer = SummarizerTransformer.load('/tmp/summarizer')
 summarizer.predict_vectors('You are the stars, earth and sky for me!')
 ```
 
@@ -110,7 +113,7 @@ A previously trained summarizer can be loaded and then retrained. In this case t
 ```
 train_data = [('Some new training data.', 'New data.')]*1000
 
-summarizer_loaded = SummarizerAttention.load('/tmp/summarizer')
+summarizer_loaded = SummarizerTransformer.load('/tmp/summarizer')
 trainer = Trainer(batch_size=2)
 trainer.train(summarizer, train_data)
 summarizer_loaded.save('/tmp/summarizer_retrained')
@@ -118,35 +121,51 @@ summarizer_loaded.save('/tmp/summarizer_retrained')
 
 ### Custom preprocessing
 
-String preprocessing can be customized:
 ```
 from headliner.preprocessing import Preprocessor
 
-sample = ('Some cased training data 1234', 'Cased data.')
-standard_preprocessor = Preprocessor()
-custom_preprocessor = Preprocessor(filter_pattern='', 
-                                   lower_case='', 
-                                   hash_numbers=False)
-standard_preprocessor(sample)
-custom_preprocessor(sample)
+train_data = [('Some inputs.', 'Some outputs.')]*1000
 
-trainer = Trainer(batch_size=2, preprocessor=preprocessor)
+preprocessor = Preprocessor(filter_pattern='', 
+                            lower_case=True, 
+                            hash_numbers=False)
+train_prep = [custom_preprocessor(t) for t in train_data]
+inputs_prep = [t[0] for t in train_prep]
+targets_prep = [t[1] for t in train_prep]
+
+# Build tf subword tokenizers. Other custom tokenizers can be implemented 
+# by subclassing headliner.preprocessing.Tokenizer
+
+tokenizer_input = SubwordTextEncoder.build_from_corpus(
+    inputs_prep, target_vocab_size=2**13)
+tokenizer_target = SubwordTextEncoder.build_from_corpus(
+    targets_prep, target_vocab_size=2**13)
+
+vectorizer = Vectorizer(tokenizer_input, tokenizer_target)
+summarizer = SummarizerTransformer(embedding_size=64, max_prediction_len=50)
+summarizer.init_model(preprocessor, vectorizer)
+
+trainer = Trainer(batch_size=2)
+trainer.train(summarizer, train_data, num_epochs=3)
 ```
+
 
 ### Training on large datasets
 
-Large datasets can be fed as an iterator:
+Large datasets can be handled by using an iterator:
 ```
+
+def read_data_iteratively():
+    return (('Some a b inputs.', 'Some a b c d e outputs.') for _ in range(1000))
+
 class DataIterator:
     def __iter__(self):
-        for i in range(1000):
-            yield ('You are the stars, earth and sky for me!', 'I love you.')
+        return read_data_iteratively()
 
 data_iter = DataIterator()
 
-summarizer = SummarizerAttention(lstm_size=16, embedding_size=10)
-trainer = Trainer(batch_size=16, steps_per_epoch=100)
-
+summarizer = SummarizerTransformer(embedding_size=10, max_prediction_len=20)
+trainer = Trainer(batch_size=16, steps_per_epoch=1000)
 trainer.train(summarizer, data_iter, num_epochs=3)
 ```
 

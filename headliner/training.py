@@ -33,25 +33,24 @@ if __name__ == '__main__':
 
     tf.get_logger().setLevel(logging.ERROR)
 
-    data_raw = read_data('/Users/cschaefe/datasets/en_ger.txt')[:10000]
-    train_data, val_data = train_test_split(data_raw, test_size=500, shuffle=True, random_state=42)
+    def read_data_iteratively():
+        return (('Some a b inputs.', 'Some a b c d e outputs.') for _ in range(10))
 
-    summarizer = SummarizerTransformer(num_heads=1,
-                                       feed_forward_dim=1024,
-                                       embedding_size=64,
-                                       embedding_encoder_trainable=True,
-                                       embedding_decoder_trainable=True,
-                                       max_prediction_len=20)
+    class DataIterator:
+        def __iter__(self):
+            return read_data_iteratively()
 
-    trainer = Trainer(steps_per_epoch=500,
-                      batch_size=8,
-                      steps_to_log=5,
-                     # embedding_path_encoder='/Users/cschaefe/datasets/glove_welt_dedup.txt',
-                   #   embedding_path_decoder='/Users/cschaefe/datasets/glove_welt_dedup.txt',
-                      tensorboard_dir='/tmp/trans_emb')
 
-    trainer.train(summarizer, train_data, val_data=val_data)
+    data_iter = DataIterator()
+    summarizer = SummarizerTransformer(embedding_size=12, max_prediction_len=20)
+    trainer = Trainer(batch_size=1, steps_per_epoch=100)
+    trainer.train(summarizer, data_iter, num_epochs=2)
+    summarizer.save('/tmp/summarizer')
 
+    summarizer = SummarizerTransformer.load('/tmp/summarizer')
+    pred = summarizer.predict('Some input new')
+
+    print(pred)
 
 
 
