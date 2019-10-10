@@ -28,9 +28,9 @@ Read the documentation at: [https://as-ideas.github.io/headliner/](https://as-id
 
 Headliner is compatible with Python 3.6 and is distributed under the MIT license.
 
-## Installation
-⚠️ Before installing Headliner, you need to install TensorFlow as we use this as our deep learning framework. For more 
-details on how to install it, have a look at the [TensorFlow installation instructions](https://www.tensorflow.org/install/).
+## ⚙️ Installation
+> ⚠️ Before installing Headliner, you need to install TensorFlow as we use this as our deep learning framework. For more 
+> details on how to install it, have a look at the [TensorFlow installation instructions](https://www.tensorflow.org/install/).
 
 Then you can install Headliner itself. There are two ways to install Headliner:
 
@@ -46,7 +46,7 @@ cd headliner
 python setup.py install
 ```
 
-## Usage 
+## 📖 Usage 
 
 ### Training
 
@@ -150,11 +150,11 @@ trainer = Trainer(batch_size=16, steps_per_epoch=100)
 trainer.train(summarizer, data_iter, num_epochs=3)
 ```
 
-## Contribute
+## 🤝 Contribute
 We welcome all kinds of contributions.
 See the [Contribution](CONTRIBUTING.md) guide for more details.
 
-## Cite this work
+## 📝 Cite this work
 Please cite Headliner in your publications if this is useful for your research. Here is an example BibTeX entry:
 ```
 @misc{axelspringerai2019headliners,
@@ -165,10 +165,10 @@ Please cite Headliner in your publications if this is useful for your research. 
 }
 ```
 
-## Maintainers
+## 🏗 Maintainers
 * Christian Schäfer, github: [cschaefer26](https://github.com/cschaefer26)
 * Dat Tran, github: [datitran](https://github.com/datitran)
 
-## Copyright
+## © Copyright
 
 See [LICENSE](LICENSE) for details.
