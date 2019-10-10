@@ -5,6 +5,7 @@ nav:
     - Home: index.md
     - Examples:
         - Neural Machine Translation: examples/nmt_example.md
+        - Advanced Neural Machine Translation: examples/advanced_nmt_example.md
     - Documentation:
         - Callbacks:
             - ValidationCallback: callbacks/validation_callback.md
@@ -15,16 +16,17 @@ nav:
         - Model:
             - Summarizer: model/summarizer.md
             - SummarizerAttention: model/summarizer_attention.md
+            - SummarizerTransformer: model/summarizer_transformer.md
         - Preprocessing:
             - BucketGenerator: preprocessing/bucket_generator.md
             - DatasetGenerator: preprocessing/dataset_generator.md
             - Preprocessor: preprocessing/preprocessor.md
             - Vectorizer: preprocessing/vectorizer.md
+            - Tokenizer: preprocessing/tokenizer.md
         - Trainer: trainer.md
         - Training: training.md
         - Losses: losses.md
         - Embeddings: embeddings.md
-        - Prediction: prediction.md
     - Contribution: CONTRIBUTING.md
     - License: LICENSE.md
 
