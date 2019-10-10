@@ -138,7 +138,7 @@ targets_prep = [t[1] for t in train_prep]
 
 # Build tf subword tokenizers. Other custom tokenizers can be implemented 
 # by subclassing headliner.preprocessing.Tokenizer
-
+from tensorflow_datasets.core.features.text import SubwordTextEncoder
 tokenizer_input = SubwordTextEncoder.build_from_corpus(
     inputs_prep, target_vocab_size=2**13)
 tokenizer_target = SubwordTextEncoder.build_from_corpus(
