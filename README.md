@@ -81,8 +81,8 @@ from headliner.model.summarizer_attention import SummarizerTransformer
 from headliner.trainer import Trainer
 
 train_data = [('You are the stars, earth and sky for me!', 'I love you.'),
-              ('You are great, but I have other plans.', 'I like you.')]*1000
-val_data = [('You are great, but I have other plans.', 'I like you.')] * 8
+              ('You are great, but I have other plans.', 'I like you.')] 
+val_data = [('You are great, but I have other plans.', 'I like you.')] 
 
 summarizer = SummarizerTransformer(num_heads=1,
                                    feed_forward_dim=512,
@@ -91,7 +91,8 @@ summarizer = SummarizerTransformer(num_heads=1,
                                    max_prediction_len=50)
 trainer = Trainer(batch_size=8,
                   steps_per_epoch=50,
-                  max_vocab_size=10000,
+                  max_vocab_size_encoder=10000,
+                  max_vocab_size_decoder=10000,
                   tensorboard_dir='/tmp/tensorboard',
                   model_save_path='/tmp/summarizer')
 
@@ -111,7 +112,7 @@ summarizer.predict_vectors('You are the stars, earth and sky for me!')
 
 A previously trained summarizer can be loaded and then retrained. In this case the data preprocessing and vectorization is loaded from the model.
 ```
-train_data = [('Some new training data.', 'New data.')]*1000
+train_data = [('Some new training data.', 'New data.')] * 10
 
 summarizer_loaded = SummarizerTransformer.load('/tmp/summarizer')
 trainer = Trainer(batch_size=2)
@@ -121,17 +122,17 @@ summarizer_loaded.save('/tmp/summarizer_retrained')
 
 ### Custom preprocessing
 
-A model can be initialized with custom string cleanup and tokenization:
+A model can be initialized with custom preprocessing and tokenization:
 
 ```
 from headliner.preprocessing import Preprocessor
 
-train_data = [('Some inputs.', 'Some outputs.')]*1000
+train_data = [('Some inputs.', 'Some outputs.')] * 10
 
 preprocessor = Preprocessor(filter_pattern='', 
                             lower_case=True, 
                             hash_numbers=False)
-train_prep = [custom_preprocessor(t) for t in train_data]
+train_prep = [preprocessor(t) for t in train_data]
 inputs_prep = [t[0] for t in train_prep]
 targets_prep = [t[1] for t in train_prep]
 
@@ -158,7 +159,7 @@ Large datasets can be handled by using an iterator:
 ```
 
 def read_data_iteratively():
-    return (('Some a b inputs.', 'Some a b c d e outputs.') for _ in range(1000))
+    return (('Some inputs.', 'Some outputs.') for _ in range(1000))
 
 class DataIterator:
     def __iter__(self):
