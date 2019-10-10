@@ -31,12 +31,13 @@ def read_data(file_path: str) -> List[Tuple[str, str]]:
 
 if __name__ == '__main__':
 
-    data_raw = read_data('/Users/cschaefe/datasets/en_ger.txt')
+    data_raw = read_data('/Users/cschaefe/datasets/en_ger.txt')[:10000]
     train_data, val_data = train_test_split(data_raw, test_size=100, shuffle=True, random_state=42)
 
 
-    preprocessor = Preprocessor()
+    preprocessor = Preprocessor(start_token='<start>', end_token='<end>')
     train_data_prep = [preprocessor(d) for d in train_data]
+
     input_texts = [t[0] for t in train_data_prep]
     output_texts = [t[1] for t in train_data_prep]
 
@@ -44,16 +45,22 @@ if __name__ == '__main__':
                                                              target_vocab_size=2**13)
     tokenizer_decoder = SubwordTextEncoder.build_from_corpus(output_texts,
                                                              target_vocab_size=2**13,
-                                                             reserved_tokens=[preprocessor.end_token,
-                                                                              preprocessor.start_token])
+                                                             reserved_tokens=[preprocessor.start_token,
+                                                                              preprocessor.end_token])
+    encoded_1 = tokenizer_decoder.encode('<start> <end>')
+    encoded_2 = tokenizer_decoder.encode('<start> wie <end>')
+   # encoded_2 = tokenizer_decoder.encode(preprocessor.start_token)
+    encoded_3 = tokenizer_decoder.encode('<start>')
 
-    encoded = tokenizer_decoder.encode('<start> wie geht es dir ? <end> „')
-    decoded = tokenizer_decoder.decode(encoded)
 
     print('vocab size encoder: {}, decoder: {}'.format(
         tokenizer_encoder.vocab_size, tokenizer_decoder.vocab_size))
 
     vectorizer = Vectorizer(tokenizer_encoder, tokenizer_decoder)
+
+    out = vectorizer(('<start> wie <end>', '<start> wie <end>'))
+
+
     summarizer = SummarizerTransformer(num_heads=1,
                                        feed_forward_dim=1024,
                                        num_layers=1,
@@ -63,7 +70,7 @@ if __name__ == '__main__':
     summarizer.init_model(preprocessor, vectorizer)
 
     trainer = Trainer(steps_per_epoch=500,
-                      batch_size=8,
+                      batch_size=4,
                       model_save_path='/tmp/summarizer_transformer',
                       steps_to_log=50,
                       bucketing_buffer_size_batches=10000,
