@@ -12,6 +12,7 @@ class Tokenizer(abc.ABC):
     def encode(self, text: str) -> List[int]:
         """
         Encodes a given string into a sequence of indices.
+
         Args:
             text: Text to encode.
 

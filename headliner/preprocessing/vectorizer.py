@@ -12,6 +12,15 @@ class Vectorizer:
                  tokenizer_encoder: Tokenizer,
                  tokenizer_decoder: Tokenizer,
                  max_output_len=None) -> None:
+        """
+        Initializes the vectorizer.
+
+        Args:
+            tokenizer_encoder: Tokenizer that encodes the input text.
+            tokenizer_decoder: Tokenizer that encodes the target text.
+            max_output_len (optional): Maximum length of target sequence,
+                longer sequences will be truncated.
+        """
         self.encoding_dim = tokenizer_encoder.vocab_size + 1
         self.decoding_dim = tokenizer_decoder.vocab_size + 1
         self.max_output_len = max_output_len
