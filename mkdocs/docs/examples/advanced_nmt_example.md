@@ -16,7 +16,7 @@ head deu.txt
 ```
 
 ### Create the dataset but only take a subset for faster training
-```
+```python
 import io
 
 def create_dataset(path, num_examples):
@@ -30,14 +30,14 @@ data[:10]
 ```
 
 ### Split the dataset into train and test
-```
+```python
 from sklearn.model_selection import train_test_split
 
 train, test = train_test_split(data, test_size=0.1)
 ```
 
 ### Define custom preprocessing
-```
+```python
 from headliner.preprocessing import Preprocessor
 preprocessor = Preprocessor(lower_case=True)
 train_prep = [preprocessor(t) for t in train]
@@ -45,7 +45,7 @@ train_prep[:5]
 ```
 
 ### Fit custom tokenizers for input and target
-```
+```python
 from tensorflow_datasets.core.features.text import SubwordTextEncoder
 from headliner.preprocessing import Vectorizer
 inputs_prep = [t[0] for t in train_prep]
@@ -68,7 +68,7 @@ vectorizer = Vectorizer(tokenizer_input, tokenizer_target)
 ```
 
 ### Define the model and train it
-```
+```python
 from headliner.model.summarizer_transformer import SummarizerTransformer
 from headliner.trainer import Trainer
 summarizer = SummarizerTransformer(num_heads=2,
@@ -87,12 +87,12 @@ trainer.train(summarizer, train, num_epochs=10, val_data=test)
 ```
 
 ### Do some prediction
-```
+```python
 summarizer.predict('Wie geht es dir?')
 ```
 
 ### Plot attention weights for some prediction
-```
+```python
 from tensorflow import squeeze
 from matplotlib import pyplot as plt
 
@@ -121,7 +121,7 @@ def plot_attention_weights(summarizer, pred_vectors, layer_name):
 ```
 
 ### Continue training to improve the model and check the BLEU score
-```
+```python
 from headliner.evaluation import BleuScorer
 bleu_scorer = BleuScorer(tokens_to_ignore=[preprocessor.start_token, 
                                            preprocessor.end_token])
