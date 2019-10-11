@@ -68,7 +68,7 @@ class TestTraining(unittest.TestCase):
         loss_attention = 0
         train_step = summarizer_attention.new_train_step(loss_function=loss_func,
                                                          batch_size=2)
-        for e in range(0, 10):
+        for _ in range(10):
             for source_seq, target_seq in dataset.take(-1):
                 loss_attention = train_step(source_seq, target_seq)
                 print(str(loss_attention))

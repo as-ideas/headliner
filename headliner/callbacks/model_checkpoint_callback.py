@@ -34,6 +34,8 @@ class ModelCheckpointCallback(tf.keras.callbacks.Callback):
     def on_epoch_end(self, batch, logs=None) -> None:
         if logs is None:
             logs = {}
+        if self.file_path is None:
+            return
         score = logs[self.monitor]
         score_is_better = False
         if self.best_score is None:

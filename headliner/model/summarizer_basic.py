@@ -62,7 +62,7 @@ class SummarizerBasic(Summarizer):
 
     def predict_vectors(self, input_text: str, target_text: str) -> Dict[str, Union[str, np.array]]:
         text_preprocessed = self.preprocessor((input_text, target_text))
-        en_inputs, de_inputs = self.vectorizer(text_preprocessed)
+        en_inputs, _ = self.vectorizer(text_preprocessed)
         en_initial_states = self.encoder.init_states(1)
         en_outputs = self.encoder(tf.constant([en_inputs]), en_initial_states)
         start_end_seq = self.vectorizer.encode_output(

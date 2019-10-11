@@ -105,8 +105,8 @@ class SummarizerTransformer(Summarizer):
 
     def predict_vectors(self, input_text: str, target_text: str) -> Dict[str, Union[str, np.array]]:
         text_preprocessed = self.preprocessor((input_text, target_text))
-        inp_sentence, output_sentence = self.vectorizer(text_preprocessed)
-        encoder_input = tf.expand_dims(inp_sentence, 0)
+        en_inputs, _ = self.vectorizer(text_preprocessed)
+        en_inputs = tf.expand_dims(en_inputs, 0)
         start_end_seq = self.vectorizer.encode_output(
             ' '.join([self.preprocessor.start_token, self.preprocessor.end_token]))
         de_start_index, de_end_index = start_end_seq[:1], start_end_seq[-1:]
@@ -115,10 +115,10 @@ class SummarizerTransformer(Summarizer):
                   'logits': [],
                   'attention_weights': [],
                   'predicted_sequence': []}
-        for i in range(self.max_prediction_len):
+        for _ in range(self.max_prediction_len):
             enc_padding_mask, combined_mask, dec_padding_mask = create_masks(
-                encoder_input, decoder_output)
-            predictions, attention_weights = self.transformer(encoder_input,
+                en_inputs, decoder_output)
+            predictions, attention_weights = self.transformer(en_inputs,
                                                               decoder_output,
                                                               False,
                                                               enc_padding_mask,

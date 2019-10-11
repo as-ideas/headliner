@@ -1,11 +1,10 @@
 import datetime
 import logging
-import tensorflow as tf
 from collections import Counter
 from typing import Tuple, List, Iterable, Callable, Dict, Union
 
+import tensorflow as tf
 import yaml
-
 
 from headliner.callbacks.evaluation_callback import EvaluationCallback
 from headliner.callbacks.model_checkpoint_callback import ModelCheckpointCallback
@@ -174,11 +173,11 @@ class Trainer:
                 ModelCheckpointCallback(file_path=self.model_save_path,
                                         summarizer=summarizer,
                                         monitor='loss_val',
-                                        mode='min'),
-                tf.keras.callbacks.TensorBoard(log_dir=self.tensorboard_dir,
-                                               update_freq='epoch')
+                                        mode='min')
             ])
-
+        if self.tensorboard_dir is not None:
+            train_callbacks.append(tf.keras.callbacks.TensorBoard(log_dir=self.tensorboard_dir,
+                                                                  update_freq='epoch'))
         logs = {}
         epoch_count, batch_count = 0, 0
         train_step = summarizer.new_train_step(self.loss_function, self.batch_size, apply_gradients=True)
