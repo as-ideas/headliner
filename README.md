@@ -35,12 +35,14 @@ Headliner is compatible with Python 3.6 and is distributed under the MIT license
 Then you can install Headliner itself. There are two ways to install Headliner:
 
 * Install Headliner from PyPI (recommended):
-```
+
+```bash
 pip install headliner
 ```
 
 * Install Headliner from the GitHub source:
-```
+
+```bash
 git clone https://github.com/as-ideas/headliner.git
 cd headliner
 python setup.py install
@@ -50,7 +52,7 @@ python setup.py install
 
 ### Training
 
-```
+```python
 from headliner.trainer import Trainer
 from headliner.model.summarizer_transformer import SummarizerTransformer
 
@@ -65,7 +67,7 @@ summarizer.save('/tmp/summarizer')
 
 ### Prediction
 
-```
+```python
 from headliner.model.summarizer_transformer import SummarizerTransformer
 
 summarizer = SummarizerTransformer.load('/tmp/summarizer')
@@ -74,7 +76,8 @@ summarizer.predict('You are the stars, earth and sky for me!')
 
 ### Models
 Currently available models include a basic encoder-decoder, an encoder-decoder with Luong attention and the transformer:
-```
+
+```python
 from headliner.model.summarizer_basic import SummarizerBasic
 from headliner.model.summarizer_attention import SummarizerAttention
 from headliner.model.summarizer_transformer import SummarizerTransformer
@@ -85,10 +88,9 @@ summarizer_transformer = SummarizerTransformer()
 ```
 
 ### Advanced training
-
 Training using a validation split and model checkpointing:
 
-```
+```python
 from headliner.model.summarizer_transformer import SummarizerTransformer
 from headliner.trainer import Trainer
 
@@ -113,7 +115,8 @@ trainer.train(summarizer, train_data, val_data=val_data, num_epochs=3)
 
 ### Advanced prediction
 Prediction information such as attention weights and logits can be accessed via predict_vectors returning a dictionary:
-```
+
+```python
 from headliner.model.summarizer_transformer import SummarizerTransformer
 
 summarizer = SummarizerTransformer.load('/tmp/summarizer')
@@ -121,9 +124,9 @@ summarizer.predict_vectors('You are the stars, earth and sky for me!')
 ```
 
 ### Resume training
-
 A previously trained summarizer can be loaded and then retrained. In this case the data preprocessing and vectorization is loaded from the model.
-```
+
+```python
 train_data = [('Some new training data.', 'New data.')] * 10
 
 summarizer_loaded = SummarizerTransformer.load('/tmp/summarizer')
@@ -133,9 +136,9 @@ summarizer_loaded.save('/tmp/summarizer_retrained')
 ```
 
 ### Use pretrained embeddings
-
 Embeddings in GloVe format can be injected in to the trainer as follows. Optionally, set the embedding to non-trainable.
-```
+
+```python
 trainer = Trainer(embedding_path_encoder='/tmp/embedding_encoder.txt',
                   embedding_path_decoder='/tmp/embedding_decoder.txt')
 
@@ -146,10 +149,9 @@ summarizer = SummarizerTransformer(embedding_size=64,
 ```
 
 ### Custom preprocessing
-
 A model can be initialized with custom preprocessing and tokenization:
 
-```
+```python
 from headliner.preprocessing import Preprocessor
 
 train_data = [('Some inputs.', 'Some outputs.')] * 10
@@ -179,9 +181,9 @@ trainer.train(summarizer, train_data, num_epochs=3)
 
 
 ### Training on large datasets
-
 Large datasets can be handled by using an iterator:
-```
+
+```python
 def read_data_iteratively():
     return (('Some inputs.', 'Some outputs.') for _ in range(1000))
 
@@ -202,7 +204,7 @@ See the [Contribution](CONTRIBUTING.md) guide for more details.
 
 ## 📝 Cite this work
 Please cite Headliner in your publications if this is useful for your research. Here is an example BibTeX entry:
-```
+```BibTeX
 @misc{axelspringerai2019headliners,
   title={Headliner},
   author={Christian Schäfer & Dat Tran},
