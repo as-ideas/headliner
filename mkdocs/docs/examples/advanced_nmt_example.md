@@ -30,7 +30,7 @@ data[:10]
 ```
 
 ### Split the dataset into train and test
-```python
+```
 from sklearn.model_selection import train_test_split
 
 train, test = train_test_split(data, test_size=0.1)
@@ -71,7 +71,7 @@ vectorizer = Vectorizer(tokenizer_input, tokenizer_target)
 ```
 from headliner.model.summarizer_transformer import SummarizerTransformer
 from headliner.trainer import Trainer
-summarizer = SummarizerTransformer(num_heads=1,
+summarizer = SummarizerTransformer(num_heads=2,
                                    feed_forward_dim=1024,
                                    num_layers=1,
                                    embedding_size=64,
@@ -89,6 +89,39 @@ trainer.train(summarizer, train, num_epochs=10, val_data=test)
 ### Do some prediction
 ```
 summarizer.predict('Wie geht es dir?')
+```
+
+### Plot attention weights for a prediction
+```
+import tensorflow as tf
+import matplotlib.pyplot as plt
+
+def plot_attention_weights(summarizer, pred_vectors, layer_name):
+    fig = plt.figure(figsize=(16, 8))
+    input_text, _ = pred_vectors['preprocessed_text']
+    input_sequence = summarizer.vectorizer.encode_input(input_text)
+    pred_sequence = pred_vectors['predicted_sequence']
+    attention = tf.squeeze(pred_vectors['attention_weights'][layer_name])
+    for head in range(attention.shape[0]):
+        ax = fig.add_subplot(1, 2, head + 1)
+        ax.matshow(attention[head][:-1, :], cmap='viridis')
+        fontdict = {'fontsize': 10}
+        ax.set_xticks(range(len(input_sequence)))
+        ax.set_yticks(range(len(pred_sequence)))
+        ax.set_ylim(len(pred_sequence) - 1.5, -0.5)
+        ax.set_xticklabels(
+            [summarizer.vectorizer.decode_input([i]) for i in input_sequence],
+            fontdict=fontdict,
+            rotation=90)
+        ax.set_yticklabels([summarizer.vectorizer.decode_output([i]) 
+                            for i in pred_sequence], fontdict=fontdict)
+        ax.set_xlabel('Head {}'.format(head + 1))
+    plt.tight_layout()
+    plt.show()
+
+pred_vectors = best_summarizer.predict_vectors(
+    'Tom rannte aus dem brennenden Haus.', '')
+plot_attention_weights(best_summarizer, pred_vectors, 'decoder_layer1_block2')
 ```
 
 ### Continue training to improve the model and check the BLEU score
