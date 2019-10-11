@@ -180,14 +180,13 @@ class Trainer:
             ])
 
         logs = {}
-        epoch_count, batch_count, sum_loss = 0, 0, 0.
+        epoch_count, batch_count = 0, 0
         train_step = summarizer.new_train_step(self.loss_function, self.batch_size, apply_gradients=True)
         while epoch_count < num_epochs:
             for train_source_seq, train_target_seq in train_dataset.take(-1):
                 batch_count += 1
                 current_loss = float(train_step(train_source_seq, train_target_seq))
-                sum_loss += current_loss
-                logs['loss'] = sum_loss / batch_count
+                logs['loss'] = current_loss
                 if batch_count % self.steps_to_log == 0:
                     self.logger.info('epoch {epoch}, batch {batch}, logs: {logs}'.format(epoch=epoch_count,
                                                                                          batch=batch_count,
