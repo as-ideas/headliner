@@ -12,6 +12,13 @@ class BleuScorer(Scorer):
     """
 
     def __init__(self, tokens_to_ignore=None, weights=(0.25, 0.25, 0.25, 0.25)) -> None:
+        """
+        Initializes the scorer.
+
+        Args:
+            tokens_to_ignore: Tokens to be removed before comparing input and output text.
+            weights: Custom weights for 1,2,3,4 grams, e.g. (1, 0, 0, 0) will only measure 1-gram overlaps.
+        """
         self.tokens_to_exclude = tokens_to_ignore or []
         self.weights = weights
 
