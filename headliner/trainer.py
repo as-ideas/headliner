@@ -83,7 +83,7 @@ class Trainer:
         self.loss_function = masked_crossentropy
         self.use_bucketing = use_bucketing
         self.shuffle_buffer_size = None if use_bucketing else shuffle_buffer_size
-        self.dataset_generator = DatasetGenerator(self.batch_size, shuffle_buffer_size)
+        self.dataset_generator = DatasetGenerator(self.batch_size, self.shuffle_buffer_size)
         self.bucket_generator = None
         if use_bucketing:
             self.bucket_generator = BucketGenerator(element_length_function=lambda vecs: len(vecs[0]),
