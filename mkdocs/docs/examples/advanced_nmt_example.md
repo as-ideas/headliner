@@ -91,21 +91,7 @@ trainer.train(summarizer, train, num_epochs=10, val_data=test)
 summarizer.predict('Wie geht es dir?')
 ```
 
-
-### Continue training to improve the model and check the BLEU score
-```
-from headliner.evaluation import BleuScorer
-bleu_scorer = BleuScorer(tokens_to_ignore=[preprocessor.start_token, 
-                                           preprocessor.end_token])
-trainer.train(best_summarizer, 
-              train, 
-              num_epochs=30, 
-              val_data=test, 
-              scorers={'bleu': bleu_scorer}
-```
-
-
-### Plot attention weights for a prediction
+### Plot attention weights for some prediction
 ```
 import tensorflow as tf
 import matplotlib.pyplot as plt
@@ -128,12 +114,21 @@ def plot_attention_weights(summarizer, pred_vectors, layer_name):
             fontdict=fontdict,
             rotation=90)
         ax.set_yticklabels([summarizer.vectorizer.decode_output([i]) 
-                            for i in pred_sequence], fontdict=fontdict)
+                               for i in pred_sequence ], fontdict=fontdict)
         ax.set_xlabel('Head {}'.format(head + 1))
     plt.tight_layout()
     plt.show()
-
-pred_vectors = best_summarizer.predict_vectors(
-    'Tom rannte aus dem brennenden Haus.', '')
-plot_attention_weights(best_summarizer, pred_vectors, 'decoder_layer1_block2')
 ```
+
+### Continue training to improve the model and check the BLEU score
+```
+from headliner.evaluation import BleuScorer
+bleu_scorer = BleuScorer(tokens_to_ignore=[preprocessor.start_token, 
+                                           preprocessor.end_token])
+trainer.train(best_summarizer, 
+              train, 
+              num_epochs=30, 
+              val_data=test, 
+              scorers={'bleu': bleu_scorer}
+```
+
