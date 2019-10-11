@@ -28,6 +28,8 @@ class TestTrainer(unittest.TestCase):
         self.assertEqual(4, trainer.steps_per_epoch)
         self.assertEqual('tensor_dir', trainer.tensorboard_dir)
         self.assertEqual('model_save_path', trainer.model_save_path)
+        self.assertTrue(trainer.use_bucketing)
+        self.assertIsNone(trainer.shuffle_buffer_size)
         self.assertEqual(5, trainer.bucketing_buffer_size_batches)
         self.assertEqual(6, trainer.bucketing_batches_to_bucket)
         self.assertEqual(7, trainer.steps_to_log)
@@ -43,6 +45,7 @@ class TestTrainer(unittest.TestCase):
                           steps_per_epoch=4,
                           tensorboard_dir='tensor_dir',
                           model_save_path='model_save_path',
+                          shuffle_buffer_size=10,
                           bucketing_buffer_size_batches=5,
                           bucketing_batches_to_bucket=6,
                           steps_to_log=7,
@@ -57,6 +60,8 @@ class TestTrainer(unittest.TestCase):
         self.assertEqual(4, trainer.steps_per_epoch)
         self.assertEqual('tensor_dir', trainer.tensorboard_dir)
         self.assertEqual('model_save_path', trainer.model_save_path)
+        self.assertFalse(trainer.use_bucketing)
+        self.assertEqual(10, trainer.shuffle_buffer_size)
         self.assertEqual(5, trainer.bucketing_buffer_size_batches)
         self.assertEqual(6, trainer.bucketing_batches_to_bucket)
         self.assertEqual(7, trainer.steps_to_log)
@@ -110,4 +115,4 @@ class TestTrainer(unittest.TestCase):
                       callbacks=[log_callback])
 
         logs = log_callback.logs
-        self.assertAlmostEqual(1.6813855, logs['loss'], 6)
+        self.assertAlmostEqual(1.6758850812911987, logs['loss'], 6)

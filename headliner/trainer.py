@@ -37,6 +37,8 @@ class Trainer:
                  steps_per_epoch=500,
                  tensorboard_dir='/tmp/train_tens_' + datetime.datetime.now().strftime('%Y%m%d_%H%M%S'),
                  model_save_path='/tmp/summarizer_' + datetime.datetime.now().strftime('%Y%m%d_%H%M%S'),
+                 shuffle_buffer_size=100000,
+                 use_bucketing=False,
                  bucketing_buffer_size_batches=10000,
                  bucketing_batches_to_bucket=100,
                  logging_level=logging.INFO,
@@ -57,6 +59,8 @@ class Trainer:
             steps_per_epoch: Number of steps to train until callbacks are invoked.
             tensorboard_dir: Directory for saving tensorboard logs.
             model_save_path: Directory for saving the best model.
+            shuffle_buffer_size: Size of the buffer for shuffling the files before batching.
+            use_bucketing: Whether to bucket the sequences by length to reduce the amount of padding.
             bucketing_buffer_size_batches: Number of batches to buffer when bucketing sequences.
             bucketing_batches_to_bucket: Number of buffered batches from which sequences are collected for bucketing.
             logging_level: Level of logging to use, e.g. logging.INFO or logging.DEBUG.
@@ -77,18 +81,23 @@ class Trainer:
         self.tensorboard_dir = tensorboard_dir
         self.model_save_path = model_save_path
         self.loss_function = masked_crossentropy
-        self.dataset_generator = DatasetGenerator(self.batch_size)
-        self.bucket_generator = BucketGenerator(element_length_function=lambda vecs: len(vecs[0]),
-                                                batch_size=self.batch_size,
-                                                buffer_size_batches=self.bucketing_buffer_size_batches,
-                                                batches_to_bucket=self.bucketing_batches_to_bucket,
-                                                shuffle=True,
-                                                seed=42)
+        self.use_bucketing = use_bucketing
+        self.shuffle_buffer_size = None if use_bucketing else shuffle_buffer_size
+        self.dataset_generator = DatasetGenerator(self.batch_size, self.shuffle_buffer_size)
+        self.bucket_generator = None
+        if use_bucketing:
+            self.bucket_generator = BucketGenerator(element_length_function=lambda vecs: len(vecs[0]),
+                                                    batch_size=self.batch_size,
+                                                    buffer_size_batches=self.bucketing_buffer_size_batches,
+                                                    batches_to_bucket=self.bucketing_batches_to_bucket,
+                                                    shuffle=True,
+                                                    seed=42)
         self.logger = get_logger(__name__)
         self.logger.setLevel(logging_level)
         self.num_print_predictions = num_print_predictions
         self.steps_to_log = steps_to_log
         self.preprocessor = preprocessor or Preprocessor(start_token=START_TOKEN, end_token=END_TOKEN)
+
 
     @classmethod
     def from_config(cls, file_path, **kwargs):
@@ -102,6 +111,8 @@ class Trainer:
             steps_per_epoch = cfg['steps_per_epoch']
             tensorboard_dir = cfg['tensorboard_dir']
             model_save_path = cfg['model_save_path']
+            use_bucketing = cfg['use_bucketing']
+            shuffle_buffer_size = cfg['shuffle_buffer_size']
             bucketing_buffer_size_batches = cfg['bucketing_buffer_size_batches']
             bucketing_batches_to_bucket = cfg['bucketing_batches_to_bucket']
             steps_to_log = cfg['steps_to_log']
@@ -120,6 +131,8 @@ class Trainer:
                            steps_per_epoch=steps_per_epoch,
                            tensorboard_dir=tensorboard_dir,
                            model_save_path=model_save_path,
+                           use_bucketing=use_bucketing,
+                           shuffle_buffer_size=shuffle_buffer_size,
                            bucketing_buffer_size_batches=bucketing_buffer_size_batches,
                            bucketing_batches_to_bucket=bucketing_batches_to_bucket,
                            logging_level=logging_level,
@@ -184,8 +197,8 @@ class Trainer:
         while epoch_count < num_epochs:
             for train_source_seq, train_target_seq in train_dataset.take(-1):
                 batch_count += 1
-                current_loss = float(train_step(train_source_seq, train_target_seq))
-                logs['loss'] = current_loss
+                current_loss = train_step(train_source_seq, train_target_seq)
+                logs['loss'] = float(current_loss.numpy())
                 if batch_count % self.steps_to_log == 0:
                     self.logger.info('epoch {epoch}, batch {batch}, logs: {logs}'.format(epoch=epoch_count,
                                                                                          batch=batch_count,
@@ -219,18 +232,12 @@ class Trainer:
             embedding_weights_encoder = embedding_to_matrix(embedding=embedding,
                                                             token_index=tokenizer_encoder.token_index,
                                                             embedding_dim=summarizer.embedding_size)
-            num_unknown_encoder = tokenizer_encoder.vocab_size - len(embedding.keys())
-            self.logger.info('unknown vocab encoder embedding: {}'.format(num_unknown_encoder))
-
         if self.embedding_path_decoder is not None:
             self.logger.info('loading decoder embedding from {}'.format(self.embedding_path_decoder))
             embedding = read_embedding(self.embedding_path_decoder, summarizer.embedding_size)
             embedding_weights_decoder = embedding_to_matrix(embedding=embedding,
                                                             token_index=tokenizer_decoder.token_index,
                                                             embedding_dim=summarizer.embedding_size)
-            num_unknown_decoder = tokenizer_decoder.vocab_size - len(embedding.keys())
-            self.logger.info('unknown vocab encoder embedding: {}'.format(num_unknown_decoder))
-
         summarizer.init_model(preprocessor=self.preprocessor,
                               vectorizer=vectorizer,
                               embedding_weights_encoder=embedding_weights_encoder,
@@ -248,7 +255,7 @@ class Trainer:
             if bucket_generator is None:
                 return data_vectorized
             else:
-                return self.bucket_generator(data_vectorized)
+                return bucket_generator(data_vectorized)
 
         return vectorize
 
