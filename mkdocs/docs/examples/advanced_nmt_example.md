@@ -92,6 +92,18 @@ summarizer.predict('Wie geht es dir?')
 ```
 
 
+### Continue training to improve the model and check the BLEU score
+```
+from headliner.evaluation import BleuScorer
+bleu_scorer = BleuScorer(tokens_to_ignore=[preprocessor.start_token, 
+                                           preprocessor.end_token])
+trainer.train(best_summarizer, 
+              train, 
+              num_epochs=30, 
+              val_data=test, 
+              scorers={'bleu': bleu_scorer}
+```
+
 
 ### Plot attention weights for a prediction
 ```
@@ -124,16 +136,4 @@ def plot_attention_weights(summarizer, pred_vectors, layer_name):
 pred_vectors = best_summarizer.predict_vectors(
     'Tom rannte aus dem brennenden Haus.', '')
 plot_attention_weights(best_summarizer, pred_vectors, 'decoder_layer1_block2')
-```
-
-### Continue training to improve the model and check the BLEU score
-```
-from headliner.evaluation import BleuScorer
-bleu_scorer = BleuScorer(tokens_to_ignore=[preprocessor.start_token, 
-                                           preprocessor.end_token])
-trainer.train(best_summarizer, 
-              train, 
-              num_epochs=30, 
-              val_data=test, 
-              scorers={'bleu': bleu_scorer}
 ```
