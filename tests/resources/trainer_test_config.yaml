@@ -7,6 +7,8 @@ embedding_path_decoder: null
 steps_per_epoch: 4
 tensorboard_dir: 'tensor_dir'
 model_save_path: 'model_save_path'
+use_bucketing: True
+shuffle_buffer_size: 1000
 bucketing_buffer_size_batches: 5
 bucketing_batches_to_bucket: 6
 steps_to_log: 7

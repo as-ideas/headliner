@@ -111,6 +111,8 @@ class Trainer:
             steps_per_epoch = cfg['steps_per_epoch']
             tensorboard_dir = cfg['tensorboard_dir']
             model_save_path = cfg['model_save_path']
+            use_bucketing = cfg['use_bucketing']
+            shuffle_buffer_size = cfg['shuffle_buffer_size']
             bucketing_buffer_size_batches = cfg['bucketing_buffer_size_batches']
             bucketing_batches_to_bucket = cfg['bucketing_batches_to_bucket']
             steps_to_log = cfg['steps_to_log']
@@ -129,6 +131,8 @@ class Trainer:
                            steps_per_epoch=steps_per_epoch,
                            tensorboard_dir=tensorboard_dir,
                            model_save_path=model_save_path,
+                           use_bucketing=use_bucketing,
+                           shuffle_buffer_size=shuffle_buffer_size,
                            bucketing_buffer_size_batches=bucketing_buffer_size_batches,
                            bucketing_batches_to_bucket=bucketing_batches_to_bucket,
                            logging_level=logging_level,
