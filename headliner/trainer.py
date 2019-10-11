@@ -197,8 +197,8 @@ class Trainer:
         while epoch_count < num_epochs:
             for train_source_seq, train_target_seq in train_dataset.take(-1):
                 batch_count += 1
-                current_loss = float(train_step(train_source_seq, train_target_seq))
-                logs['loss'] = current_loss
+                current_loss = train_step(train_source_seq, train_target_seq)
+                logs['loss'] = float(current_loss.numpy())
                 if batch_count % self.steps_to_log == 0:
                     self.logger.info('epoch {epoch}, batch {batch}, logs: {logs}'.format(epoch=epoch_count,
                                                                                          batch=batch_count,
@@ -232,18 +232,12 @@ class Trainer:
             embedding_weights_encoder = embedding_to_matrix(embedding=embedding,
                                                             token_index=tokenizer_encoder.token_index,
                                                             embedding_dim=summarizer.embedding_size)
-            num_unknown_encoder = tokenizer_encoder.vocab_size - len(embedding.keys())
-            self.logger.info('unknown vocab encoder embedding: {}'.format(num_unknown_encoder))
-
         if self.embedding_path_decoder is not None:
             self.logger.info('loading decoder embedding from {}'.format(self.embedding_path_decoder))
             embedding = read_embedding(self.embedding_path_decoder, summarizer.embedding_size)
             embedding_weights_decoder = embedding_to_matrix(embedding=embedding,
                                                             token_index=tokenizer_decoder.token_index,
                                                             embedding_dim=summarizer.embedding_size)
-            num_unknown_decoder = tokenizer_decoder.vocab_size - len(embedding.keys())
-            self.logger.info('unknown vocab encoder embedding: {}'.format(num_unknown_decoder))
-
         summarizer.init_model(preprocessor=self.preprocessor,
                               vectorizer=vectorizer,
                               embedding_weights_encoder=embedding_weights_encoder,
