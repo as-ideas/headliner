@@ -72,12 +72,24 @@ summarizer = SummarizerTransformer.load('/tmp/summarizer')
 summarizer.predict('You are the stars, earth and sky for me!')
 ```
 
+### Models
+Currently available models include a basic encoder-decoder, an encoder-decoder with Luong attention and the transformer:
+```
+from headliner.model.summarizer_basic import SummarizerBasic
+from headliner.model.summarizer_attention import SummarizerAttention
+from headliner.model.summarizer_transformer import SummarizerTransformer
+
+summarizer_basic = SummarizerBasic()
+summarizer_attention = SummarizerAttention()
+summarizer_transformer = SummarizerTransformer()
+```
+
 ### Advanced training
 
 Training using a validation split and model checkpointing:
 
 ```
-from headliner.model.summarizer_attention import SummarizerTransformer
+from headliner.model.summarizer_transformer import SummarizerTransformer
 from headliner.trainer import Trainer
 
 train_data = [('You are the stars, earth and sky for me!', 'I love you.'),
@@ -102,7 +114,7 @@ trainer.train(summarizer, train_data, val_data=val_data, num_epochs=3)
 ### Advanced prediction
 Prediction information such as attention weights and logits can be accessed via predict_vectors returning a dictionary:
 ```
-from headliner.model.summarizer_attention import SummarizerTransformer
+from headliner.model.summarizer_transformer import SummarizerTransformer
 
 summarizer = SummarizerTransformer.load('/tmp/summarizer')
 summarizer.predict_vectors('You are the stars, earth and sky for me!')
@@ -118,6 +130,19 @@ summarizer_loaded = SummarizerTransformer.load('/tmp/summarizer')
 trainer = Trainer(batch_size=2)
 trainer.train(summarizer, train_data)
 summarizer_loaded.save('/tmp/summarizer_retrained')
+```
+
+### Use pretrained embeddings
+
+Embeddings in GloVe format can be injected in to the trainer as follows. Optionally, set the embedding to non-trainable.
+```
+trainer = Trainer(embedding_path_encoder='/tmp/embedding_encoder.txt',
+                  embedding_path_decoder='/tmp/embedding_decoder.txt')
+
+# make sure the embedding size matches to the embedding size of the files
+summarizer = SummarizerTransformer(embedding_size=64,
+                                   embedding_encoder_trainable=False,
+                                   embedding_decoder_trainable=False)
 ```
 
 ### Custom preprocessing
