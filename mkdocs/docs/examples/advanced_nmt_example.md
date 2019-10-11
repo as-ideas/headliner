@@ -93,15 +93,15 @@ summarizer.predict('Wie geht es dir?')
 
 ### Plot attention weights for some prediction
 ```
-import tensorflow as tf
-import matplotlib.pyplot as plt
+from tensorflow import squeeze
+from matplotlib import pyplot as plt
 
 def plot_attention_weights(summarizer, pred_vectors, layer_name):
     fig = plt.figure(figsize=(16, 8))
     input_text, _ = pred_vectors['preprocessed_text']
     input_sequence = summarizer.vectorizer.encode_input(input_text)
     pred_sequence = pred_vectors['predicted_sequence']
-    attention = tf.squeeze(pred_vectors['attention_weights'][layer_name])
+    attention = squeeze(pred_vectors['attention_weights'][layer_name])
     for head in range(attention.shape[0]):
         ax = fig.add_subplot(1, 2, head + 1)
         ax.matshow(attention[head][:-1, :], cmap='viridis')
