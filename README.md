@@ -10,19 +10,31 @@ Headliner is a sequence modeling library that eases the training and **in partic
 for both researchers and developers. You can very easily deploy your models in a few lines of code. It was originally 
 built for our own research to generate headlines from news articles. That's why we chose the name, Headliner.   
 
-## 🧮 Internals
+## 🧠 Internals
 We use sequence-to-sequence (seq2seq) under the hood, 
 an encoder-decoder framework. We provide a very simple interface to train 
 and deploy seq2seq models. Although this library was created internally to 
-generate headlines, you can also use it for other tasks like machine translations,
-text summarization and many more.
+generate headlines, you can also use it for **other tasks like machine translations,
+text summarization and many more.**
 
 ![Seq2seq architecture](figures/seq2seq.jpg)
 
-We built this library with the following goals in mind:
+### Why Headliner?
 
-* Easy-to-use for training and deployment
-* Uses TensorFlow 2.0
+You may ask why another seq2seq library? There are a couple of them out there already. 
+For example, Facebook has [fairseq](https://github.com/pytorch/fairseq), Google has [seq2seq](https://github.com/google/seq2seq)
+and there is also [OpenNMT](http://opennmt.net/).
+Although those libraries are great, they have a few drawbacks for our use case e.g. the former doesn't focus much on production
+whereas the Google one is not actively maintained. OpenNMT was the closest one to match our requirements i.e.
+it has a strong focus on production. However, we didn't like that their workflow 
+(preparing data, training and evaluation) is mainly done via the command line. 
+They also expose a well-defined API though but the complexity there is still too high with too much custom code
+(see their [minimal transformer training example](https://github.com/OpenNMT/OpenNMT-tf/blob/master/examples/library/minimal_transformer_training.py)).    
+
+Therefore, we built this library for us with the following goals in mind:
+
+* Easy-to-use API for training and deployment (only a few lines of code)
+* Uses TensorFlow 2.0 with all its new features (`tf.function`, `tf.keras.layers` etc.)
 * Modular classes: text preprocessing, modeling, evaluation
 * Extensible for different encoder-decoder models
 * Works on large text data
