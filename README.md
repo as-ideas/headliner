@@ -39,7 +39,7 @@ Therefore, we built this library for us with the following goals in mind:
 * Extensible for different encoder-decoder models
 * Works on large text data
 
-Read the documentation at: [https://as-ideas.github.io/headliner/](https://as-ideas.github.io/headliner/)
+For more details on the library, read the documentation at: [https://as-ideas.github.io/headliner/](https://as-ideas.github.io/headliner/)
 
 Headliner is compatible with Python 3.6 and is distributed under the MIT license.
 
@@ -66,7 +66,7 @@ python setup.py install
 ## 📖 Usage 
 
 ### Training
-For the training you need to import one of our provided models or create your own custom one. Then you need to
+For the training, you need to import one of our provided models or create your own custom one. Then you need to
 create the dataset, a `tuple` of input-output sequences, and then train it:
 
 ```python
