@@ -6,9 +6,12 @@
 [![PyPI Version](https://img.shields.io/pypi/v/headliner)](https://pypi.org/project/headliner/)
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/as-ideas/headliner/blob/master/LICENSE)
 
-The goal of this project is to generate headlines from news articles.
+Headliner is a sequence modeling library that eases the training and **in particular, the deployment of custom sequence models**
+for both researchers and developers. You can very easily deploy your models in a few lines of code. It was originally 
+built for our own research to generate headlines from news articles. That's why we chose the name, Headliner.   
 
-In particular, we use sequence-to-sequence (seq2seq) under the hood, 
+## 🧮 Internals
+We use sequence-to-sequence (seq2seq) under the hood, 
 an encoder-decoder framework. We provide a very simple interface to train 
 and deploy seq2seq models. Although this library was created internally to 
 generate headlines, you can also use it for other tasks like machine translations,
@@ -51,6 +54,8 @@ python setup.py install
 ## 📖 Usage 
 
 ### Training
+For the training you need to import one of our provided models or create your own custom one. Then you need to
+create the dataset, a `tuple` of input-output sequences, and then train it:
 
 ```python
 from headliner.trainer import Trainer
@@ -66,6 +71,7 @@ summarizer.save('/tmp/summarizer')
 ```
 
 ### Prediction
+The prediction can be done in a few lines of code:
 
 ```python
 from headliner.model.summarizer_transformer import SummarizerTransformer
@@ -199,7 +205,7 @@ trainer.train(summarizer, data_iter, num_epochs=3)
 ```
 
 ## 🤝 Contribute
-We welcome all kinds of contributions.
+We welcome all kinds of contributions such as new models, new examples and many more.
 See the [Contribution](CONTRIBUTING.md) guide for more details.
 
 ## 📝 Cite this work
