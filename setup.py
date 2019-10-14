@@ -1,10 +1,11 @@
 from setuptools import setup, find_packages
 
 long_description = '''
-Headliner is a library that was internally created to generate headlines from news articles. 
-In particular, we use sequence-to-sequence (seq2seq) under the hood, 
-an encoder-decoder framework. We provide a very simple interface to train 
-and deploy seq2seq models. Although this library was created internally to 
+Headliner is a sequence modeling library that eases the training and 
+**in particular, the deployment of custom sequence models** for both researchers and developers. 
+You can very easily deploy your models in a few lines of code. It was originally 
+built for our own research to generate headlines from news articles. 
+That's why we chose the name, Headliner. Although this library was created internally to 
 generate headlines, you can also use it for other tasks like machine translations,
 text summarization and many more.
 
@@ -18,7 +19,7 @@ setup(
     version='0.0.16',
     author='Christian Schäfer',
     author_email='c.schaefer.home@gmail.com',
-    description='Generating headlines from news articles using seq2seq models.',
+    description='Easy training and deployment of seq2seq models.',
     long_description=long_description,
     license='MIT',
     install_requires=['scikit-learn', 'nltk', 'pyyaml'],
