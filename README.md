@@ -7,27 +7,33 @@
 [![License](https://img.shields.io/badge/License-MIT-blue.svg)](https://github.com/as-ideas/headliner/blob/master/LICENSE)
 
 Headliner is a sequence modeling library that eases the training and **in particular, the deployment of custom sequence models**
-for both researchers and developers. You can very easily deploy your models in a few lines of code. It was originally 
-built for our own research to generate headlines from news articles. That's why we chose the name, Headliner.   
+for both researchers and developers. You can very easily deploy your models in a few lines of code. It was originally
+built for our own research to generate headlines from [Welt news articles](https://www.welt.de/). That's why we chose the name, Headliner.
+
+<p align="center">
+  <img src="figures/headline_generator.png" />
+</p>
 
 ## 🧠 Internals
-We use sequence-to-sequence (seq2seq) under the hood, 
-an encoder-decoder framework. We provide a very simple interface to train 
-and deploy seq2seq models. Although this library was created internally to 
+We use sequence-to-sequence (seq2seq) under the hood,
+an encoder-decoder framework. We provide a very simple interface to train
+and deploy seq2seq models. Although this library was created internally to
 generate headlines, you can also use it for **other tasks like machine translations,
 text summarization and many more.**
 
-![Seq2seq architecture](figures/seq2seq.jpg)
+<p align="center">
+  <img src="figures/seq2seq.jpg" />
+</p>
 
 ### Why Headliner?
 
-You may ask why another seq2seq library? There are a couple of them out there already. 
+You may ask why another seq2seq library? There are a couple of them out there already.
 For example, Facebook has [fairseq](https://github.com/pytorch/fairseq), Google has [seq2seq](https://github.com/google/seq2seq)
 and there is also [OpenNMT](http://opennmt.net/).
 Although those libraries are great, they have a few drawbacks for our use case e.g. the former doesn't focus much on production
 whereas the Google one is not actively maintained. OpenNMT was the closest one to match our requirements i.e.
-it has a strong focus on production. However, we didn't like that their workflow 
-(preparing data, training and evaluation) is mainly done via the command line. 
+it has a strong focus on production. However, we didn't like that their workflow
+(preparing data, training and evaluation) is mainly done via the command line.
 They also expose a well-defined API though but the complexity there is still too high with too much custom code
 (see their [minimal transformer training example](https://github.com/OpenNMT/OpenNMT-tf/blob/master/examples/library/minimal_transformer_training.py)).    
 
@@ -44,7 +50,7 @@ For more details on the library, read the documentation at: [https://as-ideas.gi
 Headliner is compatible with Python 3.6 and is distributed under the MIT license.
 
 ## ⚙️ Installation
-> ⚠️ Before installing Headliner, you need to install TensorFlow as we use this as our deep learning framework. For more 
+> ⚠️ Before installing Headliner, you need to install TensorFlow as we use this as our deep learning framework. For more
 > details on how to install it, have a look at the [TensorFlow installation instructions](https://www.tensorflow.org/install/).
 
 Then you can install Headliner itself. There are two ways to install Headliner:
@@ -63,7 +69,7 @@ cd headliner
 python setup.py install
 ```
 
-## 📖 Usage 
+## 📖 Usage
 
 ### Training
 For the training, you need to import one of our provided models or create your own custom one. Then you need to
@@ -113,8 +119,8 @@ from headliner.model.summarizer_transformer import SummarizerTransformer
 from headliner.trainer import Trainer
 
 train_data = [('You are the stars, earth and sky for me!', 'I love you.'),
-              ('You are great, but I have other plans.', 'I like you.')] 
-val_data = [('You are great, but I have other plans.', 'I like you.')] 
+              ('You are great, but I have other plans.', 'I like you.')]
+val_data = [('You are great, but I have other plans.', 'I like you.')]
 
 summarizer = SummarizerTransformer(num_heads=1,
                                    feed_forward_dim=512,
@@ -174,14 +180,14 @@ from headliner.preprocessing import Preprocessor
 
 train_data = [('Some inputs.', 'Some outputs.')] * 10
 
-preprocessor = Preprocessor(filter_pattern='', 
-                            lower_case=True, 
+preprocessor = Preprocessor(filter_pattern='',
+                            lower_case=True,
                             hash_numbers=False)
 train_prep = [preprocessor(t) for t in train_data]
 inputs_prep = [t[0] for t in train_prep]
 targets_prep = [t[1] for t in train_prep]
 
-# Build tf subword tokenizers. Other custom tokenizers can be implemented 
+# Build tf subword tokenizers. Other custom tokenizers can be implemented
 # by subclassing headliner.preprocessing.Tokenizer
 from tensorflow_datasets.core.features.text import SubwordTextEncoder
 tokenizer_input = SubwordTextEncoder.build_from_corpus(
