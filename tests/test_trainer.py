@@ -115,4 +115,4 @@ class TestTrainer(unittest.TestCase):
                       callbacks=[log_callback])
 
         logs = log_callback.logs
-        self.assertAlmostEqual(1.6758850812911987, logs['loss'], 6)
+        self.assertAlmostEqual(1.7162796020507813, logs['loss'], 6)

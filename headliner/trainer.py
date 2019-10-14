@@ -83,7 +83,10 @@ class Trainer:
         self.loss_function = masked_crossentropy
         self.use_bucketing = use_bucketing
         self.shuffle_buffer_size = None if use_bucketing else shuffle_buffer_size
-        self.dataset_generator = DatasetGenerator(self.batch_size, self.shuffle_buffer_size)
+        self.train_dataset_generator = DatasetGenerator(batch_size=self.batch_size,
+                                                        shuffle_buffer_size=self.shuffle_buffer_size)
+        self.val_dataset_generator = DatasetGenerator(batch_size=self.batch_size,
+                                                      shuffle_buffer_size=None)
         self.bucket_generator = None
         if use_bucketing:
             self.bucket_generator = BucketGenerator(element_length_function=lambda vecs: len(vecs[0]),
@@ -169,8 +172,8 @@ class Trainer:
         vectorize_val = self._vectorize_data(preprocessor=summarizer.preprocessor,
                                              vectorizer=summarizer.vectorizer,
                                              bucket_generator=None)
-        train_dataset = self.dataset_generator(lambda: vectorize_train(train_data))
-        val_dataset = self.dataset_generator(lambda: vectorize_val(val_data))
+        train_dataset = self.train_dataset_generator(lambda: vectorize_train(train_data))
+        val_dataset = self.val_dataset_generator(lambda: vectorize_val(val_data))
 
         train_callbacks = callbacks or []
         if val_data is not None:
@@ -192,18 +195,20 @@ class Trainer:
             train_callbacks.append(tf.keras.callbacks.TensorBoard(log_dir=self.tensorboard_dir,
                                                                   update_freq='epoch'))
         logs = {}
-        epoch_count, batch_count = 0, 0
+        epoch_count, batch_count, train_losses = 0, 0, []
         train_step = summarizer.new_train_step(self.loss_function, self.batch_size, apply_gradients=True)
         while epoch_count < num_epochs:
             for train_source_seq, train_target_seq in train_dataset.take(-1):
                 batch_count += 1
                 current_loss = train_step(train_source_seq, train_target_seq)
-                logs['loss'] = float(current_loss.numpy())
+                train_losses.append(current_loss)
+                logs['loss'] = float(sum(train_losses)) / len(train_losses)
                 if batch_count % self.steps_to_log == 0:
                     self.logger.info('epoch {epoch}, batch {batch}, logs: {logs}'.format(epoch=epoch_count,
                                                                                          batch=batch_count,
                                                                                          logs=logs))
                 if batch_count % self.steps_per_epoch == 0:
+                    train_losses.clear()
                     for callback in train_callbacks:
                         callback.on_epoch_end(epoch_count, logs=logs)
                     epoch_count += 1
