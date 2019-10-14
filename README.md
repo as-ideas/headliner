@@ -8,21 +8,27 @@
 
 Headliner is a sequence modeling library that eases the training and **in particular, the deployment of custom sequence models**
 for both researchers and developers. You can very easily deploy your models in a few lines of code. It was originally
-built for our own research to generate headlines from [Welt news articles](https://www.welt.de/). That's why we chose the name, Headliner.
+built for our own research to generate headlines from [Welt news articles](https://www.welt.de/) (see figure 1). That's why we chose the name, Headliner.
 
 <p align="center">
   <img src="figures/headline_generator.png" />
 </p>
+<p align="center">
+  <b>Figure 1:</b> One example from our Welt.de headline generator.
+</p>
 
 ## 🧠 Internals
 We use sequence-to-sequence (seq2seq) under the hood,
-an encoder-decoder framework. We provide a very simple interface to train
+an encoder-decoder framework (see figure 2). We provide a very simple interface to train
 and deploy seq2seq models. Although this library was created internally to
 generate headlines, you can also use it for **other tasks like machine translations,
 text summarization and many more.**
 
 <p align="center">
   <img src="figures/seq2seq.jpg" />
+</p>
+<p align="center">
+  <b>Figure 2:</b> Encoder-decoder sequence-to-sequence model.
 </p>
 
 ### Why Headliner?
