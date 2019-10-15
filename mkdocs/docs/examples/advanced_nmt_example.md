@@ -31,7 +31,7 @@ data = list(zip(eng, ger))
 ```python
 from sklearn.model_selection import train_test_split
 
-train, test = train_test_split(data, test_size=0.1)
+train, test = train_test_split(data, test_size=100)
 ```
 
 ### Define custom preprocessing
@@ -77,34 +77,32 @@ summarizer = SummarizerTransformer(num_heads=2,
                                    embedding_size=64,
                                    dropout_rate=0.1,
                                    max_prediction_len=50)
-
 summarizer.init_model(preprocessor, vectorizer)
-
 trainer = Trainer(steps_per_epoch=250,
                   batch_size=64,
                   model_save_path='/tmp/summarizer_transformer',
                   tensorboard_dir='/tmp/summarizer_tensorboard',
                   steps_to_log=50)
-
 trainer.train(summarizer, train, num_epochs=10, val_data=test)
 ```
 
-### Do some prediction
+### Load best model and do some prediction
 ```python
-summarizer.predict('Wie geht es dir?')
+best_summarizer = SummarizerTransformer.load('/tmp/summarizer_transformer')
+best_summarizer.predict('Do you like robots?')
 ```
 
-### Plot attention weights for some prediction
+### Plot attention alignment for a prediction
 ```python
-from tensorflow import squeeze
-from matplotlib import pyplot as plt
+import tensorflow as tf
+import matplotlib.pyplot as plt
 
 def plot_attention_weights(summarizer, pred_vectors, layer_name):
     fig = plt.figure(figsize=(16, 8))
     input_text, _ = pred_vectors['preprocessed_text']
     input_sequence = summarizer.vectorizer.encode_input(input_text)
     pred_sequence = pred_vectors['predicted_sequence']
-    attention = squeeze(pred_vectors['attention_weights'][layer_name])
+    attention = tf.squeeze(pred_vectors['attention_weights'][layer_name])
     for head in range(attention.shape[0]):
         ax = fig.add_subplot(1, 2, head + 1)
         ax.matshow(attention[head][:-1, :], cmap='viridis')
@@ -117,13 +115,13 @@ def plot_attention_weights(summarizer, pred_vectors, layer_name):
             fontdict=fontdict,
             rotation=90)
         ax.set_yticklabels([summarizer.vectorizer.decode_output([i]) 
-                               for i in pred_sequence ], fontdict=fontdict)
+                            for i in pred_sequence], fontdict=fontdict)
         ax.set_xlabel('Head {}'.format(head + 1))
     plt.tight_layout()
     plt.show()
 
 pred_vectors = best_summarizer.predict_vectors(
-    'Tom rannte aus dem brennenden Haus.', '')
+    'Tom ran out of the house.', '')
 plot_attention_weights(best_summarizer, pred_vectors, 'decoder_layer1_block2')
 ```
 
@@ -137,6 +135,6 @@ trainer.train(best_summarizer,
               train, 
               num_epochs=30, 
               val_data=test, 
-              scorers={'bleu': bleu_scorer}
+              scorers={'bleu': bleu_scorer})
 ```
 

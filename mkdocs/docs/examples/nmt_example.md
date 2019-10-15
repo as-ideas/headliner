@@ -31,7 +31,7 @@ data = list(zip(eng, ger))
 ```python
 from sklearn.model_selection import train_test_split
 
-train, test = train_test_split(data, test_size=0.1)
+train, test = train_test_split(data, test_size=100)
 ```
 
 ### Define the model and train it
@@ -50,5 +50,5 @@ trainer.train(summarizer, train, num_epochs=10, val_data=test)
 
 ### Do some prediction
 ```python
-summarizer.predict('Hallo mir geht es gut.')
+summarizer.predict('How are you?')
 ```
