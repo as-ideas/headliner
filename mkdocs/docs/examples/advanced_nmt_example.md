@@ -53,7 +53,8 @@ from headliner.preprocessing import Vectorizer
 inputs_prep = [t[0] for t in train_prep]
 targets_prep = [t[1] for t in train_prep]
 tokenizer_input = SubwordTextEncoder.build_from_corpus(
-    inputs_prep, target_vocab_size=2**13)
+    inputs_prep, target_vocab_size=2**13,
+    reserved_tokens=[preprocessor.start_token, preprocessor.end_token])
 tokenizer_target = SubwordTextEncoder.build_from_corpus(
     targets_prep, target_vocab_size=2**13, 
     reserved_tokens=[preprocessor.start_token, preprocessor.end_token])

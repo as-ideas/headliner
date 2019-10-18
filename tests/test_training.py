@@ -73,12 +73,12 @@ class TestTraining(unittest.TestCase):
                 loss_attention = train_step(source_seq, target_seq)
                 print(str(loss_attention))
 
-        self.assertAlmostEqual(1.5810251235961914, float(loss_attention), 10)
+        self.assertAlmostEqual(1.577033519744873, float(loss_attention), 10)
         output_attention = summarizer_attention.predict_vectors('a c', '')
-        expected_first_logits = np.array([-0.069454,  0.00272,  0.007199, -0.039547,  0.014357])
+        expected_first_logits = np.array([-0.077805,  0.012667,  0.021359, -0.04872,  0.014989])
         np.testing.assert_allclose(expected_first_logits, output_attention['logits'][0], atol=1e-6)
-        self.assertEqual('a c', output_attention['preprocessed_text'][0])
-        self.assertEqual('<end>', output_attention['predicted_text'])
+        self.assertEqual('<start> a c <end>', output_attention['preprocessed_text'][0])
+        self.assertEqual('d <end>', output_attention['predicted_text'])
 
         loss = 0
         train_step = summarizer.new_train_step(loss_function=loss_func,
@@ -87,11 +87,11 @@ class TestTraining(unittest.TestCase):
             for source_seq, target_seq in dataset.take(-1):
                 loss = train_step(source_seq, target_seq)
 
-        self.assertAlmostEqual(1.5771859884262085, float(loss), 10)
+        self.assertAlmostEqual(1.5713274478912354, float(loss), 10)
         output = summarizer.predict_vectors('a c', '')
-        expected_first_logits = np.array([-0.03838864, 0.01226684, 0.01055636, -0.05209339, 0.02549592])
+        expected_first_logits = np.array([-0.051753,  0.013869,  0.010337, -0.073727,  0.033059])
         np.testing.assert_allclose(expected_first_logits, output['logits'][0], atol=1e-6)
-        self.assertEqual('a c', output['preprocessed_text'][0])
+        self.assertEqual('<start> a c <end>', output['preprocessed_text'][0])
         self.assertEqual('<end>', output['predicted_text'])
 
         loss_transformer = 0
@@ -102,10 +102,10 @@ class TestTraining(unittest.TestCase):
                 loss_transformer = train_step(source_seq, target_seq)
                 print(str(loss_transformer))
 
-        self.assertAlmostEqual(1.2841172218322754, float(loss_transformer), 10)
+        self.assertAlmostEqual(1.175953984260559, float(loss_transformer), 10)
         output_transformer = summarizer_transformer.predict_vectors('a c', '')
 
-        expected_first_logits = np.array([0.094787, 0.516092, 1.165521, 0.271338, 0.670318])
+        expected_first_logits = np.array([-0.197903,  0.884185,  1.147212,  0.318798,  0.97936 ])
         np.testing.assert_allclose(expected_first_logits, output_transformer['logits'][0], atol=1e-6)
-        self.assertEqual('a c', output_transformer['preprocessed_text'][0])
+        self.assertEqual('<start> a c <end>', output_transformer['preprocessed_text'][0])
         self.assertEqual('d <end>', output_transformer['predicted_text'])
