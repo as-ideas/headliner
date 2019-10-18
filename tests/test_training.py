@@ -73,7 +73,7 @@ class TestTraining(unittest.TestCase):
                 loss_attention = train_step(source_seq, target_seq)
                 print(str(loss_attention))
 
-        self.assertAlmostEqual(1.577033519744873, float(loss_attention), 10)
+        self.assertAlmostEqual(1.577033519744873, float(loss_attention), 5)
         output_attention = summarizer_attention.predict_vectors('a c', '')
         expected_first_logits = np.array([-0.077805,  0.012667,  0.021359, -0.04872,  0.014989])
         np.testing.assert_allclose(expected_first_logits, output_attention['logits'][0], atol=1e-6)
@@ -87,7 +87,7 @@ class TestTraining(unittest.TestCase):
             for source_seq, target_seq in dataset.take(-1):
                 loss = train_step(source_seq, target_seq)
 
-        self.assertAlmostEqual(1.5713274478912354, float(loss), 10)
+        self.assertAlmostEqual(1.5713274478912354, float(loss), 5)
         output = summarizer.predict_vectors('a c', '')
         expected_first_logits = np.array([-0.051753,  0.013869,  0.010337, -0.073727,  0.033059])
         np.testing.assert_allclose(expected_first_logits, output['logits'][0], atol=1e-6)
@@ -102,7 +102,7 @@ class TestTraining(unittest.TestCase):
                 loss_transformer = train_step(source_seq, target_seq)
                 print(str(loss_transformer))
 
-        self.assertAlmostEqual(1.175953984260559, float(loss_transformer), 10)
+        self.assertAlmostEqual(1.175953984260559, float(loss_transformer), 5)
         output_transformer = summarizer_transformer.predict_vectors('a c', '')
 
         expected_first_logits = np.array([-0.197903,  0.884185,  1.147212,  0.318798,  0.97936 ])
