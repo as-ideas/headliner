@@ -161,7 +161,7 @@ train_data = [('Some new training data.', 'New data.')] * 10
 
 summarizer_loaded = SummarizerTransformer.load('/tmp/summarizer')
 trainer = Trainer(batch_size=2)
-trainer.train(summarizer, train_data)
+trainer.train(summarizer_loaded, train_data)
 summarizer_loaded.save('/tmp/summarizer_retrained')
 ```
 

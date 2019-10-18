@@ -12,7 +12,6 @@ pip install headliner
 ```bash
 wget http://www.manythings.org/anki/deu-eng.zip
 unzip deu-eng.zip
-head deu.txt
 ```
 
 ### Create the dataset but only take a subset for faster training
@@ -21,18 +20,18 @@ import io
 
 def create_dataset(path, num_examples):
     lines = io.open(path, encoding='UTF-8').read().strip().split('\n')
-    word_pairs = [[w for w in l.split('\t')]  for l in lines[:num_examples]]
+    word_pairs = [[w for w in l.split('\t')[:2]]  for l in lines[:num_examples]]
     return zip(*word_pairs)
 
-eng, ger = create_dataset('deu.txt', 500)
-data = list(zip(ger, eng))
+eng, ger = create_dataset('deu.txt', 30000)
+data = list(zip(eng, ger))
 ```
 
 ### Split the dataset into train and test
 ```python
 from sklearn.model_selection import train_test_split
 
-train, test = train_test_split(data, test_size=0.1)
+train, test = train_test_split(data, test_size=100)
 ```
 
 ### Define the model and train it
@@ -51,5 +50,5 @@ trainer.train(summarizer, train, num_epochs=10, val_data=test)
 
 ### Do some prediction
 ```python
-summarizer.predict('Hallo mir geht es gut.')
+summarizer.predict('How are you?')
 ```
