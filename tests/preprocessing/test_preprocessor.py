@@ -7,7 +7,13 @@ class TestPreprocessor(unittest.TestCase):
 
     def test_preprocessing(self):
         preprocessor = Preprocessor()
+
+
+
+
         data = (('First text!', 'first head'), ('2-nd täxt', 'Second head'))
+
+
         data_preprocessed = [preprocessor(d) for d in data]
         self.assertEqual(('<start> first text ! <end>', '<start> first head <end>'), data_preprocessed[0])
         self.assertEqual(('<start> #-nd täxt <end>', '<start> second head <end>'), data_preprocessed[1])
