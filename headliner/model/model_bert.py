@@ -170,6 +170,7 @@ class Encoder(tf.keras.layers.Layer):
         vocab_size, vec_dim = embedding_shape
         self.embedding_size = 768
         self.embedding = TFBertModel.from_pretrained('bert-base-uncased')
+        self.embedding.trainable = False
         self.pos_encoding = positional_encoding(vocab_size, self.embedding_size)
         self.enc_layers = [EncoderLayer(vec_dim, num_heads, feed_forward_dim, dropout_rate)
                            for _ in range(num_layers)]
