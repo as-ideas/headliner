@@ -6,13 +6,13 @@ from typing import Dict, Union
 import numpy as np
 import tensorflow as tf
 
-from headliner.model.model_transformer import Transformer, create_masks
+from headliner.model.model_bert import Transformer, create_masks
 from headliner.model.summarizer import Summarizer
 from headliner.preprocessing.preprocessor import Preprocessor
 from headliner.preprocessing.vectorizer import Vectorizer
 
 
-class SummarizerTransformer(Summarizer):
+class SummarizerBert(Summarizer):
 
     def __init__(self,
                  max_prediction_len=20,
@@ -39,9 +39,9 @@ class SummarizerTransformer(Summarizer):
         self.embedding_shape_out = None
 
     def __getstate__(self):
-        """ Prevents pickle from serializing the transformer and optimizer """
+        """ Prevents pickle from serializing the Bert and optimizer """
         state = self.__dict__.copy()
-        del state['transformer']
+        del state['Bert']
         del state['optimizer']
         return state
 
@@ -60,7 +60,6 @@ class SummarizerTransformer(Summarizer):
                                        feed_forward_dim=self.feed_forward_dim,
                                        embedding_shape_encoder=(self.vectorizer.encoding_dim, self.embedding_size),
                                        embedding_shape_decoder=(self.vectorizer.decoding_dim, self.embedding_size),
-                                       embedding_encoder_trainable=self.embedding_encoder_trainable,
                                        embedding_decoder_trainable=self.embedding_decoder_trainable,
                                        embedding_weights_encoder=embedding_weights_encoder,
                                        embedding_weights_decoder=embedding_weights_decoder,
@@ -81,6 +80,7 @@ class SummarizerTransformer(Summarizer):
             tf.TensorSpec(shape=(batch_size, None), dtype=tf.int32),
         ]
 
+        @tf.function(input_signature=train_step_signature)
         def train_step(inp, tar):
             tar_inp = tar[:, :-1]
             tar_real = tar[:, 1:]
@@ -93,8 +93,8 @@ class SummarizerTransformer(Summarizer):
                                              dec_padding_mask)
                 loss = loss_function(tar_real, predictions)
             if apply_gradients:
-                gradients = tape.gradient(loss, transformer.trainable_variables)
-                optimizer.apply_gradients(zip(gradients, transformer.trainable_variables))
+                gradients = tape.gradient(loss, self.transformer.trainable_variables)
+                optimizer.apply_gradients(zip(gradients, self.transformer.trainable_variables))
             return loss
 
         return train_step
@@ -137,35 +137,11 @@ class SummarizerTransformer(Summarizer):
         return output
 
     def save(self, out_path: str) -> None:
-        if not os.path.exists(out_path):
-            os.mkdir(out_path)
-        summarizer_path = os.path.join(out_path, 'summarizer.pkl')
-        transformer_path = os.path.join(out_path, 'transformer')
-        with open(summarizer_path, 'wb+') as handle:
-            pickle.dump(self, handle, protocol=pickle.HIGHEST_PROTOCOL)
-        self.transformer.save_weights(transformer_path, save_format='tf')
+        pass
 
     @staticmethod
     def load(in_path: str):
-        summarizer_path = os.path.join(in_path, 'summarizer.pkl')
-        transformer_path = os.path.join(in_path, 'transformer')
-        with open(summarizer_path, 'rb') as handle:
-            summarizer = pickle.load(handle)
-        summarizer.transformer = Transformer(num_layers=summarizer.num_layers,
-                                             num_heads=summarizer.num_heads,
-                                             feed_forward_dim=summarizer.feed_forward_dim,
-                                             embedding_shape_encoder=(summarizer.vectorizer.encoding_dim,
-                                                                      summarizer.embedding_size),
-                                             embedding_shape_decoder=(summarizer.vectorizer.decoding_dim,
-                                                                      summarizer.embedding_size),
-                                             embedding_encoder_trainable=summarizer.embedding_encoder_trainable,
-                                             embedding_decoder_trainable=summarizer.embedding_decoder_trainable,
-                                             dropout_rate=summarizer.dropout_rate)
-        optimizer = SummarizerTransformer.new_optimizer()
-        summarizer.transformer.compile(optimizer=optimizer)
-        summarizer.transformer.load_weights(transformer_path)
-        summarizer.optimizer = summarizer.transformer.optimizer
-        return summarizer
+        pass
 
     @staticmethod
     def new_optimizer() -> tf.keras.optimizers.Optimizer:
