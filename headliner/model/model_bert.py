@@ -169,8 +169,8 @@ class Encoder(tf.keras.layers.Layer):
         self.num_layers = num_layers
         vocab_size, vec_dim = embedding_shape
         self.embedding_size = 768
-        self.embedding = TFBertModel.from_pretrained('bert-base-german-cased')
-        self.embedding.trainable = False
+        self.embedding = TFBertModel.from_pretrained('bert-base-uncased')
+#        self.embedding.trainable = False
         self.pos_encoding = positional_encoding(vocab_size, self.embedding_size)
         self.enc_layers = [EncoderLayer(vec_dim, num_heads, feed_forward_dim, dropout_rate)
                            for _ in range(num_layers)]
@@ -178,7 +178,7 @@ class Encoder(tf.keras.layers.Layer):
 
     def call(self, x, training, mask):
         seq_len = tf.shape(x)[1]
-        x = self.embedding(x)[0]
+        x, y = self.embedding(x, training=training)
         x *= tf.math.sqrt(tf.cast(self.embedding_size, tf.float32))
         x += self.pos_encoding[:, :seq_len, :]
         x = self.dropout(x, training=training)
@@ -201,9 +201,12 @@ class Decoder(tf.keras.layers.Layer):
 
         self.num_layers = num_layers
         vocab_size, vec_dim = embedding_shape
-        self.embedding_size = 768
-        self.embedding = TFBertModel.from_pretrained('bert-base-german-cased')
-        self.embedding.trainable = False
+        weights = None if embedding_weights is None else [embedding_weights]
+        self.embedding_size = vec_dim
+        self.embedding = tf.keras.layers.Embedding(vocab_size,
+                                                   vec_dim,
+                                                   weights=weights,
+                                                   trainable=embedding_trainable)
         self.pos_encoding = positional_encoding(vocab_size, vec_dim)
         self.dec_layers = [DecoderLayer(vec_dim, num_heads, feed_forward_dim, dropout_rate)
                            for _ in range(num_layers)]

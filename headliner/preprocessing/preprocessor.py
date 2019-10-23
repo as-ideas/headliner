@@ -7,7 +7,7 @@ class Preprocessor:
     def __init__(self,
                  start_token='<start>',
                  end_token='<end>',
-                 punctuation_pattern='([!.?,])',
+                 punctuation_pattern='([!.?])',
                  filter_pattern='(["#$%&()*+/:;<=>@[\\]^_`{|}~\t\n])',
                  lower_case=True,
                  hash_numbers=True):

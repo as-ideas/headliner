@@ -11,6 +11,7 @@ class Vectorizer:
     def __init__(self,
                  tokenizer_encoder: Tokenizer,
                  tokenizer_decoder: Tokenizer,
+                 max_input_len=512,
                  max_output_len=None) -> None:
         """
         Initializes the vectorizer.
@@ -23,6 +24,7 @@ class Vectorizer:
         """
         self.encoding_dim = tokenizer_encoder.vocab_size + 1
         self.decoding_dim = tokenizer_decoder.vocab_size + 1
+        self.max_input_len = max_input_len
         self.max_output_len = max_output_len
         self._tokenizer_encoder = tokenizer_encoder
         self._tokenizer_decoder = tokenizer_decoder
@@ -34,11 +36,12 @@ class Vectorizer:
         text_encoder, text_decoder = data[0], data[1]
         vec_encoder = self._tokenizer_encoder.encode(text_encoder)
         vec_decoder = self._tokenizer_decoder.encode(text_decoder)
+
+        if self.max_input_len is not None:
+            if len(vec_encoder) > self.max_input_len:
+                vec_encoder = vec_encoder[:self.max_input_len - 1] + [vec_encoder[-1]]
+
         if self.max_output_len is not None:
-            if len(vec_encoder) > self.max_output_len:
-                vec_encoder = vec_encoder[:self.max_output_len-1] + [vec_encoder[-1]]
-            else:
-                vec_encoder = vec_encoder + [0] * (self.max_output_len - len(vec_encoder))
             if len(vec_decoder) > self.max_output_len:
                 vec_decoder = vec_decoder[:self.max_output_len-1] + [vec_decoder[-1]]
             else:

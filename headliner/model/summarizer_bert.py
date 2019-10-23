@@ -41,7 +41,7 @@ class SummarizerBert(Summarizer):
     def __getstate__(self):
         """ Prevents pickle from serializing the Bert and optimizer """
         state = self.__dict__.copy()
-        del state['Bert']
+        del state['transformer']
         del state['optimizer']
         return state
 
@@ -137,12 +137,35 @@ class SummarizerBert(Summarizer):
         return output
 
     def save(self, out_path: str) -> None:
-        pass
+        if not os.path.exists(out_path):
+            os.mkdir(out_path)
+        summarizer_path = os.path.join(out_path, 'summarizer.pkl')
+        transformer_path = os.path.join(out_path, 'transformer')
+        with open(summarizer_path, 'wb+') as handle:
+            pickle.dump(self, handle, protocol=pickle.HIGHEST_PROTOCOL)
+        self.transformer.save_weights(transformer_path, save_format='tf')
 
     @staticmethod
     def load(in_path: str):
-        pass
+        summarizer_path = os.path.join(in_path, 'summarizer.pkl')
+        transformer_path = os.path.join(in_path, 'transformer')
+        with open(summarizer_path, 'rb') as handle:
+            summarizer = pickle.load(handle)
+        summarizer.transformer = Transformer(num_layers=summarizer.num_layers,
+                                             num_heads=summarizer.num_heads,
+                                             feed_forward_dim=summarizer.feed_forward_dim,
+                                             embedding_shape_encoder=(summarizer.vectorizer.encoding_dim,
+                                                                      summarizer.embedding_size),
+                                             embedding_shape_decoder=(summarizer.vectorizer.decoding_dim,
+                                                                      summarizer.embedding_size),
+                                             embedding_decoder_trainable=summarizer.embedding_decoder_trainable,
+                                             dropout_rate=summarizer.dropout_rate)
+        optimizer = SummarizerBert.new_optimizer()
+        summarizer.transformer.compile(optimizer=optimizer)
+        summarizer.transformer.load_weights(transformer_path)
+        summarizer.optimizer = summarizer.transformer.optimizer
+        return summarizer
 
     @staticmethod
     def new_optimizer() -> tf.keras.optimizers.Optimizer:
-        return tf.keras.optimizers.Adam()
+        return tf.keras.optimizers.Adam(learning_rate=3e-5, epsilon=1e-08)

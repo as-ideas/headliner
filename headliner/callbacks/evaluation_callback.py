@@ -44,7 +44,7 @@ class EvaluationCallback(tf.keras.callbacks.Callback):
             prediction = self.summarizer.predict_vectors(input_text, target_text)
             if count_val <= self.print_num_examples:
                 self.logger.info('\n(input) {} \n(target) {} \n(prediction) {}\n'.format(
-                    d[0], d[1], prediction['predicted_text']
+                    prediction['preprocessed_text'][0], prediction['preprocessed_text'][1], prediction['predicted_text']
                 ))
             elif len(self.scorers) == 0:
                 break
