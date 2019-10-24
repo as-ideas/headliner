@@ -41,8 +41,8 @@ class SummarizerBert(Summarizer):
         self.embedding_decoder_trainable = embedding_decoder_trainable
         self.bert_embedding_encoder = bert_embedding_encoder
         self.bert_embedding_decoder = bert_embedding_decoder
+        self.optimizer = SummarizerBert.new_optimizer()
         self.transformer = None
-        self.optimizer = None
         self.embedding_shape_in = None
         self.embedding_shape_out = None
 
@@ -76,7 +76,6 @@ class SummarizerBert(Summarizer):
                                        embedding_weights_encoder=embedding_weights_encoder,
                                        embedding_weights_decoder=embedding_weights_decoder,
                                        dropout_rate=self.dropout_rate)
-        self.optimizer = self.new_optimizer()
         self.transformer.compile(optimizer=self.optimizer)
 
     def new_train_step(self,

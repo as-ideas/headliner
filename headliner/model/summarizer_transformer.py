@@ -33,8 +33,8 @@ class SummarizerTransformer(Summarizer):
         self.feed_forward_dim = feed_forward_dim
         self.embedding_encoder_trainable = embedding_encoder_trainable
         self.embedding_decoder_trainable = embedding_decoder_trainable
+        self.optimizer = SummarizerTransformer.new_optimizer()
         self.transformer = None
-        self.optimizer = None
         self.embedding_shape_in = None
         self.embedding_shape_out = None
 
@@ -65,7 +65,6 @@ class SummarizerTransformer(Summarizer):
                                        embedding_weights_encoder=embedding_weights_encoder,
                                        embedding_weights_decoder=embedding_weights_decoder,
                                        dropout_rate=self.dropout_rate)
-        self.optimizer = self.new_optimizer()
         self.transformer.compile(optimizer=self.optimizer)
 
     def new_train_step(self,
