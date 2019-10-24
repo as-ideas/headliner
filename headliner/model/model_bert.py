@@ -20,12 +20,13 @@ class Encoder(tf.keras.layers.Layer):
 
         self.num_layers = num_layers
         vocab_size, vec_dim = embedding_shape
+        self.embedding_size = vec_dim
+        self.bert_embedding_name = bert_embedding_name
         if bert_embedding_name is not None:
             self.embedding = TFBertModel.from_pretrained(bert_embedding_name)
             self.embedding.trainable = embedding_trainable
         else:
             weights = None if embedding_weights is None else [embedding_weights]
-            self.embedding_size = vec_dim
             self.embedding = tf.keras.layers.Embedding(vocab_size,
                                                        vec_dim,
                                                        weights=weights,
@@ -37,7 +38,10 @@ class Encoder(tf.keras.layers.Layer):
 
     def call(self, x, training, mask):
         seq_len = tf.shape(x)[1]
-        x = (self.embedding(x), )[0]
+        if self.bert_embedding_name is not None:
+            x = self.embedding(x)[0]
+        else:
+            x = self.embedding(x)
         x *= tf.math.sqrt(tf.cast(self.embedding_size, tf.float32))
         x += self.pos_encoding[:, :seq_len, :]
         x = self.dropout(x, training=training)
@@ -61,12 +65,13 @@ class Decoder(tf.keras.layers.Layer):
 
         self.num_layers = num_layers
         vocab_size, vec_dim = embedding_shape
+        self.embedding_size = vec_dim
+        self.bert_embedding_name = bert_embedding_name
         if bert_embedding_name is not None:
             self.embedding = TFBertModel.from_pretrained(bert_embedding_name)
             self.embedding.trainable = embedding_trainable
         else:
             weights = None if embedding_weights is None else [embedding_weights]
-            self.embedding_size = vec_dim
             self.embedding = tf.keras.layers.Embedding(vocab_size,
                                                        vec_dim,
                                                        weights=weights,
@@ -85,7 +90,10 @@ class Decoder(tf.keras.layers.Layer):
         seq_len = tf.shape(x)[1]
         attention_weights = {}
 
-        x = (self.embedding(x), )[0]
+        if self.bert_embedding_name is not None:
+            x = self.embedding(x)[0]
+        else:
+            x = self.embedding(x)
         x *= tf.math.sqrt(tf.cast(self.embedding_size, tf.float32))
         x += self.pos_encoding[:, :seq_len, :]
         x = self.dropout(x, training=training)
@@ -102,7 +110,8 @@ class Decoder(tf.keras.layers.Layer):
 class Transformer(tf.keras.Model):
 
     def __init__(self,
-                 num_layers: int,
+                 num_layers_encoder: int,
+                 num_layers_decoder: int,
                  num_heads: int,
                  feed_forward_dim: int,
                  embedding_shape_encoder: Tuple[int, int],
@@ -116,7 +125,7 @@ class Transformer(tf.keras.Model):
                  dropout_rate=0.1) -> None:
         super(Transformer, self).__init__()
 
-        self.encoder = Encoder(num_layers,
+        self.encoder = Encoder(num_layers_encoder,
                                num_heads,
                                feed_forward_dim,
                                embedding_shape_encoder,
@@ -125,7 +134,7 @@ class Transformer(tf.keras.Model):
                                embedding_weights=embedding_weights_encoder,
                                dropout_rate=dropout_rate)
 
-        self.decoder = Decoder(num_layers,
+        self.decoder = Decoder(num_layers_decoder,
                                num_heads,
                                feed_forward_dim,
                                embedding_shape_decoder,

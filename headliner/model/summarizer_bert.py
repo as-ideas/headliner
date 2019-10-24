@@ -16,7 +16,8 @@ class SummarizerBert(Summarizer):
 
     def __init__(self,
                  max_prediction_len=20,
-                 num_layers=1,
+                 num_layers_encoder=1,
+                 num_layers_decoder=1,
                  num_heads=2,
                  feed_forward_dim=512,
                  dropout_rate=0,
@@ -31,7 +32,8 @@ class SummarizerBert(Summarizer):
         self.max_prediction_len = max_prediction_len
         self.embedding_size_encoder = embedding_size_encoder
         self.embedding_size_decoder = embedding_size_decoder
-        self.num_layers = num_layers
+        self.num_layers_encoder = num_layers_encoder
+        self.num_layers_decoder = num_layers_decoder
         self.num_heads = num_heads
         self.dropout_rate = dropout_rate
         self.feed_forward_dim = feed_forward_dim
@@ -59,13 +61,16 @@ class SummarizerBert(Summarizer):
                    ) -> None:
         self.preprocessor = preprocessor
         self.vectorizer = vectorizer
-        self.embedding_shape_in = (self.vectorizer.encoding_dim, self.embedding_size)
-        self.embedding_shape_out = (self.vectorizer.decoding_dim, self.embedding_size)
-        self.transformer = Transformer(num_layers=self.num_layers,
+        self.embedding_shape_in = (self.vectorizer.encoding_dim, self.embedding_size_encoder)
+        self.embedding_shape_out = (self.vectorizer.decoding_dim, self.embedding_size_decoder)
+        self.transformer = Transformer(num_layers_encoder=self.num_layers_encoder,
+                                       num_layers_decoder=self.num_layers_decoder,
                                        num_heads=self.num_heads,
                                        feed_forward_dim=self.feed_forward_dim,
-                                       embedding_shape_encoder=(self.vectorizer.encoding_dim, self.embedding_size_encoder),
-                                       embedding_shape_decoder=(self.vectorizer.decoding_dim, self.embedding_size_decoder),
+                                       embedding_shape_encoder=self.embedding_shape_in,
+                                       embedding_shape_decoder=self.embedding_shape_out,
+                                       bert_embedding_encoder=self.bert_embedding_encoder,
+                                       bert_embedding_decoder=self.bert_embedding_decoder,
                                        embedding_encoder_trainable=self.embedding_encoder_trainable,
                                        embedding_decoder_trainable=self.embedding_decoder_trainable,
                                        embedding_weights_encoder=embedding_weights_encoder,
@@ -158,13 +163,12 @@ class SummarizerBert(Summarizer):
         transformer_path = os.path.join(in_path, 'transformer')
         with open(summarizer_path, 'rb') as handle:
             summarizer = pickle.load(handle)
-        summarizer.transformer = Transformer(num_layers=summarizer.num_layers,
+        summarizer.transformer = Transformer(num_layers_encoder=summarizer.num_layers_encoder,
+                                             num_layers_decoder=summarizer.num_layers_decoder,
                                              num_heads=summarizer.num_heads,
                                              feed_forward_dim=summarizer.feed_forward_dim,
-                                             embedding_shape_encoder=(summarizer.vectorizer.encoding_dim,
-                                                                      summarizer.embedding_size),
-                                             embedding_shape_decoder=(summarizer.vectorizer.decoding_dim,
-                                                                      summarizer.embedding_size),
+                                             embedding_shape_encoder=summarizer.embedding_shape_in,
+                                             embedding_shape_decoder=summarizer.embedding_shape_out,
                                              bert_embedding_encoder=summarizer.bert_embedding_encoder,
                                              bert_embedding_decoder=summarizer.bert_embedding_decoder,
                                              embedding_encoder_trainable=summarizer.embedding_encoder_trainable,
