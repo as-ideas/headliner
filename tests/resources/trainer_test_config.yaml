@@ -1,3 +1,4 @@
+max_input_len: 10
 max_output_len: 9
 batch_size: 1
 max_vocab_size_encoder: 7
