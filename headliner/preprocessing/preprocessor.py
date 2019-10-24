@@ -39,9 +39,11 @@ class Preprocessor:
     def normalize_string(self, s: str) -> str:
         if self.lower_case:
             s = s.lower()
-        s = re.sub(self.filter_pattern, '', s)
+        if self.filter_pattern is not None:
+            s = re.sub(self.filter_pattern, '', s)
         if self.hash_numbers:
             s = re.sub(r'\d+', '#', s)
-        s = re.sub(self.punctuation_pattern, r' \1', s)
+        if self.punctuation_pattern is not None:
+            s = re.sub(self.punctuation_pattern, r' \1', s)
         s = re.sub(r'\s+', r' ', s)
         return s
