@@ -111,23 +111,24 @@ class TestTraining(unittest.TestCase):
                                          embedding_size_encoder=768,
                                          embedding_size_decoder=10,
                                          bert_embedding_encoder='bert-base-uncased',
+                                         embedding_encoder_trainable=False,
                                          dropout_rate=0,
                                          max_prediction_len=3)
         summarizer_bert.init_model(preprocessor=self.preprocessor,
                                    vectorizer=self.vectorizer,
                                    embedding_weights_encoder=None,
                                    embedding_weights_decoder=None)
-        loss_transformer = 0
+        loss_bert = 0
         train_step = summarizer_bert.new_train_step(loss_function=self.loss_func,
                                                     batch_size=2)
         for e in range(0, 10):
             for source_seq, target_seq in self.dataset.take(-1):
-                loss_transformer = train_step(source_seq, target_seq)
-                print(str(loss_transformer))
+                loss_bert = train_step(source_seq, target_seq)
+                print(str(loss_bert))
 
-        self.assertAlmostEqual(1.1055916547775269, float(loss_transformer), 5)
+        self.assertAlmostEqual(1.1354467868804932, float(loss_bert), 5)
         output_transformer = summarizer_bert.predict_vectors('a c', '')
-        expected_first_logits = np.array([-2.015814,  0.789228,  0.833245, -0.686917,  1.475502])
+        expected_first_logits = np.array([-1.946814,  0.861174,  0.462897, -0.713187,  1.560397])
         np.testing.assert_allclose(expected_first_logits, output_transformer['logits'][0], atol=1e-6)
         self.assertEqual('<start> a c <end>', output_transformer['preprocessed_text'][0])
         self.assertEqual('<end>', output_transformer['predicted_text'])
