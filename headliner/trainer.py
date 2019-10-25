@@ -28,6 +28,7 @@ OOV_TOKEN = '<unk>'
 class Trainer:
 
     def __init__(self,
+                 max_input_len=None,
                  max_output_len=None,
                  batch_size=16,
                  max_vocab_size_encoder=200000,
@@ -49,8 +50,8 @@ class Trainer:
         Initializes the trainer.
 
         Args:
-            max_output_len: Maximum length of output sequences. Default None, then eager mode will be enabled,
-                else static.
+            max_input_len (output): Maximum length of input sequences, longer sequences will be truncated.
+            max_output_len (output): Maximum length of output sequences, longer sequences will be truncated.
             batch_size: Size of mini-batches for stochastic gradient descent.
             max_vocab_size_encoder: Maximum number of unique tokens to consider for encoder embeddings.
             max_vocab_size_decoder: Maximum number of unique tokens to consider for decoder embeddings.
@@ -69,6 +70,7 @@ class Trainer:
             preprocessor (optional): custom preprocessor, if None a standard preprocessor will be created.
         """
 
+        self.max_input_len = max_input_len
         self.max_output_len = max_output_len
         self.batch_size = batch_size
         self.max_vocab_size_encoder = max_vocab_size_encoder
@@ -121,6 +123,7 @@ class Trainer:
             steps_to_log = cfg['steps_to_log']
             logging_level = logging.INFO
             logging_level_string = cfg['logging_level']
+            max_input_len = cfg['max_input_len']
             max_output_len = cfg['max_output_len']
             if logging_level_string == 'debug':
                 logging_level = logging.DEBUG
@@ -140,6 +143,7 @@ class Trainer:
                            bucketing_batches_to_bucket=bucketing_batches_to_bucket,
                            logging_level=logging_level,
                            steps_to_log=steps_to_log,
+                           max_input_len=max_input_len,
                            max_output_len=max_output_len,
                            **kwargs)
 
@@ -228,7 +232,8 @@ class Trainer:
             vocab_enc=tokenizer_encoder.vocab_size, vocab_dec=tokenizer_decoder.vocab_size))
         vectorizer = Vectorizer(tokenizer_encoder,
                                 tokenizer_decoder,
-                                self.max_output_len)
+                                max_input_len=self.max_input_len,
+                                max_output_len=self.max_output_len)
         embedding_weights_encoder, embedding_weights_decoder = None, None
 
         if self.embedding_path_encoder is not None:

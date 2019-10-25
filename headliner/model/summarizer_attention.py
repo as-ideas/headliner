@@ -21,9 +21,9 @@ class SummarizerAttention(Summarizer):
         self.embedding_size = embedding_size
         self.embedding_encoder_trainable = embedding_encoder_trainable
         self.embedding_decoder_trainable = embedding_decoder_trainable
+        self.optimizer = SummarizerAttention._new_optimizer()
         self.encoder = None
         self.decoder = None
-        self.optimizer = None
         self.embedding_shape_in = None
         self.embedding_shape_out = None
 
@@ -44,7 +44,6 @@ class SummarizerAttention(Summarizer):
                                self.lstm_size,
                                embedding_trainable=self.embedding_decoder_trainable,
                                embedding_weights=embedding_weights_decoder)
-        self.optimizer = SummarizerAttention._new_optimizer()
         self.encoder.compile(optimizer=self.optimizer)
         self.decoder.compile(optimizer=self.optimizer)
 

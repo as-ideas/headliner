@@ -19,6 +19,7 @@ class TestTrainer(unittest.TestCase):
         current_dir = os.path.dirname(os.path.abspath(__file__))
         config_path = os.path.join(current_dir, 'resources/trainer_test_config.yaml')
         trainer = Trainer.from_config(config_path)
+        self.assertEqual(10, trainer.max_input_len)
         self.assertEqual(9, trainer.max_output_len)
         self.assertEqual(1, trainer.batch_size)
         self.assertEqual(7, trainer.max_vocab_size_encoder)
@@ -80,12 +81,14 @@ class TestTrainer(unittest.TestCase):
                           steps_per_epoch=10,
                           max_vocab_size_encoder=10,
                           max_vocab_size_decoder=10,
+                          max_input_len=5,
                           max_output_len=3)
         trainer.train(summarizer, data, num_epochs=1)
         # encoding dim and decoding dim are num unique tokens + 4 (pad, start, end, oov)
         self.assertIsNotNone(summarizer.vectorizer)
         self.assertEqual(7, summarizer.vectorizer.encoding_dim)
         self.assertEqual(6, summarizer.vectorizer.decoding_dim)
+        self.assertEqual(5, summarizer.vectorizer.max_input_len)
         self.assertEqual(3, summarizer.vectorizer.max_output_len)
 
     def test_train(self) -> None:
