@@ -17,6 +17,11 @@ built for our own research to generate headlines from [Welt news articles](https
   <b>Figure 1:</b> One example from our Welt.de headline generator.
 </p>
 
+## Update 28.10.2019
+The library now supports fine-tuning pre-trained BERT models, check out 
+[this](https://colab.research.google.com/github/as-ideas/headliner/blob/master/notebooks/BERT_Translation_Example.ipynb)
+tutorial on colab!
+
 ## 🧠 Internals
 We use sequence-to-sequence (seq2seq) under the hood,
 an encoder-decoder framework (see figure 2). We provide a very simple interface to train
@@ -165,7 +170,7 @@ trainer.train(summarizer_loaded, train_data)
 summarizer_loaded.save('/tmp/summarizer_retrained')
 ```
 
-### Use pretrained embeddings
+### Use pretrained GloVe embeddings
 Embeddings in GloVe format can be injected in to the trainer as follows. Optionally, set the embedding to non-trainable.
 
 ```python
@@ -208,6 +213,53 @@ summarizer.init_model(preprocessor, vectorizer)
 trainer = Trainer(batch_size=2)
 trainer.train(summarizer, train_data, num_epochs=3)
 ```
+
+
+### Use pre-trained BERT embeddings
+Pre-trained BERT models can be included as follows. 
+Be aware that pre-trained BERT models are expensive to train and require custom preprocessing!
+
+```python
+from headliner.preprocessing import Preprocessor
+
+train_data = [('Some inputs.', 'Some outputs.')] * 10
+
+# use BERT-specific start and end token
+preprocessor = Preprocessor(start_token='[CLS]',
+                            end_token='[SEP]',
+                            lower_case=True)
+train_prep = [preprocessor(t) for t in train_data]
+targets_prep = [t[1] for t in train_prep]
+
+
+from tensorflow_datasets.core.features.text import SubwordTextEncoder
+from transformers import BertTokenizer
+from headliner.model import SummarizerBert
+
+# Use a pre-trained BERT embedding and BERT tokenizer for the encoder 
+tokenizer_input = BertTokenizer.from_pretrained('bert-base-uncased')
+tokenizer_target = SubwordTextEncoder.build_from_corpus(
+    targets_prep, target_vocab_size=2**13,  reserved_tokens=[preprocessor.start_token, preprocessor.end_token])
+
+vectorizer = Vectorizer(tokenizer_input, tokenizer_target)
+summarizer = SummarizerBert(num_heads=2,
+                            feed_forward_dim=512,
+                            num_layers_encoder=1,
+                            num_layers_decoder=1,
+                            bert_embedding_encoder='bert-base-uncased',
+                            embedding_encoder_trainable=False,
+                            embedding_size_encoder=768,
+                            embedding_size_decoder=64,
+                            dropout_rate=0.1,
+                            max_prediction_len=50)
+)
+summarizer.init_model(preprocessor, vectorizer)
+
+trainer = Trainer(batch_size=2)
+trainer.train(summarizer, train_data, num_epochs=3)
+```
+
+
 
 
 ### Training on large datasets

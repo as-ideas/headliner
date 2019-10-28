@@ -6,6 +6,7 @@ nav:
     - Examples:
         - Neural Machine Translation: examples/nmt_example.md
         - Advanced Neural Machine Translation: examples/advanced_nmt_example.md
+        - BERT Machine Translation: examples/bert_example.md
     - Documentation:
         - Callbacks:
             - ValidationCallback: callbacks/validation_callback.md
