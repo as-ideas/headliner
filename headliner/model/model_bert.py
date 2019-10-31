@@ -42,8 +42,8 @@ class Encoder(tf.keras.layers.Layer):
             x = self.embedding(x)[0]
         else:
             x = self.embedding(x)
-        x *= tf.math.sqrt(tf.cast(self.embedding_size, tf.float32))
-        x += self.pos_encoding[:, :seq_len, :]
+            x *= tf.math.sqrt(tf.cast(self.embedding_size, tf.float32))
+            x += self.pos_encoding[:, :seq_len, :]
         x = self.dropout(x, training=training)
         for i in range(self.num_layers):
             x = self.enc_layers[i](x, training, mask)
@@ -94,8 +94,8 @@ class Decoder(tf.keras.layers.Layer):
             x = self.embedding(x)[0]
         else:
             x = self.embedding(x)
-        x *= tf.math.sqrt(tf.cast(self.embedding_size, tf.float32))
-        x += self.pos_encoding[:, :seq_len, :]
+            x *= tf.math.sqrt(tf.cast(self.embedding_size, tf.float32))
+            x += self.pos_encoding[:, :seq_len, :]
         x = self.dropout(x, training=training)
 
         for i in range(self.num_layers):
