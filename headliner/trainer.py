@@ -2,6 +2,7 @@ import datetime
 import logging
 from collections import Counter
 from typing import Tuple, List, Iterable, Callable, Dict, Union
+from pathlib import PurePath
 
 import tensorflow as tf
 import yaml
@@ -190,13 +191,13 @@ class Trainer:
                                    val_dataset=val_dataset,
                                    loss_function=self.loss_function,
                                    batch_size=self.batch_size),
-                ModelCheckpointCallback(file_path=self.model_save_path,
+                ModelCheckpointCallback(file_path=PurePath(self.model_save_path),
                                         summarizer=summarizer,
                                         monitor='loss_val',
                                         mode='min')
             ])
         if self.tensorboard_dir is not None:
-            train_callbacks.append(tf.keras.callbacks.TensorBoard(log_dir=self.tensorboard_dir,
+            train_callbacks.append(tf.keras.callbacks.TensorBoard(log_dir=PurePath(self.tensorboard_dir),
                                                                   update_freq='epoch'))
         logs = {}
         epoch_count, batch_count, train_losses = 0, 0, []
