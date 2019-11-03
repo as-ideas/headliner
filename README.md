@@ -1,5 +1,6 @@
 # Headliner
 
+[![Build Status](https://dev.azure.com/axelspringerai/Public/_apis/build/status/as-ideas.headliner?branchName=master)](https://dev.azure.com/axelspringerai/Public/_build/latest?definitionId=2&branchName=master)
 [![Build Status](https://travis-ci.org/as-ideas/headliner.svg?branch=master)](https://travis-ci.org/as-ideas/headliner)
 [![Docs](https://img.shields.io/badge/docs-online-brightgreen)](https://as-ideas.github.io/headliner/)
 [![codecov](https://codecov.io/gh/as-ideas/headliner/branch/master/graph/badge.svg)](https://codecov.io/gh/as-ideas/headliner)
