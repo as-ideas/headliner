@@ -11,7 +11,7 @@ text summarization and many more.
 
 Read the documentation at: https://as-ideas.github.io/headliner/
 
-Headliner is compatible with Python 3.6 and is distributed under the MIT license.
+Headliner is compatible with Python 3.6+ and is distributed under the MIT license.
 '''
 
 setup(
@@ -34,8 +34,13 @@ setup(
         'Intended Audience :: Education',
         'Intended Audience :: Science/Research',
         'License :: OSI Approved :: MIT License',
+        'Operating System :: POSIX :: Linux',
+        'Operating System :: MacOS :: MacOS X',
+        'Operating System :: Microsoft :: Windows',
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Topic :: Scientific/Engineering',
         'Topic :: Software Development :: Libraries',
         'Topic :: Software Development :: Libraries :: Python Modules',
     ],
