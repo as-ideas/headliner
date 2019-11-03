@@ -1,8 +1,9 @@
+import os
+import tempfile
 import datetime
 import logging
 from collections import Counter
 from typing import Tuple, List, Iterable, Callable, Dict, Union
-from pathlib import PurePath
 
 import tensorflow as tf
 import yaml
@@ -37,8 +38,10 @@ class Trainer:
                  embedding_path_encoder=None,
                  embedding_path_decoder=None,
                  steps_per_epoch=500,
-                 tensorboard_dir='/tmp/train_tens_' + datetime.datetime.now().strftime('%Y%m%d_%H%M%S'),
-                 model_save_path='/tmp/summarizer_' + datetime.datetime.now().strftime('%Y%m%d_%H%M%S'),
+                 tensorboard_dir=os.path.join(tempfile.gettempdir(), 'train_tens_',
+                                              datetime.datetime.now().strftime('%Y%m%d_%H%M%S')),
+                 model_save_path=os.path.join(tempfile.gettempdir(), 'summarizer_',
+                                              datetime.datetime.now().strftime('%Y%m%d_%H%M%S')),
                  shuffle_buffer_size=100000,
                  use_bucketing=False,
                  bucketing_buffer_size_batches=10000,
@@ -103,7 +106,6 @@ class Trainer:
         self.num_print_predictions = num_print_predictions
         self.steps_to_log = steps_to_log
         self.preprocessor = preprocessor or Preprocessor(start_token=START_TOKEN, end_token=END_TOKEN)
-
 
     @classmethod
     def from_config(cls, file_path, **kwargs):
@@ -191,13 +193,13 @@ class Trainer:
                                    val_dataset=val_dataset,
                                    loss_function=self.loss_function,
                                    batch_size=self.batch_size),
-                ModelCheckpointCallback(file_path=PurePath(self.model_save_path),
+                ModelCheckpointCallback(file_path=self.model_save_path,
                                         summarizer=summarizer,
                                         monitor='loss_val',
                                         mode='min')
             ])
         if self.tensorboard_dir is not None:
-            train_callbacks.append(tf.keras.callbacks.TensorBoard(log_dir=PurePath(self.tensorboard_dir),
+            train_callbacks.append(tf.keras.callbacks.TensorBoard(log_dir=self.tensorboard_dir,
                                                                   update_freq='epoch'))
         logs = {}
         epoch_count, batch_count, train_losses = 0, 0, []
