@@ -81,6 +81,7 @@ class TestTrainer(unittest.TestCase):
                           steps_per_epoch=10,
                           max_vocab_size_encoder=10,
                           max_vocab_size_decoder=10,
+                          model_save_path=None,
                           max_input_len=5,
                           max_output_len=3)
         trainer.train(summarizer, data, num_epochs=1)
@@ -110,6 +111,7 @@ class TestTrainer(unittest.TestCase):
                           steps_per_epoch=10,
                           max_vocab_size_encoder=10,
                           max_vocab_size_decoder=10,
+                          model_save_path=None,
                           max_output_len=3)
 
         trainer.train(summarizer,
