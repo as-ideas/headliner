@@ -1,3 +1,5 @@
+import os
+import tempfile
 import datetime
 import logging
 from collections import Counter
@@ -36,8 +38,10 @@ class Trainer:
                  embedding_path_encoder=None,
                  embedding_path_decoder=None,
                  steps_per_epoch=500,
-                 tensorboard_dir='/tmp/train_tens_' + datetime.datetime.now().strftime('%Y%m%d_%H%M%S'),
-                 model_save_path='/tmp/summarizer_' + datetime.datetime.now().strftime('%Y%m%d_%H%M%S'),
+                 tensorboard_dir=os.path.join(tempfile.gettempdir(), 'train_tens_',
+                                              datetime.datetime.now().strftime('%Y%m%d_%H%M%S')),
+                 model_save_path=os.path.join(tempfile.gettempdir(), 'summarizer_',
+                                              datetime.datetime.now().strftime('%Y%m%d_%H%M%S')),
                  shuffle_buffer_size=100000,
                  use_bucketing=False,
                  bucketing_buffer_size_batches=10000,
@@ -102,7 +106,6 @@ class Trainer:
         self.num_print_predictions = num_print_predictions
         self.steps_to_log = steps_to_log
         self.preprocessor = preprocessor or Preprocessor(start_token=START_TOKEN, end_token=END_TOKEN)
-
 
     @classmethod
     def from_config(cls, file_path, **kwargs):
