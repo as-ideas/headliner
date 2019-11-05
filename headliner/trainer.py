@@ -190,11 +190,14 @@ class Trainer:
                                    val_dataset=val_dataset,
                                    loss_function=self.loss_function,
                                    batch_size=self.batch_size),
-                ModelCheckpointCallback(file_path=self.model_save_path,
-                                        summarizer=summarizer,
-                                        monitor='loss_val',
-                                        mode='min')
             ])
+        loss_monitor = 'loss_val' if val_data is not None else 'loss'
+        train_callbacks.append(
+            ModelCheckpointCallback(file_path=self.model_save_path,
+                                    summarizer=summarizer,
+                                    monitor=loss_monitor,
+                                    mode='min'))
+
         if self.tensorboard_dir is not None:
             train_callbacks.append(tf.keras.callbacks.TensorBoard(log_dir=self.tensorboard_dir,
                                                                   update_freq='epoch'))
