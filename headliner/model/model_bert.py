@@ -37,17 +37,8 @@ class Encoder(tf.keras.layers.Layer):
         self.dropout = tf.keras.layers.Dropout(dropout_rate)
 
     def call(self, x, x_ids, training, mask):
-        seq_len = tf.shape(x)[1]
-        if self.bert_embedding_name is not None:
-            x = {'input_ids': x, 'token_type_ids': x_ids}
-            x = self.embedding(x)[0]
-        else:
-            x = self.embedding(x)
-            x *= tf.math.sqrt(tf.cast(self.embedding_size, tf.float32))
-            x += self.pos_encoding[:, :seq_len, :]
-        x = self.dropout(x, training=training)
-        for i in range(self.num_layers):
-            x = self.enc_layers[i](x, training, mask)
+        x = {'input_ids': x, 'token_type_ids': x_ids}
+        x = self.embedding(x, training=training)[0]
         return x
 
 
