@@ -41,7 +41,8 @@ class SummarizerBert(Summarizer):
         self.embedding_decoder_trainable = embedding_decoder_trainable
         self.bert_embedding_encoder = bert_embedding_encoder
         self.bert_embedding_decoder = bert_embedding_decoder
-        self.optimizer = SummarizerBert.new_optimizer()
+        self.optimizer_encoder = SummarizerBert.new_optimizer_encoder()
+        self.optimizer_decoder = SummarizerBert.new_optimizer_decoder()
         self.transformer = None
         self.embedding_shape_in = None
         self.embedding_shape_out = None
@@ -50,7 +51,6 @@ class SummarizerBert(Summarizer):
         """ Prevents pickle from serializing the transformer and optimizer """
         state = self.__dict__.copy()
         del state['transformer']
-        del state['optimizer']
         return state
 
     def init_model(self,
@@ -76,36 +76,53 @@ class SummarizerBert(Summarizer):
                                        embedding_weights_encoder=embedding_weights_encoder,
                                        embedding_weights_decoder=embedding_weights_decoder,
                                        dropout_rate=self.dropout_rate)
-        self.transformer.compile(optimizer=self.optimizer)
+        self.transformer.compile()
 
     def new_train_step(self,
-                       loss_function: Callable[[tf.Tensor], tf.Tensor],
+                       loss_function: Callable[[tf.Tensor, tf.Tensor], tf.Tensor],
                        batch_size: int,
                        apply_gradients=True):
 
         transformer = self.transformer
-        optimizer = self.optimizer
+        optimizer_encoder = self.optimizer_encoder
+        optimizer_decoder = self.optimizer_decoder
 
         train_step_signature = [
+            tf.TensorSpec(shape=(batch_size, None), dtype=tf.int32),
             tf.TensorSpec(shape=(batch_size, None), dtype=tf.int32),
             tf.TensorSpec(shape=(batch_size, None), dtype=tf.int32),
         ]
 
         @tf.function(input_signature=train_step_signature)
-        def train_step(inp, tar):
+        def train_step(inp, inp_ind, tar):
             tar_inp = tar[:, :-1]
             tar_real = tar[:, 1:]
             enc_padding_mask, combined_mask, dec_padding_mask = create_masks(inp, tar_inp)
             with tf.GradientTape() as tape:
-                predictions, _ = transformer(inp, tar_inp,
-                                             True,
+                predictions, _ = transformer(inp,
+                                             inp_ind,
+                                             tar_inp,
+                                             apply_gradients,
                                              enc_padding_mask,
                                              combined_mask,
                                              dec_padding_mask)
                 loss = loss_function(tar_real, predictions)
             if apply_gradients:
-                gradients = tape.gradient(loss, transformer.trainable_variables)
-                optimizer.apply_gradients(zip(gradients, transformer.trainable_variables))
+                gradients_encoder = tape.gradient(loss, transformer.encoder.trainable_variables)
+                optimizer_encoder.apply_gradients(zip(gradients_encoder, transformer.encoder.trainable_variables))
+            with tf.GradientTape() as tape:
+                predictions, _ = transformer(inp,
+                                             inp_ind,
+                                             tar_inp,
+                                             apply_gradients,
+                                             enc_padding_mask,
+                                             combined_mask,
+                                             dec_padding_mask)
+                loss = loss_function(tar_real, predictions)
+            if apply_gradients:
+                gradients_decoder = tape.gradient(loss, transformer.decoder.trainable_variables)
+                optimizer_decoder.apply_gradients(zip(gradients_decoder, transformer.decoder.trainable_variables))
+
             return loss
 
         return train_step
@@ -115,8 +132,9 @@ class SummarizerBert(Summarizer):
 
     def predict_vectors(self, input_text: str, target_text: str) -> Dict[str, Union[str, np.array]]:
         text_preprocessed = self.preprocessor((input_text, target_text))
-        en_inputs, _ = self.vectorizer(text_preprocessed)
+        en_inputs, en_input_ids, _ = self.vectorizer(text_preprocessed)
         en_inputs = tf.expand_dims(en_inputs, 0)
+        en_input_ids = tf.expand_dims(en_input_ids, 0)
         start_end_seq = self.vectorizer.encode_output(
             ' '.join([self.preprocessor.start_token, self.preprocessor.end_token]))
         de_start_index, de_end_index = start_end_seq[:1], start_end_seq[-1:]
@@ -129,6 +147,7 @@ class SummarizerBert(Summarizer):
             enc_padding_mask, combined_mask, dec_padding_mask = create_masks(
                 en_inputs, decoder_output)
             predictions, attention_weights = self.transformer(en_inputs,
+                                                              en_input_ids,
                                                               decoder_output,
                                                               False,
                                                               enc_padding_mask,
@@ -173,12 +192,19 @@ class SummarizerBert(Summarizer):
                                              embedding_encoder_trainable=summarizer.embedding_encoder_trainable,
                                              embedding_decoder_trainable=summarizer.embedding_decoder_trainable,
                                              dropout_rate=summarizer.dropout_rate)
-        optimizer = SummarizerBert.new_optimizer()
-        summarizer.transformer.compile(optimizer=optimizer)
+        optimizer_encoder = SummarizerBert.new_optimizer_encoder()
+        optimizer_decoder = SummarizerBert.new_optimizer_decoder()
+        summarizer.transformer.compile()
         summarizer.transformer.load_weights(transformer_path)
-        summarizer.optimizer = summarizer.transformer.optimizer
+        summarizer.optimizer_encoder = optimizer_encoder
+        summarizer.optimizer_decoder = optimizer_decoder
+
         return summarizer
 
     @staticmethod
-    def new_optimizer() -> tf.keras.optimizers.Optimizer:
-        return tf.keras.optimizers.Adam()
+    def new_optimizer_encoder() -> tf.keras.optimizers.Optimizer:
+        return tf.keras.optimizers.Adam(learning_rate=1e-4)
+
+    @staticmethod
+    def new_optimizer_decoder() -> tf.keras.optimizers.Optimizer:
+        return tf.keras.optimizers.Adam(learning_rate=1e-3)

@@ -208,9 +208,9 @@ class Trainer:
         epoch_count, batch_count, train_losses = 0, 0, []
         train_step = summarizer.new_train_step(self.loss_function, self.batch_size, apply_gradients=True)
         while epoch_count < num_epochs:
-            for train_source_seq, train_target_seq in train_dataset.take(-1):
+            for train_source_seq, train_source_ind, train_target_seq in train_dataset.take(-1):
                 batch_count += 1
-                current_loss = train_step(train_source_seq, train_target_seq)
+                current_loss = train_step(train_source_seq, train_source_ind, train_target_seq)
                 train_losses.append(current_loss)
                 logs['loss'] = float(sum(train_losses)) / len(train_losses)
                 if batch_count % self.steps_to_log == 0:

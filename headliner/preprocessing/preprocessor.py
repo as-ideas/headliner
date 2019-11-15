@@ -32,18 +32,8 @@ class Preprocessor:
     def __call__(self, data: Tuple[str, str]) -> Tuple[str, str]:
         """ Performs regex logic for string cleansing and attaches start and end tokens to the text. """
         text_encoder, text_decoder = self.normalize_string(data[0]), self.normalize_string(data[1])
-        text_encoder = self.start_token + ' ' + text_encoder + ' ' + self.end_token
         text_decoder = self.start_token + ' ' + text_decoder + ' ' + self.end_token
         return text_encoder, text_decoder
 
     def normalize_string(self, s: str) -> str:
-        if self.lower_case:
-            s = s.lower()
-        if self.filter_pattern is not None:
-            s = re.sub(self.filter_pattern, '', s)
-        if self.hash_numbers:
-            s = re.sub(r'\d+', '#', s)
-        if self.punctuation_pattern is not None:
-            s = re.sub(self.punctuation_pattern, r' \1', s)
-        s = re.sub(r'\s+', r' ', s)
         return s

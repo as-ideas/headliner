@@ -36,9 +36,10 @@ class Encoder(tf.keras.layers.Layer):
                            for _ in range(num_layers)]
         self.dropout = tf.keras.layers.Dropout(dropout_rate)
 
-    def call(self, x, training, mask):
+    def call(self, x, x_ids, training, mask):
         seq_len = tf.shape(x)[1]
         if self.bert_embedding_name is not None:
+            x = {'input_ids': x, 'token_type_ids': x_ids}
             x = self.embedding(x)[0]
         else:
             x = self.embedding(x)
@@ -145,9 +146,9 @@ class Transformer(tf.keras.Model):
 
         self.final_layer = tf.keras.layers.Dense(embedding_shape_decoder[0])
 
-    def call(self, inp, tar, training, enc_padding_mask,
+    def call(self, inp, inp_ids, tar, training, enc_padding_mask,
              look_ahead_mask, dec_padding_mask):
-        enc_output = self.encoder(inp, training, enc_padding_mask)
+        enc_output = self.encoder(inp, inp_ids, training, enc_padding_mask)
 
         dec_output, attention_weights = self.decoder(
             tar, enc_output, training, look_ahead_mask, dec_padding_mask)

@@ -38,8 +38,8 @@ class ValidationCallback(tf.keras.callbacks.Callback):
         if logs is None:
             logs = {}
         val_loss, count_batches_val = 0, 0
-        for test_source_seq, test_target_seq in self.val_dataset.take(-1):
-            val_loss_batch = self.train_step(test_source_seq, test_target_seq)
+        for test_source_seq, test_source_ind, test_target_seq in self.val_dataset.take(-1):
+            val_loss_batch = self.train_step(test_source_seq, test_source_ind, test_target_seq)
             val_loss += val_loss_batch
             count_batches_val += 1
         if count_batches_val == 0:

@@ -1,7 +1,10 @@
 from typing import Tuple, List
 
-from headliner.preprocessing.tokenizer import Tokenizer
+from spacy.lang.de import German
 
+from headliner.preprocessing.tokenizer import Tokenizer
+import spacy
+import re
 
 class Vectorizer:
     """
@@ -31,24 +34,40 @@ class Vectorizer:
         self.max_output_len = max_output_len
         self._tokenizer_encoder = tokenizer_encoder
         self._tokenizer_decoder = tokenizer_decoder
+        self.nlp = German()
+        self.nlp.add_pipe(self.nlp.create_pipe('sentencizer'))
+        self.count = 0
 
-    def __call__(self, data: Tuple[str, str]) -> Tuple[List[int], List[int]]:
+    def __call__(self, data: Tuple[str, str]) -> Tuple[List[int], List[int], List[int]]:
         """
         Encodes preprocessed strings into sequences of one-hot indices.
         """
         text_encoder, text_decoder = data[0], data[1]
-        vec_encoder = self._tokenizer_encoder.encode(text_encoder)
+        doc = self.nlp(text_encoder)
+        sentences = [sent.string.strip() for sent in doc.sents]
+        vec_encoder = []
+        sentence_ids = []
+        self.count += 1
+        for i, sent in enumerate(sentences):
+            sent = '[CLS] ' + sent + ' [SEP]'
+            vec = self._tokenizer_encoder.encode(sent)
+            vec_encoder.extend(vec)
+            ids = [i % 2] * len(vec)
+            sentence_ids.extend(ids)
+
         vec_decoder = self._tokenizer_decoder.encode(text_decoder)
         if self.max_input_len is not None:
             if len(vec_encoder) > self.max_input_len:
                 vec_encoder = vec_encoder[:self.max_input_len-1] + [vec_encoder[-1]]
+            if len(sentence_ids) > self.max_input_len:
+                sentence_ids = sentence_ids[:self.max_input_len-1] + [sentence_ids[-1]]
         if self.max_output_len is not None:
             if len(vec_decoder) > self.max_output_len:
                 vec_decoder = vec_decoder[:self.max_output_len-1] + [vec_decoder[-1]]
             else:
                 vec_decoder = vec_decoder + [0] * (self.max_output_len - len(vec_decoder))
 
-        return vec_encoder, vec_decoder
+        return vec_encoder, sentence_ids, vec_decoder
 
     def encode_input(self, text: str) -> List[int]:
         return self._tokenizer_encoder.encode(text)
