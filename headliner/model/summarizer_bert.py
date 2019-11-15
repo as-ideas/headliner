@@ -186,11 +186,11 @@ class SummarizerBert(Summarizer):
                                              embedding_decoder_trainable=summarizer.embedding_decoder_trainable,
                                              dropout_rate=summarizer.dropout_rate)
         optimizer_encoder = SummarizerBert.new_optimizer_encoder()
-        optimizer_transformer = SummarizerBert.new_optimizer_decoder()
+        optimizer_decoder = SummarizerBert.new_optimizer_decoder()
         summarizer.transformer.compile()
         summarizer.transformer.load_weights(transformer_path)
         summarizer.optimizer_encoder = optimizer_encoder
-        summarizer.optimizer_transformer = optimizer_transformer
+        summarizer.optimizer_transformer = optimizer_decoder
 
         return summarizer
 
