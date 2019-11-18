@@ -51,10 +51,12 @@ class Vectorizer:
         for i, sent in enumerate(sentences):
             sent = '[CLS] ' + sent + ' [SEP]'
             vec = self._tokenizer_encoder.encode(sent)
-            vec_encoder.extend(vec)
-            ids = [i % 2] * len(vec)
-            sentence_ids.extend(ids)
+            if len(vec_encoder) + len(vec) < self.max_input_len:
+                vec_encoder.extend(vec)
+                ids = [i % 2] * len(vec)
+                sentence_ids.extend(ids)
 
+        print(vec_encoder)
         vec_decoder = self._tokenizer_decoder.encode(text_decoder)
         if self.max_input_len is not None:
             if len(vec_encoder) > self.max_input_len:
