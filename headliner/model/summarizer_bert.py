@@ -26,7 +26,8 @@ class SummarizerBert(Summarizer):
                  bert_embedding_encoder=None,
                  bert_embedding_decoder=None,
                  embedding_encoder_trainable=True,
-                 embedding_decoder_trainable=True):
+                 embedding_decoder_trainable=True,
+                 max_sequence_len=10000):
 
         super().__init__()
         self.max_prediction_len = max_prediction_len
@@ -45,6 +46,7 @@ class SummarizerBert(Summarizer):
         self.transformer = None
         self.embedding_shape_in = None
         self.embedding_shape_out = None
+        self.max_sequence_len = max_sequence_len
 
     def __getstate__(self):
         """ Prevents pickle from serializing the transformer and optimizer """
@@ -57,8 +59,7 @@ class SummarizerBert(Summarizer):
                    preprocessor: Preprocessor,
                    vectorizer: Vectorizer,
                    embedding_weights_encoder=None,
-                   embedding_weights_decoder=None
-                   ) -> None:
+                   embedding_weights_decoder=None) -> None:
         self.preprocessor = preprocessor
         self.vectorizer = vectorizer
         self.embedding_shape_in = (self.vectorizer.encoding_dim, self.embedding_size_encoder)
@@ -75,7 +76,8 @@ class SummarizerBert(Summarizer):
                                        embedding_decoder_trainable=self.embedding_decoder_trainable,
                                        embedding_weights_encoder=embedding_weights_encoder,
                                        embedding_weights_decoder=embedding_weights_decoder,
-                                       dropout_rate=self.dropout_rate)
+                                       dropout_rate=self.dropout_rate,
+                                       max_seq_len=self.max_sequence_len)
         self.transformer.compile(optimizer=self.optimizer)
 
     def new_train_step(self,

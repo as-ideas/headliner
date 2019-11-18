@@ -7,8 +7,8 @@ def get_angles(pos, i, embedding_size):
     return pos * angle_rates
 
 
-def positional_encoding(position, embedding_size):
-    angle_rads = get_angles(np.arange(position)[:, np.newaxis],
+def positional_encoding(max_len, embedding_size):
+    angle_rads = get_angles(np.arange(max_len)[:, np.newaxis],
                             np.arange(embedding_size)[np.newaxis, :],
                             embedding_size)
 
