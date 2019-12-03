@@ -56,7 +56,7 @@ class Vectorizer:
                 ids = [i % 2] * len(vec)
                 sentence_ids.extend(ids)
 
-        print(vec_encoder)
+        #print(vec_encoder)
         vec_decoder = self._tokenizer_decoder.encode(text_decoder)
         if self.max_input_len is not None:
             if len(vec_encoder) > self.max_input_len:
