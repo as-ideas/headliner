@@ -173,6 +173,7 @@ class SummarizerTransformer(Summarizer):
                                           combined_mask,
                                           dec_padding_mask)
 
+        # build up beam search tree with root node plus first top k predictions
         root_node = BeamNode(parent_node=None, sum_logits=0, token_index=de_start_index[0])
         top_k_logits, top_k_indices = tf.math.top_k(predictions[0, -1, :], k=beam_width)
         last_nodes = [BeamNode(parent_node=root_node,
@@ -184,10 +185,13 @@ class SummarizerTransformer(Summarizer):
             for index in range(1, -1, -1):
                 current_batch[i, index] = int(node.token_index)
                 node = node.parent_node
-
         final_nodes = []
         en_inputs_shape = tf.shape(en_inputs)
-        for pred_indx in range(2, self.max_prediction_len):
+
+        # iteratively predict on batch and add k top predictions
+        for time_step in range(2, self.max_prediction_len):
+
+            # do batch prediction with current top k paths
             en_inputs = tf.broadcast_to(en_inputs[0], (len(last_nodes), en_inputs_shape[1]))
             enc_padding_mask, combined_mask, dec_padding_mask = create_masks(
                 en_inputs, current_batch)
@@ -197,19 +201,23 @@ class SummarizerTransformer(Summarizer):
                                                               enc_padding_mask,
                                                               combined_mask,
                                                               dec_padding_mask)
+
+            # get top k predictions for each path for k*k path candidates
             current_nodes = []
             for i in range(len(last_nodes)):
                 top_k_logits, top_k_indices = tf.math.top_k(predictions[i, -1, :], k=beam_width)
                 last_node = last_nodes[i]
                 for j in range(beam_width):
-                    norm_logit = length_penalty_factor(pred_indx) * top_k_logits[j]
+                    norm_logit = length_penalty_factor(time_step) * top_k_logits[j]
                     current_nodes.append(BeamNode(parent_node=last_node,
                                                   sum_logits=norm_logit + last_node.sum_logits,
                                                   token_index=top_k_indices[j]))
 
+            # select top k from k*k path candidate
             current_nodes.sort(key=lambda node: node.sum_logits)
             last_nodes = []
             for current_node in current_nodes[-beam_width:]:
+                # if path is finished, add to final nodes,
                 if int(current_node.token_index) == de_end_index[0]:
                     final_nodes.append(current_node)
                 else:
@@ -218,13 +226,15 @@ class SummarizerTransformer(Summarizer):
             if len(last_nodes) == 0:
                 break
 
-            current_batch = np.zeros((len(last_nodes), pred_indx+1))
+            # construct batch of top k paths for next batch prediction of the model
+            current_batch = np.zeros((len(last_nodes), time_step+1))
             for i in range(len(last_nodes)):
                 node = last_nodes[i]
-                for index in range(pred_indx, -1, -1):
+                for index in range(time_step, -1, -1):
                     current_batch[i, index] = int(node.token_index)
                     node = node.parent_node
 
+        # construct sequences from final nodes by traversing the tree from last node to root node
         final_preds = []
         for i in range(len(final_nodes)):
             node = final_nodes[i]
