@@ -31,7 +31,6 @@ def length_penalty_factor(seq_len, alpha=1):
     return ((5.0 + (seq_len + 1)) / 6.0) ** alpha
 
 
-
 class SummarizerTransformer(Summarizer):
 
     def __init__(self,
