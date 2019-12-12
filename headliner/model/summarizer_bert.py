@@ -195,39 +195,28 @@ class SummarizerBert(Summarizer):
         start_end_seq = self.vectorizer.encode_output(
             ' '.join([self.preprocessor.start_token, self.preprocessor.end_token]))
         de_start_index, de_end_index = start_end_seq[:1], start_end_seq[-1:]
-        decoder_output = tf.expand_dims(de_start_index, 0)
 
-        enc_padding_mask, combined_mask, dec_padding_mask = create_masks(en_inputs, decoder_output)
-        predictions, _ = self.transformer(en_inputs,
-                                          en_input_ids,
-                                          decoder_output,
-                                          False,
-                                          enc_padding_mask,
-                                          combined_mask,
-                                          dec_padding_mask)
-
-        # build up beam search tree with root node plus first top k predictions
-        root_node = BeamNode(parent_node=None, sum_logits=0, token_index=de_start_index[0])
-        top_k_logits, top_k_indices = tf.math.top_k(predictions[0, -1, :], k=beam_width)
-        last_nodes = [BeamNode(parent_node=root_node,
-                               sum_logits=top_k_logits[i],
-                               token_index=top_k_indices[i]) for i in range(beam_width)]
-        current_batch = np.zeros((beam_width, 2))
-        for i in range(beam_width):
-            node = last_nodes[i]
-            for index in range(1, -1, -1):
-                current_batch[i, index] = int(node.token_index)
-                node = node.parent_node
+        # start beam search with single root node
+        last_nodes = [BeamNode(parent_node=None, sum_logits=0, token_index=de_start_index[0])]
         final_nodes = []
         en_inputs_shape = tf.shape(en_inputs)
         en_input_ids_shape = tf.shape(en_input_ids)
 
         # iteratively predict on batch and add k top predictions
-        for time_step in range(2, self.max_prediction_len):
+        for time_step in range(0, self.max_prediction_len):
 
-            # do batch prediction with current top k paths
+            # do batch prediction with current top paths
             en_inputs = tf.broadcast_to(en_inputs[0], (len(last_nodes), en_inputs_shape[1]))
             en_input_ids = tf.broadcast_to(en_input_ids[0], (len(last_nodes), en_input_ids_shape[1]))
+
+            # construct batch of top k paths for next batch prediction of the model
+            current_batch = np.zeros((len(last_nodes), time_step+1))
+            for i in range(len(last_nodes)):
+                node = last_nodes[i]
+                for index in range(time_step, -1, -1):
+                    current_batch[i, index] = int(node.token_index)
+                    node = node.parent_node
+
             enc_padding_mask, combined_mask, dec_padding_mask = create_masks(
                 en_inputs, current_batch)
             predictions, attention_weights = self.transformer(en_inputs,
@@ -260,14 +249,6 @@ class SummarizerBert(Summarizer):
 
             if len(last_nodes) == 0:
                 break
-
-            # construct batch of top k paths for next batch prediction of the model
-            current_batch = np.zeros((len(last_nodes), time_step+1))
-            for i in range(len(last_nodes)):
-                node = last_nodes[i]
-                for index in range(time_step, -1, -1):
-                    current_batch[i, index] = int(node.token_index)
-                    node = node.parent_node
 
         # construct sequences from final nodes by traversing the tree from last node to root node
         final_preds = []
