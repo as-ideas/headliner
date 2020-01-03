@@ -9,6 +9,7 @@ class Preprocessor:
                  end_token='<end>',
                  punctuation_pattern='([!.?,])',
                  filter_pattern='(["#$%&()*+/:;<=>@[\\]^_`{|}~\t\n])',
+                 add_input_start_end=True,
                  lower_case=True,
                  hash_numbers=True):
         """
@@ -19,6 +20,7 @@ class Preprocessor:
             end_token: Unique end token to be attached at the end of a target text.
             punctuation_pattern: Regex pattern for punktuation that is splitted from the tokens.
             filter_pattern: Regex pattern for characters to be removed from the text.
+            add_input_start_end: Whether to add start and end token to input sequence.
             lower_case: Whether to perform lower casing.
             hash_numbers: Whether to replace numbers by a #.
         """
@@ -26,13 +28,15 @@ class Preprocessor:
         self.end_token = end_token
         self.punctuation_pattern = punctuation_pattern
         self.filter_pattern = filter_pattern
+        self.add_input_start_end = add_input_start_end
         self.lower_case = lower_case
         self.hash_numbers = hash_numbers
 
     def __call__(self, data: Tuple[str, str]) -> Tuple[str, str]:
         """ Performs regex logic for string cleansing and attaches start and end tokens to the text. """
         text_encoder, text_decoder = self.normalize_string(data[0]), self.normalize_string(data[1])
-        text_encoder = self.start_token + ' ' + text_encoder + ' ' + self.end_token
+        if self.add_input_start_end:
+            text_encoder = self.start_token + ' ' + text_encoder + ' ' + self.end_token
         text_decoder = self.start_token + ' ' + text_decoder + ' ' + self.end_token
         return text_encoder, text_decoder
 
