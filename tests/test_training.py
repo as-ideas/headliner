@@ -126,9 +126,9 @@ class TestTraining(unittest.TestCase):
                 loss_bert = train_step(source_seq, target_seq)
                 print(str(loss_bert))
 
-        self.assertAlmostEqual(1.1114540100097656, float(loss_bert), 3)
+        self.assertAlmostEqual(1.7905714511871338, float(loss_bert), 3)
         output_transformer = summarizer_bert.predict_vectors('a c', '')
-        expected_first_logits = np.array([-1.901011,  0.91757 ,  0.63448 , -0.227698,  1.14404])
+        expected_first_logits = np.array([-0.485657,  1.597103,  0.028933,  1.012528, -0.76804])
         np.testing.assert_allclose(expected_first_logits, output_transformer['logits'][0], atol=1e-3)
         self.assertEqual('<start> a c <end>', output_transformer['preprocessed_text'][0])
-        self.assertEqual('<end>', output_transformer['predicted_text'])
+        self.assertEqual('c c <start>', output_transformer['predicted_text'])

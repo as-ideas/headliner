@@ -64,7 +64,8 @@ class TestSummarizerTransformer(unittest.TestCase):
         self.assertIsNotNone(summarizer_loaded.transformer)
         self.assertFalse(summarizer_loaded.transformer.encoder.embedding.trainable)
         self.assertTrue(summarizer_loaded.transformer.decoder.embedding.trainable)
-        self.assertIsNotNone(summarizer_loaded.optimizer)
+        self.assertIsNotNone(summarizer_loaded.optimizer_encoder)
+        self.assertIsNotNone(summarizer_loaded.optimizer_decoder)
 
         pred = summarizer.predict_vectors('a c', '')
         pred_loaded = summarizer_loaded.predict_vectors('a c', '')
