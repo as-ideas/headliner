@@ -55,6 +55,7 @@ class SummarizerBert(Summarizer):
         """ Prevents pickle from serializing the transformer and optimizer """
         state = self.__dict__.copy()
         del state['transformer']
+        del state['logger']
         del state['optimizer_encoder']
         del state['optimizer_decoder']
         return state
@@ -185,6 +186,7 @@ class SummarizerBert(Summarizer):
         optimizer_decoder_path = os.path.join(in_path, 'optimizer_decoder.pkl')
         with open(summarizer_path, 'rb') as handle:
             summarizer = pickle.load(handle)
+        summarizer.logger = get_logger(__name__)
         summarizer.transformer = Transformer(num_layers_encoder=summarizer.num_layers_encoder,
                                              num_layers_decoder=summarizer.num_layers_decoder,
                                              num_heads=summarizer.num_heads,
