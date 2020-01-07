@@ -5,6 +5,7 @@ from typing import Dict, Union
 
 import numpy as np
 import tensorflow as tf
+from headliner.utils.logger import get_logger
 
 from headliner.model.model_bert import Transformer, create_masks
 from headliner.model.summarizer import Summarizer
@@ -26,7 +27,8 @@ class SummarizerBert(Summarizer):
                  bert_embedding_encoder=None,
                  bert_embedding_decoder=None,
                  embedding_encoder_trainable=True,
-                 embedding_decoder_trainable=True):
+                 embedding_decoder_trainable=True,
+                 max_sequence_len=10000):
 
         super().__init__()
         self.max_prediction_len = max_prediction_len
@@ -46,11 +48,16 @@ class SummarizerBert(Summarizer):
         self.transformer = None
         self.embedding_shape_in = None
         self.embedding_shape_out = None
+        self.max_sequence_len = max_sequence_len
+        self.logger = get_logger(__name__)
 
     def __getstate__(self):
         """ Prevents pickle from serializing the transformer and optimizer """
         state = self.__dict__.copy()
         del state['transformer']
+        del state['logger']
+        del state['optimizer_encoder']
+        del state['optimizer_decoder']
         return state
 
     def init_model(self,
@@ -75,8 +82,10 @@ class SummarizerBert(Summarizer):
                                        embedding_decoder_trainable=self.embedding_decoder_trainable,
                                        embedding_weights_encoder=embedding_weights_encoder,
                                        embedding_weights_decoder=embedding_weights_decoder,
-                                       dropout_rate=self.dropout_rate)
-        self.transformer.compile()
+                                       dropout_rate=self.dropout_rate,
+                                       max_seq_len=self.max_sequence_len)
+        self.transformer.encoder.compile(optimizer=self.optimizer_encoder)
+        self.transformer.decoder.compile(optimizer=self.optimizer_decoder)
 
     def new_train_step(self,
                        loss_function: Callable[[tf.Tensor, tf.Tensor], tf.Tensor],
@@ -109,10 +118,8 @@ class SummarizerBert(Summarizer):
                                              dec_padding_mask)
                 loss = loss_function(tar_real, predictions)
             if apply_gradients:
-                transformer.encoder.trainable = False
-                gradients = tape.gradient(loss, transformer.trainable_variables)
-                optimizer_decoder.apply_gradients(zip(gradients, transformer.trainable_variables))
-                transformer.encoder.trainable = True
+                gradients_decoder = tape.gradient(loss, transformer.decoder.trainable_variables)
+                optimizer_decoder.apply_gradients(zip(gradients_decoder, transformer.decoder.trainable_variables))
                 gradients_encoder = tape.gradient(loss, transformer.encoder.trainable_variables)
                 optimizer_encoder.apply_gradients(zip(gradients_encoder, transformer.encoder.trainable_variables))
 
@@ -163,17 +170,21 @@ class SummarizerBert(Summarizer):
         if not os.path.exists(out_path):
             os.mkdir(out_path)
         summarizer_path = os.path.join(out_path, 'summarizer.pkl')
-        transformer_path = os.path.join(out_path, 'transformer')
+        encoder_path = os.path.join(out_path, 'encoder')
+        decoder_path = os.path.join(out_path, 'decoder')
         with open(summarizer_path, 'wb+') as handle:
             pickle.dump(self, handle, protocol=pickle.HIGHEST_PROTOCOL)
-        self.transformer.save_weights(transformer_path, save_format='tf')
+        self.transformer.encoder.save_weights(encoder_path, save_format='tf')
+        self.transformer.decoder.save_weights(decoder_path, save_format='tf')
 
     @staticmethod
     def load(in_path: str):
         summarizer_path = os.path.join(in_path, 'summarizer.pkl')
-        transformer_path = os.path.join(in_path, 'transformer')
+        encoder_path = os.path.join(in_path, 'encoder')
+        decoder_path = os.path.join(in_path, 'decoder')
         with open(summarizer_path, 'rb') as handle:
             summarizer = pickle.load(handle)
+        summarizer.logger = get_logger(__name__)
         summarizer.transformer = Transformer(num_layers_encoder=summarizer.num_layers_encoder,
                                              num_layers_decoder=summarizer.num_layers_decoder,
                                              num_heads=summarizer.num_heads,
@@ -187,27 +198,29 @@ class SummarizerBert(Summarizer):
                                              dropout_rate=summarizer.dropout_rate)
         optimizer_encoder = SummarizerBert.new_optimizer_encoder()
         optimizer_decoder = SummarizerBert.new_optimizer_decoder()
-        summarizer.transformer.compile()
-        summarizer.transformer.load_weights(transformer_path)
-        summarizer.optimizer_encoder = optimizer_encoder
-        summarizer.optimizer_transformer = optimizer_decoder
-
+        summarizer.transformer.encoder.compile(optimizer=optimizer_encoder)
+        summarizer.transformer.decoder.compile(optimizer=optimizer_decoder)
+        summarizer.transformer.encoder.load_weights(encoder_path)
+        summarizer.transformer.decoder.load_weights(decoder_path)
+        summarizer.optimizer_encoder = summarizer.transformer.encoder.optimizer
+        summarizer.optimizer_decoder = summarizer.transformer.decoder.optimizer
         return summarizer
 
     @staticmethod
-    def new_optimizer_decoder() -> tf.keras.optimizers.Optimizer:
-        learning_rate = CustomSchedule(warmup_steps=10000, learning_rate_start=0.1)
+    def new_optimizer_decoder(learning_rate_start=0.02) -> tf.keras.optimizers.Optimizer:
+        learning_rate = CustomSchedule(warmup_steps=10000, learning_rate_start=learning_rate_start)
         optimizer = tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.999,)
         return optimizer
 
     @staticmethod
-    def new_optimizer_encoder() -> tf.keras.optimizers.Optimizer:
-        learning_rate = CustomSchedule(warmup_steps=20000, learning_rate_start=2e-3)
+    def new_optimizer_encoder(learning_rate_start=5e-4) -> tf.keras.optimizers.Optimizer:
+        learning_rate = CustomSchedule(warmup_steps=20000, learning_rate_start=learning_rate_start)
         optimizer = tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.999,)
         return optimizer
 
 
 class CustomSchedule(tf.keras.optimizers.schedules.LearningRateSchedule):
+
     def __init__(self, warmup_steps=10000, learning_rate_start=1e-1):
         super(CustomSchedule, self).__init__()
         self.warmup_steps = warmup_steps
