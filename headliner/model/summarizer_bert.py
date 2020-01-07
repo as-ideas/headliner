@@ -84,7 +84,8 @@ class SummarizerBert(Summarizer):
                                        embedding_weights_decoder=embedding_weights_decoder,
                                        dropout_rate=self.dropout_rate,
                                        max_seq_len=self.max_sequence_len)
-        self.transformer.compile()
+        self.transformer.encoder.compile(optimizer=self.optimizer_encoder)
+        self.transformer.decoder.compile(optimizer=self.optimizer_decoder)
 
     def new_train_step(self,
                        loss_function: Callable[[tf.Tensor], tf.Tensor],
@@ -165,25 +166,18 @@ class SummarizerBert(Summarizer):
         if not os.path.exists(out_path):
             os.mkdir(out_path)
         summarizer_path = os.path.join(out_path, 'summarizer.pkl')
-        optimizer_encoder_path = os.path.join(out_path, 'optimizer_encoder.pkl')
-        optimizer_decoder_path = os.path.join(out_path, 'optimizer_decoder.pkl')
-        transformer_path = os.path.join(out_path, 'transformer')
+        encoder_path = os.path.join(out_path, 'encoder')
+        decoder_path = os.path.join(out_path, 'decoder')
         with open(summarizer_path, 'wb+') as handle:
             pickle.dump(self, handle, protocol=pickle.HIGHEST_PROTOCOL)
-
-        # just quick & dirty pickle the optimizer states
-        with open(optimizer_encoder_path, 'wb+') as handle:
-            pickle.dump(self.optimizer_encoder, handle, protocol=pickle.HIGHEST_PROTOCOL)
-        with open(optimizer_decoder_path, 'wb+') as handle:
-            pickle.dump(self.optimizer_decoder, handle, protocol=pickle.HIGHEST_PROTOCOL)
-        self.transformer.save_weights(transformer_path, save_format='tf')
+        self.transformer.encoder.save_weights(encoder_path, save_format='tf')
+        self.transformer.decoder.save_weights(decoder_path, save_format='tf')
 
     @staticmethod
     def load(in_path: str):
         summarizer_path = os.path.join(in_path, 'summarizer.pkl')
-        transformer_path = os.path.join(in_path, 'transformer')
-        optimizer_encoder_path = os.path.join(in_path, 'optimizer_encoder.pkl')
-        optimizer_decoder_path = os.path.join(in_path, 'optimizer_decoder.pkl')
+        encoder_path = os.path.join(in_path, 'encoder')
+        decoder_path = os.path.join(in_path, 'decoder')
         with open(summarizer_path, 'rb') as handle:
             summarizer = pickle.load(handle)
         summarizer.logger = get_logger(__name__)
@@ -198,25 +192,14 @@ class SummarizerBert(Summarizer):
                                              embedding_encoder_trainable=summarizer.embedding_encoder_trainable,
                                              embedding_decoder_trainable=summarizer.embedding_decoder_trainable,
                                              dropout_rate=summarizer.dropout_rate)
-        summarizer.transformer.compile()
-        summarizer.transformer.load_weights(transformer_path)
-
-        # just quick & dirty unpickle the optimizer states
-        try:
-            with open(optimizer_encoder_path, 'rb') as handle:
-                summarizer.optimizer_encoder = pickle.load(handle)
-        except Exception as e:
-            summarizer.logger.warn('Warning: Could not load {}, creating a bare optimizer. {}'
-                                   .format(optimizer_encoder_path, e))
-            summarizer.optimizer_encoder = SummarizerBert.new_optimizer_encoder()
-        try:
-            with open(optimizer_decoder_path, 'rb') as handle:
-                summarizer.optimizer_decoder = pickle.load(handle)
-        except Exception as e:
-            summarizer.logger.warn('Warning: Could not load {}, creating a bare optimizer. {}'
-                                   .format(optimizer_decoder_path, e))
-            summarizer.optimizer_decoder = SummarizerBert.new_optimizer_decoder()
-
+        optimizer_encoder = SummarizerBert.new_optimizer_encoder()
+        optimizer_decoder = SummarizerBert.new_optimizer_decoder()
+        summarizer.transformer.encoder.compile(optimizer=optimizer_encoder)
+        summarizer.transformer.decoder.compile(optimizer=optimizer_decoder)
+        summarizer.transformer.encoder.load_weights(encoder_path)
+        summarizer.transformer.decoder.load_weights(decoder_path)
+        summarizer.optimizer_encoder = summarizer.transformer.encoder.optimizer
+        summarizer.optimizer_decoder = summarizer.transformer.decoder.optimizer
         return summarizer
 
     @staticmethod

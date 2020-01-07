@@ -5,7 +5,7 @@ from transformers import TFBertModel
 from headliner.model.transformer_util import *
 
 
-class Encoder(tf.keras.layers.Layer):
+class Encoder(tf.keras.Model):
 
     def __init__(self,
                  num_layers: int,
@@ -51,7 +51,7 @@ class Encoder(tf.keras.layers.Layer):
         return x
 
 
-class Decoder(tf.keras.layers.Layer):
+class Decoder(tf.keras.Model):
 
     def __init__(self,
                  num_layers: int,
@@ -82,6 +82,7 @@ class Decoder(tf.keras.layers.Layer):
         self.dec_layers = [DecoderLayer(vec_dim, num_heads, feed_forward_dim, dropout_rate)
                            for _ in range(num_layers)]
         self.dropout = tf.keras.layers.Dropout(dropout_rate)
+        self.final_layer = tf.keras.layers.Dense(embedding_shape[0])
 
     def call(self,
              x,
@@ -92,20 +93,16 @@ class Decoder(tf.keras.layers.Layer):
         seq_len = tf.shape(x)[1]
         attention_weights = {}
 
-        if self.bert_embedding_name is not None:
-            x = self.embedding(x)[0]
-        else:
-            x = self.embedding(x)
-            x *= tf.math.sqrt(tf.cast(self.embedding_size, tf.float32))
-            x += self.pos_encoding[:, :seq_len, :]
+        x = self.embedding(x)
+        x *= tf.math.sqrt(tf.cast(self.embedding_size, tf.float32))
+        x += self.pos_encoding[:, :seq_len, :]
         x = self.dropout(x, training=training)
-
         for i in range(self.num_layers):
             x, block1, block2 = self.dec_layers[i](x, enc_output, training,
                                                    look_ahead_mask, padding_mask)
             attention_weights['decoder_layer{}_block1'.format(i + 1)] = block1
             attention_weights['decoder_layer{}_block2'.format(i + 1)] = block2
-
+        x = self.final_layer(x)
         return x, attention_weights
 
 
@@ -148,7 +145,7 @@ class Transformer(tf.keras.Model):
                                dropout_rate=dropout_rate,
                                max_seq_len=max_seq_len)
 
-        self.final_layer = tf.keras.layers.Dense(embedding_shape_decoder[0])
+
 
     def call(self, inp, tar, training, enc_padding_mask,
              look_ahead_mask, dec_padding_mask):
@@ -156,5 +153,4 @@ class Transformer(tf.keras.Model):
 
         dec_output, attention_weights = self.decoder(
             tar, enc_output, training, look_ahead_mask, dec_padding_mask)
-        final_output = self.final_layer(dec_output)  # (batch_size, tar_seq_len, target_vocab_size)
-        return final_output, attention_weights
+        return dec_output, attention_weights
