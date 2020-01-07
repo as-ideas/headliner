@@ -38,14 +38,20 @@ train, test = train_test_split(data, test_size=100)
 ```python
 from headliner.preprocessing import Preprocessor
 
-preprocessor = Preprocessor(lower_case=True)
+preprocessor = Preprocessor(lower_case=True, 
+                            punctuation_pattern=None,
+                            filter_pattern=None,
+                            add_input_start_end=False,
+                            start_token='[CLS]', 
+                            end_token='[SEP]')
 train_prep = [preprocessor(t) for t in train]
+train_prep[:5]
 ```
 
 ### Create custom tokenizers for input and target
 ```python
 from tensorflow_datasets.core.features.text import SubwordTextEncoder
-from transformers import TFBertModel, BertTokenizer
+from transformers import BertTokenizer
 from headliner.preprocessing import Vectorizer
 
 targets_prep = [t[1] for t in train_prep]
@@ -57,6 +63,7 @@ tokenizer_target = SubwordTextEncoder.build_from_corpus(
 vectorizer = Vectorizer(tokenizer_input, tokenizer_target)
 'vocab size input {}, target {}'.format(
     vectorizer.encoding_dim, vectorizer.decoding_dim)
+```
 
 ### Start tensorboard
 ```
@@ -71,28 +78,28 @@ from headliner.trainer import Trainer
 
 # use pre-trained BERT embedding for the encoder and freeze it 
 # for faster training
-summarizer = SummarizerBert(num_heads=2,
-                            feed_forward_dim=512,
-                            num_layers_encoder=1,
-                            num_layers_decoder=1,
+summarizer = SummarizerBert(num_heads=8,
+                            feed_forward_dim=1024,
+                            num_layers_encoder=0,
+                            num_layers_decoder=4,
                             bert_embedding_encoder='bert-base-uncased',
                             embedding_encoder_trainable=False,
                             embedding_size_encoder=768,
-                            embedding_size_decoder=64,
+                            embedding_size_decoder=768,
                             dropout_rate=0.1,
                             max_prediction_len=50)
 summarizer.init_model(preprocessor, vectorizer)
-trainer = Trainer(steps_per_epoch=250,
-                  batch_size=64,
-                  model_save_path='/tmp/summarizer_transformer',
+trainer = Trainer(steps_per_epoch=500,
+                  batch_size=8,
+                  model_save_path='/tmp/summarizer_bert',
                   tensorboard_dir='/tmp/summarizer_tensorboard',
                   steps_to_log=50)
-trainer.train(summarizer, train, num_epochs=10, val_data=test)
+trainer.train(summarizer, train, num_epochs=200, val_data=test)
 ```
 
 ### Load best model and do some prediction
 ```python
-best_summarizer = SummarizerTransformer.load('/tmp/summarizer_transformer')
+best_summarizer = SummarizerBert.load('/tmp/summarizer_bert')
 best_summarizer.predict('Do you like robots?')
 ```
 
@@ -127,18 +134,5 @@ def plot_attention_weights(summarizer, pred_vectors, layer_name):
 pred_vectors = best_summarizer.predict_vectors(
     'Tom ran out of the house.', '')
 plot_attention_weights(best_summarizer, pred_vectors, 'decoder_layer1_block2')
-```
-
-### Continue training to improve the model and check the BLEU score
-```python
-from headliner.evaluation import BleuScorer
-
-bleu_scorer = BleuScorer(tokens_to_ignore=[preprocessor.start_token, 
-                                           preprocessor.end_token])
-trainer.train(best_summarizer, 
-              train, 
-              num_epochs=30, 
-              val_data=test, 
-              scorers={'bleu': bleu_scorer})
 ```
 
