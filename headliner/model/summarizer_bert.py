@@ -114,10 +114,8 @@ class SummarizerBert(Summarizer):
                                              dec_padding_mask)
                 loss = loss_function(tar_real, predictions)
             if apply_gradients:
-                transformer.encoder.trainable = False
-                gradients = tape.gradient(loss, transformer.trainable_variables)
-                optimizer_decoder.apply_gradients(zip(gradients, transformer.trainable_variables))
-                transformer.encoder.trainable = True
+                gradients_decoder = tape.gradient(loss, transformer.decoder.trainable_variables)
+                optimizer_decoder.apply_gradients(zip(gradients_decoder, transformer.decoder.trainable_variables))
                 gradients_encoder = tape.gradient(loss, transformer.encoder.trainable_variables)
                 optimizer_encoder.apply_gradients(zip(gradients_encoder, transformer.encoder.trainable_variables))
 
