@@ -304,6 +304,10 @@ Please cite Headliner in your publications if this is useful for your research. 
 
 See [LICENSE](LICENSE) for details.
 
+## References
+
+[Text Summarization with Pretrained Encoders](https://arxiv.org/pdf/1908.08345.pdf)
+
 
 ## Acknowlegements
 
@@ -311,4 +315,4 @@ https://www.tensorflow.org/tutorials/text/transformer
 
 https://github.com/huggingface/transformers
 
-https://arxiv.org/pdf/1908.08345.pdf
+
