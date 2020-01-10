@@ -308,6 +308,7 @@ See [LICENSE](LICENSE) for details.
 
 [Text Summarization with Pretrained Encoders](https://arxiv.org/pdf/1908.08345.pdf)
 
+[Effective Approaches to Attention-based Neural Machine Translation](https://arxiv.org/abs/1508.04025)
 
 ## Acknowlegements
 
@@ -315,4 +316,5 @@ https://www.tensorflow.org/tutorials/text/transformer
 
 https://github.com/huggingface/transformers
 
+https://machinetalk.org/2019/03/29/neural-machine-translation-with-attention-mechanism/
 
