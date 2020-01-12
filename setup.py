@@ -24,7 +24,7 @@ setup(
     license='MIT',
     install_requires=['scikit-learn', 'nltk', 'pyyaml', 'transformers'],
     extras_require={
-        'tests': ['pytest', 'pytest-cov', 'codecov', 'tensorflow==2.0'],
+        'tests': ['pytest', 'pytest-cov', 'codecov', 'tensorflow==2.0.0'],
         'docs': ['mkdocs', 'mkdocs-material'],
         'dev': ['bumpversion']
     },
