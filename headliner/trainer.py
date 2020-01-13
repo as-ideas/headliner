@@ -10,6 +10,7 @@ import yaml
 
 from headliner.callbacks.evaluation_callback import EvaluationCallback
 from headliner.callbacks.model_checkpoint_callback import ModelCheckpointCallback
+from headliner.callbacks.tensorboard_callback import TensorboardCallback
 from headliner.callbacks.validation_callback import ValidationCallback
 from headliner.embeddings import read_embedding, embedding_to_matrix
 from headliner.evaluation.scorer import Scorer
@@ -202,8 +203,8 @@ class Trainer:
                                     mode='min'))
 
         if self.tensorboard_dir is not None:
-            train_callbacks.append(tf.keras.callbacks.TensorBoard(log_dir=self.tensorboard_dir,
-                                                                  update_freq='epoch'))
+            tb_callback = TensorboardCallback(log_dir=self.tensorboard_dir)
+            train_callbacks.append(tb_callback)
         logs = {}
         epoch_count, batch_count, train_losses = 0, 0, []
         train_step = summarizer.new_train_step(self.loss_function, self.batch_size, apply_gradients=True)
