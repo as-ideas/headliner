@@ -6,11 +6,11 @@ from typing import Dict, Union
 import numpy as np
 import tensorflow as tf
 
-from headliner.preprocessing.bert_vectorizer import BertVectorizer
-from headliner.utils.logger import get_logger
 from headliner.model.model_bert import Transformer, create_masks
 from headliner.model.summarizer import Summarizer
+from headliner.preprocessing.bert_vectorizer import BertVectorizer
 from headliner.preprocessing.preprocessor import Preprocessor
+from headliner.utils.logger import get_logger
 
 
 class SummarizerBert(Summarizer):

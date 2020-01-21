@@ -5,18 +5,16 @@ import unittest
 
 import numpy as np
 import tensorflow as tf
-from keras_preprocessing.text import Tokenizer
 from transformers import BertTokenizer
 
 from headliner.losses import masked_crossentropy
 from headliner.model.summarizer_bert import SummarizerBert
-from headliner.model.summarizer_transformer import SummarizerTransformer
+from headliner.preprocessing.bert_vectorizer import BertVectorizer
 from headliner.preprocessing.keras_tokenizer import KerasTokenizer
 from headliner.preprocessing.preprocessor import Preprocessor
-from headliner.preprocessing.vectorizer import Vectorizer
 
 
-class TestSummarizerTransformer(unittest.TestCase):
+class TestSummarizerBert(unittest.TestCase):
 
     def setUp(self) -> None:
         np.random.seed(42)
@@ -33,7 +31,7 @@ class TestSummarizerTransformer(unittest.TestCase):
         tokenizer_decoder = KerasTokenizer(oov_token='<unk>')
         tokenizer_decoder.fit(['a b c {} {}'.format(
             preprocessor.start_token, preprocessor.end_token)])
-        vectorizer = Vectorizer(tokenizer_encoder, tokenizer_decoder)
+        vectorizer = BertVectorizer(tokenizer_encoder, tokenizer_decoder)
         summarizer = SummarizerBert(num_layers_encoder=1,
                                     num_layers_decoder=1,
                                     bert_embedding_encoder='bert-base-uncased',
@@ -48,7 +46,7 @@ class TestSummarizerTransformer(unittest.TestCase):
         # we need at least a train step to init the weights
         train_step = summarizer.new_train_step(masked_crossentropy, batch_size=1, apply_gradients=True)
         train_seq = tf.convert_to_tensor(np.array([[1, 1, 1]]), dtype=tf.int32)
-        train_step(train_seq, train_seq)
+        train_step(train_seq, train_seq, train_seq)
 
         save_dir = os.path.join(self.temp_dir, 'summarizer_serde_happy_path')
         summarizer.save(save_dir)
