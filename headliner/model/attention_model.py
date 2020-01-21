@@ -81,4 +81,3 @@ class Decoder(tf.keras.Model):
     def init_states(self, batch_size):
         return (tf.zeros([batch_size, self.lstm_size]),
                 tf.zeros([batch_size, self.lstm_size]))
-

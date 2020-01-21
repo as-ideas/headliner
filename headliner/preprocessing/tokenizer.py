@@ -40,4 +40,3 @@ class Tokenizer(abc.ABC):
         Size of token vocab.
         """
         pass
-

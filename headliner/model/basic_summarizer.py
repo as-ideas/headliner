@@ -101,7 +101,6 @@ class BasicSummarizer(Summarizer):
         @tf.function(input_signature=train_step_signature)
         def train_step(source_seq: tf.Tensor,
                        target_seq: tf.Tensor) -> float:
-
             en_initial_states = self.encoder.init_states(source_seq.get_shape()[0])
             with tf.GradientTape() as tape:
                 en_outputs = encoder(source_seq, en_initial_states)

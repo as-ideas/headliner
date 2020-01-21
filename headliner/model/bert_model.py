@@ -75,7 +75,7 @@ class Decoder(tf.keras.Model):
                                                    trainable=embedding_trainable)
         self.pos_encoding = positional_encoding(max_seq_len, vec_dim)
         self.dec_layers = [DecoderLayer(vec_dim, num_heads, feed_forward_dim, dropout_rate)
-                       for _ in range(num_layers)]
+                           for _ in range(num_layers)]
         self.dropout = tf.keras.layers.Dropout(dropout_rate)
         self.final_layer = tf.keras.layers.Dense(embedding_shape[0])
 
@@ -137,8 +137,6 @@ class Transformer(tf.keras.Model):
                                embedding_weights=embedding_weights_decoder,
                                dropout_rate=dropout_rate,
                                max_seq_len=max_seq_len)
-
-
 
     def call(self,
              inp,
