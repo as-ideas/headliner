@@ -18,10 +18,15 @@ built for our own research to generate headlines from [Welt news articles](https
   <b>Figure 1:</b> One example from our Welt.de headline generator.
 </p>
 
-## Update 28.10.2019
-The library now supports fine-tuning pre-trained BERT models, check out 
+## Update 21.01.2020
+The library now supports fine-tuning pre-trained BERT models with 
+custom preprocessing as in [Text Summarization with Pretrained Encoders](https://arxiv.org/pdf/1908.08345.pdf)!
+
+<!--
+check out 
 [this](https://colab.research.google.com/github/as-ideas/headliner/blob/master/notebooks/BERT_Translation_Example.ipynb)
 tutorial on colab!
+-->
 
 ## 🧠 Internals
 We use sequence-to-sequence (seq2seq) under the hood,

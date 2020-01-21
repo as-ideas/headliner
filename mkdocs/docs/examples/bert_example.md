@@ -1,6 +1,8 @@
 # Advanced Neural Machine Translation Example
 
+<!--
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/as-ideas/headliner/blob/master/notebooks/BERT_Translation_Example.ipynb)
+-->
 
 ### Install TensorFlow and also our package via PyPI
 ```bash
