@@ -37,7 +37,7 @@ train, test = train_test_split(data, test_size=100)
 ### Define the model and train it
 ```python
 from headliner.trainer import Trainer
-from headliner.model.summarizer_attention import SummarizerAttention
+from headliner.model.attention_summarizer import AttentionSummarizer
 
 summarizer = SummarizerAttention(lstm_size=1024, embedding_size=256)
 trainer = Trainer(batch_size=64, 

@@ -8,7 +8,7 @@ import tensorflow as tf
 from keras_preprocessing.text import Tokenizer
 
 from headliner.losses import masked_crossentropy
-from headliner.model.summarizer_attention import SummarizerAttention
+from headliner.model.attention_summarizer import AttentionSummarizer
 from headliner.preprocessing.keras_tokenizer import KerasTokenizer
 from headliner.preprocessing.preprocessor import Preprocessor
 from headliner.preprocessing.vectorizer import Vectorizer
@@ -30,7 +30,7 @@ class TestSummarizerAttention(unittest.TestCase):
         tokenizer.fit(['a b c {} {}'.format(
             preprocessor.start_token, preprocessor.end_token)])
         vectorizer = Vectorizer(tokenizer, tokenizer)
-        summarizer = SummarizerAttention(lstm_size=10,
+        summarizer = AttentionSummarizer(lstm_size=10,
                                          max_prediction_len=10,
                                          embedding_size=10,
                                          embedding_encoder_trainable=False)
@@ -44,7 +44,7 @@ class TestSummarizerAttention(unittest.TestCase):
 
         save_dir = os.path.join(self.temp_dir, 'summarizer_serde_happy_path')
         summarizer.save(save_dir)
-        summarizer_loaded = SummarizerAttention.load(save_dir)
+        summarizer_loaded = AttentionSummarizer.load(save_dir)
         self.assertEqual(10, summarizer_loaded.lstm_size)
         self.assertEqual(10, summarizer_loaded.max_prediction_len)
         self.assertIsNotNone(summarizer_loaded.preprocessor)

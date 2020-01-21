@@ -8,7 +8,7 @@ import tensorflow as tf
 from transformers import BertTokenizer
 
 from headliner.losses import masked_crossentropy
-from headliner.model.summarizer_bert import SummarizerBert
+from headliner.model.bert_summarizer import BertSummarizer
 from headliner.preprocessing.bert_vectorizer import BertVectorizer
 from headliner.preprocessing.keras_tokenizer import KerasTokenizer
 from headliner.preprocessing.preprocessor import Preprocessor
@@ -32,7 +32,7 @@ class TestSummarizerBert(unittest.TestCase):
         tokenizer_decoder.fit(['a b c {} {}'.format(
             preprocessor.start_token, preprocessor.end_token)])
         vectorizer = BertVectorizer(tokenizer_encoder, tokenizer_decoder)
-        summarizer = SummarizerBert(num_layers_encoder=1,
+        summarizer = BertSummarizer(num_layers_encoder=1,
                                     num_layers_decoder=1,
                                     bert_embedding_encoder='bert-base-uncased',
                                     num_heads=2,
@@ -50,7 +50,7 @@ class TestSummarizerBert(unittest.TestCase):
 
         save_dir = os.path.join(self.temp_dir, 'summarizer_serde_happy_path')
         summarizer.save(save_dir)
-        summarizer_loaded = SummarizerBert.load(save_dir)
+        summarizer_loaded = BertSummarizer.load(save_dir)
         self.assertEqual(1, summarizer_loaded.num_layers_encoder)
         self.assertEqual(1, summarizer_loaded.num_layers_decoder)
         self.assertEqual(2, summarizer_loaded.num_heads)

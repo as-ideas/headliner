@@ -73,7 +73,7 @@ vectorizer = Vectorizer(tokenizer_input, tokenizer_target)
 
 ### Define the model and train it
 ```python
-from headliner.model.summarizer_bert import SummarizerBert
+from headliner.model.bert_summarizer import BertSummarizer
 from headliner.trainer import Trainer
 
 # use pre-trained BERT embedding for the encoder and freeze it 

@@ -15,8 +15,8 @@ from headliner.callbacks.validation_callback import ValidationCallback
 from headliner.embeddings import read_embedding, embedding_to_matrix
 from headliner.evaluation.scorer import Scorer
 from headliner.losses import masked_crossentropy
+from headliner.model.bert_summarizer import BertSummarizer
 from headliner.model.summarizer import Summarizer
-from headliner.model.summarizer_bert import SummarizerBert
 from headliner.preprocessing.bucket_generator import BucketGenerator
 from headliner.preprocessing.dataset_generator import DatasetGenerator
 from headliner.preprocessing.keras_tokenizer import KerasTokenizer
@@ -303,7 +303,7 @@ class Trainer:
         return tokenizer_encoder, tokenizer_decoder
 
     def _create_dataset_generators(self, summarizer):
-        if isinstance(summarizer, SummarizerBert):
+        if isinstance(summarizer, BertSummarizer):
             data_rank = 3
         else:
             data_rank = 2

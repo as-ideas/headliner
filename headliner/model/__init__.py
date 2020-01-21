@@ -1,2 +1,2 @@
-from .summarizer_attention import SummarizerAttention
-from .summarizer_basic import SummarizerBasic
+from .attention_summarizer import AttentionSummarizer
+from .basic_summarizer import BasicSummarizer

@@ -69,7 +69,7 @@ vectorizer = Vectorizer(tokenizer_input, tokenizer_target)
 
 ### Define the model and train it
 ```python
-from headliner.model.summarizer_transformer import SummarizerTransformer
+from headliner.model.transformer_summarizer import TransformerSummarizer
 from headliner.trainer import Trainer
 
 summarizer = SummarizerTransformer(num_heads=2,

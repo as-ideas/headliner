@@ -89,7 +89,7 @@ create the dataset, a `tuple` of input-output sequences, and then train it:
 
 ```python
 from headliner.trainer import Trainer
-from headliner.model.summarizer_transformer import SummarizerTransformer
+from headliner.model.transformer_summarizer import TransformerSummarizer
 
 data = [('You are the stars, earth and sky for me!', 'I love you.'),
         ('You are great, but I have other plans.', 'I like you.')]
@@ -104,9 +104,9 @@ summarizer.save('/tmp/summarizer')
 The prediction can be done in a few lines of code:
 
 ```python
-from headliner.model.summarizer_transformer import SummarizerTransformer
+from headliner.model.transformer_summarizer import TransformerSummarizer
 
-summarizer = SummarizerTransformer.load('/tmp/summarizer')
+summarizer = TransformerSummarizer.load('/tmp/summarizer')
 summarizer.predict('You are the stars, earth and sky for me!')
 ```
 
@@ -114,9 +114,9 @@ summarizer.predict('You are the stars, earth and sky for me!')
 Currently available models include a basic encoder-decoder, an encoder-decoder with Luong attention and the transformer:
 
 ```python
-from headliner.model.summarizer_basic import SummarizerBasic
-from headliner.model.summarizer_attention import SummarizerAttention
-from headliner.model.summarizer_transformer import SummarizerTransformer
+from headliner.model.basic_summarizer import BasicSummarizer
+from headliner.model.attention_summarizer import AttentionSummarizer
+from headliner.model.transformer_summarizer import TransformerSummarizer
 
 summarizer_basic = SummarizerBasic()
 summarizer_attention = SummarizerAttention()
@@ -127,7 +127,7 @@ summarizer_transformer = SummarizerTransformer()
 Training using a validation split and model checkpointing:
 
 ```python
-from headliner.model.summarizer_transformer import SummarizerTransformer
+from headliner.model.transformer_summarizer import TransformerSummarizer
 from headliner.trainer import Trainer
 
 train_data = [('You are the stars, earth and sky for me!', 'I love you.'),
@@ -153,9 +153,9 @@ trainer.train(summarizer, train_data, val_data=val_data, num_epochs=3)
 Prediction information such as attention weights and logits can be accessed via predict_vectors returning a dictionary:
 
 ```python
-from headliner.model.summarizer_transformer import SummarizerTransformer
+from headliner.model.transformer_summarizer import TransformerSummarizer
 
-summarizer = SummarizerTransformer.load('/tmp/summarizer')
+summarizer = TransformerSummarizer.load('/tmp/summarizer')
 summarizer.predict_vectors('You are the stars, earth and sky for me!')
 ```
 
