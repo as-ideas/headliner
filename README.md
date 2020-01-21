@@ -94,7 +94,7 @@ from headliner.model.transformer_summarizer import TransformerSummarizer
 data = [('You are the stars, earth and sky for me!', 'I love you.'),
         ('You are great, but I have other plans.', 'I like you.')]
 
-summarizer = SummarizerTransformer(embedding_size=64, max_prediction_len=20)
+summarizer = TransformerSummarizer(embedding_size=64, max_prediction_len=20)
 trainer = Trainer(batch_size=2, steps_per_epoch=100)
 trainer.train(summarizer, data, num_epochs=2)
 summarizer.save('/tmp/summarizer')
@@ -111,16 +111,20 @@ summarizer.predict('You are the stars, earth and sky for me!')
 ```
 
 ### Models
-Currently available models include a basic encoder-decoder, an encoder-decoder with Luong attention and the transformer:
+Currently available models include a basic encoder-decoder, 
+an encoder-decoder with Luong attention, the transformer and 
+a transformer on top of a pre-trained BERT-model:
 
 ```python
 from headliner.model.basic_summarizer import BasicSummarizer
 from headliner.model.attention_summarizer import AttentionSummarizer
 from headliner.model.transformer_summarizer import TransformerSummarizer
+from headliner.model.bert_summarizer import BertSummarizer
 
-summarizer_basic = SummarizerBasic()
-summarizer_attention = SummarizerAttention()
-summarizer_transformer = SummarizerTransformer()
+basic_summarizer = BasicSummarizer()
+attention_summarizer = AttentionSummarizer()
+transformer_summarizer = TransformerSummarizer()
+bert_summarizer = BertSummarizer()
 ```
 
 ### Advanced training
@@ -134,7 +138,7 @@ train_data = [('You are the stars, earth and sky for me!', 'I love you.'),
               ('You are great, but I have other plans.', 'I like you.')]
 val_data = [('You are great, but I have other plans.', 'I like you.')]
 
-summarizer = SummarizerTransformer(num_heads=1,
+summarizer = TransformerSummarizer(num_heads=1,
                                    feed_forward_dim=512,
                                    num_layers=1,
                                    embedding_size=64,
@@ -165,7 +169,7 @@ A previously trained summarizer can be loaded and then retrained. In this case t
 ```python
 train_data = [('Some new training data.', 'New data.')] * 10
 
-summarizer_loaded = SummarizerTransformer.load('/tmp/summarizer')
+summarizer_loaded = TransformerSummarizer.load('/tmp/summarizer')
 trainer = Trainer(batch_size=2)
 trainer.train(summarizer_loaded, train_data)
 summarizer_loaded.save('/tmp/summarizer_retrained')
@@ -179,7 +183,7 @@ trainer = Trainer(embedding_path_encoder='/tmp/embedding_encoder.txt',
                   embedding_path_decoder='/tmp/embedding_decoder.txt')
 
 # make sure the embedding size matches to the embedding size of the files
-summarizer = SummarizerTransformer(embedding_size=64,
+summarizer = TransformerSummarizer(embedding_size=64,
                                    embedding_encoder_trainable=False,
                                    embedding_decoder_trainable=False)
 ```
@@ -188,7 +192,7 @@ summarizer = SummarizerTransformer(embedding_size=64,
 A model can be initialized with custom preprocessing and tokenization:
 
 ```python
-from headliner.preprocessing import Preprocessor
+from headliner.preprocessing.preprocessor import Preprocessor
 
 train_data = [('Some inputs.', 'Some outputs.')] * 10
 
@@ -208,7 +212,7 @@ tokenizer_target = SubwordTextEncoder.build_from_corpus(
     targets_prep, target_vocab_size=2**13,  reserved_tokens=[preprocessor.start_token, preprocessor.end_token])
 
 vectorizer = Vectorizer(tokenizer_input, tokenizer_target)
-summarizer = SummarizerTransformer(embedding_size=64, max_prediction_len=50)
+summarizer = TransformerSummarizer(embedding_size=64, max_prediction_len=50)
 summarizer.init_model(preprocessor, vectorizer)
 
 trainer = Trainer(batch_size=2)
@@ -221,46 +225,41 @@ Pre-trained BERT models can be included as follows.
 Be aware that pre-trained BERT models are expensive to train and require custom preprocessing!
 
 ```python
-from headliner.preprocessing import Preprocessor
+from headliner.preprocessing.bert_preprocessor import BertPreprocessor
+from spacy.lang.en import English
 
 train_data = [('Some inputs.', 'Some outputs.')] * 10
 
 # use BERT-specific start and end token
-preprocessor = Preprocessor(start_token='[CLS]',
-                            end_token='[SEP]',
-                            lower_case=True)
+preprocessor = BertPreprocessor(nlp=English()
 train_prep = [preprocessor(t) for t in train_data]
 targets_prep = [t[1] for t in train_prep]
 
 
 from tensorflow_datasets.core.features.text import SubwordTextEncoder
 from transformers import BertTokenizer
-from headliner.model import SummarizerBert
+from headliner.model.bert_summarizer import BertSummarizer
 
 # Use a pre-trained BERT embedding and BERT tokenizer for the encoder 
 tokenizer_input = BertTokenizer.from_pretrained('bert-base-uncased')
 tokenizer_target = SubwordTextEncoder.build_from_corpus(
     targets_prep, target_vocab_size=2**13,  reserved_tokens=[preprocessor.start_token, preprocessor.end_token])
 
-vectorizer = Vectorizer(tokenizer_input, tokenizer_target)
-summarizer = SummarizerBert(num_heads=2,
+vectorizer = BertVectorizer(tokenizer_input, tokenizer_target)
+summarizer = BertSummarizer(num_heads=2,
                             feed_forward_dim=512,
-                            num_layers_encoder=1,
-                            num_layers_decoder=1,
+                            num_layers_encoder=0,
+                            num_layers_decoder=4,
                             bert_embedding_encoder='bert-base-uncased',
-                            embedding_encoder_trainable=False,
                             embedding_size_encoder=768,
-                            embedding_size_decoder=64,
+                            embedding_size_decoder=768,
                             dropout_rate=0.1,
-                            max_prediction_len=50)
-)
+                            max_prediction_len=50))
 summarizer.init_model(preprocessor, vectorizer)
 
 trainer = Trainer(batch_size=2)
 trainer.train(summarizer, train_data, num_epochs=3)
 ```
-
-
 
 
 ### Training on large datasets
@@ -276,7 +275,7 @@ class DataIterator:
 
 data_iter = DataIterator()
 
-summarizer = SummarizerTransformer(embedding_size=10, max_prediction_len=20)
+summarizer = TransformerSummarizer(embedding_size=10, max_prediction_len=20)
 trainer = Trainer(batch_size=16, steps_per_epoch=1000)
 trainer.train(summarizer, data_iter, num_epochs=3)
 ```

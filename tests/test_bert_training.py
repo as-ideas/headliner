@@ -62,6 +62,6 @@ class TestBertTraining(unittest.TestCase):
         self.assertAlmostEqual(0.08860704302787781, float(loss_bert), 6)
         model_output = bert_summarizer.predict_vectors('I love dogs.', '')
         expected_first_logits = np.array([-2.069179, -1.594622,  1.158607,  3.03027, 1.404088])
-        np.testing.assert_allclose(expected_first_logits, model_output['logits'][0], atol=1e-6)
+        np.testing.assert_allclose(expected_first_logits, model_output['logits'][0], atol=1e-3)
         self.assertEqual('[CLS] I love dogs. [SEP]', model_output['preprocessed_text'][0])
         self.assertEqual('Dogs. [SEP]', model_output['predicted_text'])
