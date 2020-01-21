@@ -1,12 +1,10 @@
 import unittest
 
-from keras_preprocessing.text import Tokenizer
-
 from headliner.preprocessing.keras_tokenizer import KerasTokenizer
 from headliner.preprocessing.vectorizer import Vectorizer
 
 
-class TestPreprocessor(unittest.TestCase):
+class TestVectorizer(unittest.TestCase):
 
     def test_vectorize(self):
         data = [('a b c', 'd')]

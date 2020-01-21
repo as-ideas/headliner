@@ -34,13 +34,13 @@ class Preprocessor:
 
     def __call__(self, data: Tuple[str, str]) -> Tuple[str, str]:
         """ Performs regex logic for string cleansing and attaches start and end tokens to the text. """
-        text_encoder, text_decoder = self.normalize_string(data[0]), self.normalize_string(data[1])
+        text_encoder, text_decoder = self._normalize_string(data[0]), self._normalize_string(data[1])
         if self.add_input_start_end:
             text_encoder = self.start_token + ' ' + text_encoder + ' ' + self.end_token
         text_decoder = self.start_token + ' ' + text_decoder + ' ' + self.end_token
         return text_encoder, text_decoder
 
-    def normalize_string(self, s: str) -> str:
+    def _normalize_string(self, s: str) -> str:
         if self.lower_case:
             s = s.lower()
         if self.filter_pattern is not None:

@@ -6,7 +6,6 @@ import tensorflow as tf
 from headliner.losses import masked_crossentropy
 from headliner.model.summarizer_basic import SummarizerBasic
 from headliner.model.summarizer_attention import SummarizerAttention
-from headliner.model.summarizer_bert import SummarizerBert
 from headliner.model.summarizer_transformer import SummarizerTransformer
 from headliner.preprocessing.dataset_generator import DatasetGenerator
 from headliner.preprocessing.keras_tokenizer import KerasTokenizer
@@ -102,33 +101,3 @@ class TestTraining(unittest.TestCase):
         np.testing.assert_allclose(expected_first_logits, output_transformer['logits'][0], atol=1e-6)
         self.assertEqual('<start> a c <end>', output_transformer['preprocessed_text'][0])
         self.assertEqual('c c c', output_transformer['predicted_text'])
-
-    def test_training_summarizer_bert(self):
-        summarizer_bert = SummarizerBert(num_heads=1,
-                                         num_layers_encoder=1,
-                                         num_layers_decoder=1,
-                                         feed_forward_dim=20,
-                                         embedding_size_encoder=768,
-                                         embedding_size_decoder=10,
-                                         bert_embedding_encoder='bert-base-uncased',
-                                         embedding_encoder_trainable=False,
-                                         dropout_rate=0,
-                                         max_prediction_len=3)
-        summarizer_bert.init_model(preprocessor=self.preprocessor,
-                                   vectorizer=self.vectorizer,
-                                   embedding_weights_encoder=None,
-                                   embedding_weights_decoder=None)
-        loss_bert = 0
-        train_step = summarizer_bert.new_train_step(loss_function=self.loss_func,
-                                                    batch_size=2)
-        for e in range(0, 10):
-            for source_seq, target_seq in self.dataset.take(-1):
-                loss_bert = train_step(source_seq, target_seq)
-                print(str(loss_bert))
-
-        self.assertAlmostEqual(1.7905714511871338, float(loss_bert), 3)
-        output_transformer = summarizer_bert.predict_vectors('a c', '')
-        expected_first_logits = np.array([-0.485657,  1.597103,  0.028933,  1.012528, -0.76804])
-        np.testing.assert_allclose(expected_first_logits, output_transformer['logits'][0], atol=1e-3)
-        self.assertEqual('<start> a c <end>', output_transformer['preprocessed_text'][0])
-        self.assertEqual('c c <start>', output_transformer['predicted_text'])

@@ -5,12 +5,12 @@ from typing import Dict, Union
 
 import numpy as np
 import tensorflow as tf
-from headliner.utils.logger import get_logger
 
+from headliner.preprocessing.bert_vectorizer import BertVectorizer
+from headliner.utils.logger import get_logger
 from headliner.model.model_bert import Transformer, create_masks
 from headliner.model.summarizer import Summarizer
 from headliner.preprocessing.preprocessor import Preprocessor
-from headliner.preprocessing.vectorizer import Vectorizer
 
 
 class SummarizerBert(Summarizer):
@@ -62,7 +62,7 @@ class SummarizerBert(Summarizer):
 
     def init_model(self,
                    preprocessor: Preprocessor,
-                   vectorizer: Vectorizer,
+                   vectorizer: BertVectorizer,
                    embedding_weights_encoder=None,
                    embedding_weights_decoder=None
                    ) -> None:
@@ -77,7 +77,6 @@ class SummarizerBert(Summarizer):
                                        embedding_shape_encoder=self.embedding_shape_in,
                                        embedding_shape_decoder=self.embedding_shape_out,
                                        bert_embedding_encoder=self.bert_embedding_encoder,
-                                       bert_embedding_decoder=self.bert_embedding_decoder,
                                        embedding_encoder_trainable=self.embedding_encoder_trainable,
                                        embedding_decoder_trainable=self.embedding_decoder_trainable,
                                        embedding_weights_encoder=embedding_weights_encoder,
@@ -99,15 +98,18 @@ class SummarizerBert(Summarizer):
         train_step_signature = [
             tf.TensorSpec(shape=(batch_size, None), dtype=tf.int32),
             tf.TensorSpec(shape=(batch_size, None), dtype=tf.int32),
+            tf.TensorSpec(shape=(batch_size, None), dtype=tf.int32),
         ]
 
         @tf.function(input_signature=train_step_signature)
-        def train_step(inp, tar):
+        def train_step(inp, sent_ids, tar):
             tar_inp = tar[:, :-1]
             tar_real = tar[:, 1:]
             enc_padding_mask, combined_mask, dec_padding_mask = create_masks(inp, tar_inp)
             with tf.GradientTape(persistent=True) as tape:
-                predictions, _ = transformer(inp, tar_inp,
+                predictions, _ = transformer(inp,
+                                             sent_ids,
+                                             tar_inp,
                                              True,
                                              enc_padding_mask,
                                              combined_mask,
@@ -128,8 +130,9 @@ class SummarizerBert(Summarizer):
 
     def predict_vectors(self, input_text: str, target_text: str) -> Dict[str, Union[str, np.array]]:
         text_preprocessed = self.preprocessor((input_text, target_text))
-        en_inputs, _ = self.vectorizer(text_preprocessed)
+        en_inputs, sent_ids, _ = self.vectorizer(text_preprocessed)
         en_inputs = tf.expand_dims(en_inputs, 0)
+        sent_ids = tf.expand_dims(sent_ids, 0)
         start_end_seq = self.vectorizer.encode_output(
             ' '.join([self.preprocessor.start_token, self.preprocessor.end_token]))
         de_start_index, de_end_index = start_end_seq[:1], start_end_seq[-1:]
@@ -142,6 +145,7 @@ class SummarizerBert(Summarizer):
             enc_padding_mask, combined_mask, dec_padding_mask = create_masks(
                 en_inputs, decoder_output)
             predictions, attention_weights = self.transformer(en_inputs,
+                                                              sent_ids,
                                                               decoder_output,
                                                               False,
                                                               enc_padding_mask,
@@ -186,7 +190,6 @@ class SummarizerBert(Summarizer):
                                              embedding_shape_encoder=summarizer.embedding_shape_in,
                                              embedding_shape_decoder=summarizer.embedding_shape_out,
                                              bert_embedding_encoder=summarizer.bert_embedding_encoder,
-                                             bert_embedding_decoder=summarizer.bert_embedding_decoder,
                                              embedding_encoder_trainable=summarizer.embedding_encoder_trainable,
                                              embedding_decoder_trainable=summarizer.embedding_decoder_trainable,
                                              dropout_rate=summarizer.dropout_rate)
