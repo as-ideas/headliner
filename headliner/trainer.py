@@ -303,10 +303,7 @@ class Trainer:
         return tokenizer_encoder, tokenizer_decoder
 
     def _create_dataset_generators(self, summarizer):
-        if isinstance(summarizer, BertSummarizer):
-            data_rank = 3
-        else:
-            data_rank = 2
+        data_rank = 3 if isinstance(summarizer, BertSummarizer) else 2
         train_gen = DatasetGenerator(batch_size=self.batch_size,
                                      shuffle_buffer_size=self.shuffle_buffer_size,
                                      rank=data_rank)
