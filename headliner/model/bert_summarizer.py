@@ -204,14 +204,14 @@ class BertSummarizer(Summarizer):
         return summarizer
 
     @staticmethod
-    def new_optimizer_decoder(learning_rate_start=0.02) -> tf.keras.optimizers.Optimizer:
-        learning_rate = CustomSchedule(warmup_steps=10000, learning_rate_start=learning_rate_start)
+    def new_optimizer_decoder(learning_rate_start=0.02, warmup_steps=10000) -> tf.keras.optimizers.Optimizer:
+        learning_rate = CustomSchedule(warmup_steps=warmup_steps, learning_rate_start=learning_rate_start)
         optimizer = tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.999, )
         return optimizer
 
     @staticmethod
-    def new_optimizer_encoder(learning_rate_start=5e-4) -> tf.keras.optimizers.Optimizer:
-        learning_rate = CustomSchedule(warmup_steps=20000, learning_rate_start=learning_rate_start)
+    def new_optimizer_encoder(learning_rate_start=5e-4, warmup_steps=20000) -> tf.keras.optimizers.Optimizer:
+        learning_rate = CustomSchedule(warmup_steps=warmup_steps, learning_rate_start=learning_rate_start)
         optimizer = tf.keras.optimizers.Adam(learning_rate, beta_1=0.9, beta_2=0.999, )
         return optimizer
 
