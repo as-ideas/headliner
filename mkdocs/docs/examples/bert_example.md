@@ -36,14 +36,10 @@ train, test = train_test_split(data, test_size=100)
 
 ### Define custom preprocessing
 ```python
-from headliner.preprocessing import Preprocessor
+from headliner.preprocessing.bert_preprocessor import BertPreprocessor
+from spacy.lang.en import English
 
-preprocessor = Preprocessor(lower_case=True, 
-                            punctuation_pattern=None,
-                            filter_pattern=None,
-                            add_input_start_end=False,
-                            start_token='[CLS]', 
-                            end_token='[SEP]')
+preprocessor = BertPreprocessor(nlp=English())
 train_prep = [preprocessor(t) for t in train]
 train_prep[:5]
 ```
@@ -52,7 +48,7 @@ train_prep[:5]
 ```python
 from tensorflow_datasets.core.features.text import SubwordTextEncoder
 from transformers import BertTokenizer
-from headliner.preprocessing import Vectorizer
+from headliner.preprocessing.bert_vectorizer import BertVectorizer
 
 targets_prep = [t[1] for t in train_prep]
 tokenizer_input = BertTokenizer.from_pretrained('bert-base-uncased')
@@ -60,7 +56,7 @@ tokenizer_target = SubwordTextEncoder.build_from_corpus(
     targets_prep, target_vocab_size=2**13, 
     reserved_tokens=[preprocessor.start_token, preprocessor.end_token])
 
-vectorizer = Vectorizer(tokenizer_input, tokenizer_target)
+vectorizer = BertVectorizer(tokenizer_input, tokenizer_target)
 'vocab size input {}, target {}'.format(
     vectorizer.encoding_dim, vectorizer.decoding_dim)
 ```
@@ -68,7 +64,7 @@ vectorizer = Vectorizer(tokenizer_input, tokenizer_target)
 ### Start tensorboard
 ```
 %load_ext tensorboard
-%tensorboard --logdir /tmp/summarizer_tensorboard
+%tensorboard --logdir /tmp/bert_tensorboard
 ```
 
 ### Define the model and train it
@@ -78,7 +74,7 @@ from headliner.trainer import Trainer
 
 # use pre-trained BERT embedding for the encoder and freeze it 
 # for faster training
-summarizer = SummarizerBert(num_heads=8,
+summarizer = BertSummarizer(num_heads=8,
                             feed_forward_dim=1024,
                             num_layers_encoder=0,
                             num_layers_decoder=4,
@@ -91,15 +87,15 @@ summarizer = SummarizerBert(num_heads=8,
 summarizer.init_model(preprocessor, vectorizer)
 trainer = Trainer(steps_per_epoch=500,
                   batch_size=8,
-                  model_save_path='/tmp/summarizer_bert',
-                  tensorboard_dir='/tmp/summarizer_tensorboard',
+                  model_save_path='/tmp/bert_summarizer',
+                  tensorboard_dir='/tmp/bert_tensorboard',
                   steps_to_log=50)
 trainer.train(summarizer, train, num_epochs=200, val_data=test)
 ```
 
 ### Load best model and do some prediction
 ```python
-best_summarizer = SummarizerBert.load('/tmp/summarizer_bert')
+best_summarizer = SummarizerBert.load('/tmp/bert_summarizer')
 best_summarizer.predict('Do you like robots?')
 ```
 

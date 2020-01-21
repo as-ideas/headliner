@@ -39,7 +39,7 @@ train, test = train_test_split(data, test_size=100)
 from headliner.trainer import Trainer
 from headliner.model.attention_summarizer import AttentionSummarizer
 
-summarizer = SummarizerAttention(lstm_size=1024, embedding_size=256)
+summarizer = AttentionSummarizer(lstm_size=1024, embedding_size=256)
 trainer = Trainer(batch_size=64, 
                   steps_per_epoch=100, 
                   steps_to_log=20, 

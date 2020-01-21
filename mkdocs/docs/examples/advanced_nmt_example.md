@@ -64,7 +64,7 @@ vectorizer = Vectorizer(tokenizer_input, tokenizer_target)
 ### Start tensorboard
 ```
 %load_ext tensorboard
-%tensorboard --logdir /tmp/summarizer_tensorboard
+%tensorboard --logdir /tmp/transformer_tensorboard
 ```
 
 ### Define the model and train it
@@ -72,24 +72,24 @@ vectorizer = Vectorizer(tokenizer_input, tokenizer_target)
 from headliner.model.transformer_summarizer import TransformerSummarizer
 from headliner.trainer import Trainer
 
-summarizer = SummarizerTransformer(num_heads=2,
+summarizer = TransformerSummarizer(num_heads=4,
                                    feed_forward_dim=1024,
                                    num_layers=1,
-                                   embedding_size=64,
+                                   embedding_size=256,
                                    dropout_rate=0.1,
                                    max_prediction_len=50)
 summarizer.init_model(preprocessor, vectorizer)
 trainer = Trainer(steps_per_epoch=250,
-                  batch_size=64,
-                  model_save_path='/tmp/summarizer_transformer',
-                  tensorboard_dir='/tmp/summarizer_tensorboard',
+                  batch_size=32,
+                  model_save_path='/tmp/transformer_summarizer',
+                  tensorboard_dir='/tmp/transformer_tensorboard',
                   steps_to_log=50)
 trainer.train(summarizer, train, num_epochs=10, val_data=test)
 ```
 
 ### Load best model and do some prediction
 ```python
-best_summarizer = SummarizerTransformer.load('/tmp/summarizer_transformer')
+best_summarizer = TransformerSummarizer.load('/tmp/transformer_summarizer')
 best_summarizer.predict('Do you like robots?')
 ```
 
