@@ -39,8 +39,14 @@ class Encoder(tf.keras.Model):
 
     def call(self, x, sent_ids, training, mask):
         seq_len = tf.shape(x)[1]
+        # make attention mask consumable for huggingface transformes
+        # 1 for non-masked tokens, 0 for masked tokens
+        mask = mask[:, 0, 0, :]
+        attention_mask = tf.cast(tf.math.equal(mask, 0), tf.int32)
         if self.bert_embedding_name is not None:
-            x = {'input_ids': x, 'token_type_ids': sent_ids}
+            x = {'input_ids': x,
+                 'token_type_ids': sent_ids,
+                 'attention_mask': attention_mask}
             x = self.embedding(x, training=training)[0]
         else:
             x = self.embedding(x)
