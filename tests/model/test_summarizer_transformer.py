@@ -7,7 +7,7 @@ import numpy as np
 import tensorflow as tf
 
 from headliner.losses import masked_crossentropy
-from headliner.model.summarizer_transformer import SummarizerTransformer
+from headliner.model.transformer_summarizer import TransformerSummarizer
 from headliner.preprocessing.keras_tokenizer import KerasTokenizer
 from headliner.preprocessing.preprocessor import Preprocessor
 from headliner.preprocessing.vectorizer import Vectorizer
@@ -29,7 +29,7 @@ class TestSummarizerTransformer(unittest.TestCase):
         tokenizer.fit(['a b c {} {}'.format(
             preprocessor.start_token, preprocessor.end_token)])
         vectorizer = Vectorizer(tokenizer, tokenizer)
-        summarizer = SummarizerTransformer(num_layers=1,
+        summarizer = TransformerSummarizer(num_layers=1,
                                            num_heads=2,
                                            max_prediction_len=3,
                                            embedding_size=10,
@@ -44,7 +44,7 @@ class TestSummarizerTransformer(unittest.TestCase):
 
         save_dir = os.path.join(self.temp_dir, 'summarizer_serde_happy_path')
         summarizer.save(save_dir)
-        summarizer_loaded = SummarizerTransformer.load(save_dir)
+        summarizer_loaded = TransformerSummarizer.load(save_dir)
         self.assertEqual(1, summarizer_loaded.num_layers)
         self.assertEqual(2, summarizer_loaded.num_heads)
         self.assertEqual(3, summarizer_loaded.max_prediction_len)

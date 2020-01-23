@@ -1,6 +1,8 @@
 # Neural Machine Translation Example
 
+<!--
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/as-ideas/headliner/blob/master/notebooks/Neural_Machine_Translation_Example.ipynb)
+-->
 
 ### Install TensorFlow and also our package via PyPI
 ```bash
@@ -37,9 +39,9 @@ train, test = train_test_split(data, test_size=100)
 ### Define the model and train it
 ```python
 from headliner.trainer import Trainer
-from headliner.model.summarizer_attention import SummarizerAttention
+from headliner.model.attention_summarizer import AttentionSummarizer
 
-summarizer = SummarizerAttention(lstm_size=1024, embedding_size=256)
+summarizer = AttentionSummarizer(lstm_size=1024, embedding_size=256)
 trainer = Trainer(batch_size=64, 
                   steps_per_epoch=100, 
                   steps_to_log=20, 

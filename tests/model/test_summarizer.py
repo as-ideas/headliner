@@ -8,7 +8,7 @@ import tensorflow as tf
 
 
 from headliner.losses import masked_crossentropy
-from headliner.model.summarizer_basic import SummarizerBasic
+from headliner.model.basic_summarizer import BasicSummarizer
 from headliner.preprocessing.keras_tokenizer import KerasTokenizer
 from headliner.preprocessing.preprocessor import Preprocessor
 from headliner.preprocessing.vectorizer import Vectorizer
@@ -30,7 +30,7 @@ class TestSummarizer(unittest.TestCase):
         tokenizer.fit(['a b c {} {}'.format(
             preprocessor.start_token, preprocessor.end_token)])
         vectorizer = Vectorizer(tokenizer, tokenizer)
-        summarizer = SummarizerBasic(lstm_size=10,
+        summarizer = BasicSummarizer(lstm_size=10,
                                      max_prediction_len=10,
                                      embedding_decoder_trainable=False,
                                      embedding_size=10)
@@ -44,7 +44,7 @@ class TestSummarizer(unittest.TestCase):
 
         save_dir = os.path.join(self.temp_dir, 'summarizer_serde_happy_path')
         summarizer.save(save_dir)
-        summarizer_loaded = SummarizerBasic.load(save_dir)
+        summarizer_loaded = BasicSummarizer.load(save_dir)
         self.assertEqual(10, summarizer_loaded.lstm_size)
         self.assertEqual(10, summarizer_loaded.max_prediction_len)
         self.assertIsNotNone(summarizer_loaded.preprocessor)

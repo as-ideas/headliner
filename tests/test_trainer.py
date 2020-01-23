@@ -4,7 +4,7 @@ import os
 import unittest
 import numpy as np
 from tensorflow.python.keras.callbacks import Callback
-from headliner.model import SummarizerAttention
+from headliner.model import AttentionSummarizer
 from headliner.preprocessing.preprocessor import Preprocessor
 from headliner.trainer import Trainer
 
@@ -75,7 +75,7 @@ class TestTrainer(unittest.TestCase):
     def test_init_model(self) -> None:
         logging.basicConfig(level=logging.INFO)
         data = [('a b', 'a'), ('a b c', 'b')]
-        summarizer = SummarizerAttention(lstm_size=16,
+        summarizer = AttentionSummarizer(lstm_size=16,
                                          embedding_size=10)
         trainer = Trainer(batch_size=2,
                           steps_per_epoch=10,
@@ -104,7 +104,7 @@ class TestTrainer(unittest.TestCase):
 
         data = [('a b', 'a'), ('a b c', 'b')]
 
-        summarizer = SummarizerAttention(lstm_size=16,
+        summarizer = AttentionSummarizer(lstm_size=16,
                                          embedding_size=10)
         log_callback = LogCallback()
         trainer = Trainer(batch_size=2,

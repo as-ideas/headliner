@@ -5,23 +5,24 @@ from typing import Callable, Dict, Union
 import numpy as np
 import tensorflow as tf
 
-from headliner.model.model_attention import Encoder, Decoder
+from headliner.model.basic_model import Encoder, Decoder
 from headliner.model.summarizer import Summarizer
 from headliner.preprocessing.preprocessor import Preprocessor
 from headliner.preprocessing.vectorizer import Vectorizer
 
 
-class SummarizerAttention(Summarizer):
+class BasicSummarizer(Summarizer):
 
     def __init__(self, lstm_size=50, max_prediction_len=20, embedding_size=50, embedding_encoder_trainable=True,
                  embedding_decoder_trainable=True):
+
         super().__init__()
         self.lstm_size = lstm_size
         self.max_prediction_len = max_prediction_len
         self.embedding_size = embedding_size
         self.embedding_encoder_trainable = embedding_encoder_trainable
         self.embedding_decoder_trainable = embedding_decoder_trainable
-        self.optimizer = SummarizerAttention._new_optimizer()
+        self.optimizer = BasicSummarizer._new_optimizer()
         self.encoder = None
         self.decoder = None
         self.embedding_shape_in = None
@@ -48,7 +49,7 @@ class SummarizerAttention(Summarizer):
         self.decoder.compile(optimizer=self.optimizer)
 
     def __getstate__(self):
-        """ Prevents pickle from serializing encoder and decoder """
+        """ Prevents pickle from serializing encoder and decoder. """
         state = self.__dict__.copy()
         del state['encoder']
         del state['decoder']
@@ -73,13 +74,11 @@ class SummarizerAttention(Summarizer):
                   'alignment': [],
                   'predicted_sequence': []}
         for _ in range(self.max_prediction_len):
-            de_output, de_state_h, de_state_c, alignment = self.decoder(de_input, (de_state_h, de_state_c),
-                                                                        en_outputs[0])
-            de_input = tf.expand_dims(tf.argmax(de_output, -1), 0)
+            de_output, de_state_h, de_state_c = self.decoder(de_input, (de_state_h, de_state_c))
+            de_input = tf.argmax(de_output, -1)
             pred_token_index = de_input.numpy()[0][0]
             if pred_token_index != 0:
                 output['logits'].append(np.squeeze(de_output.numpy()))
-                output['alignment'].append(np.squeeze(alignment.numpy()))
                 output['predicted_sequence'].append(pred_token_index)
                 if pred_token_index == de_end_index:
                     break
@@ -93,36 +92,32 @@ class SummarizerAttention(Summarizer):
 
         train_step_signature = [
             tf.TensorSpec(shape=(batch_size, None), dtype=tf.int32),
-            tf.TensorSpec(shape=(batch_size, self.vectorizer.max_output_len), dtype=tf.int32),
+            tf.TensorSpec(shape=(batch_size, None), dtype=tf.int32),
         ]
         encoder = self.encoder
         decoder = self.decoder
         optimizer = self.optimizer
 
-        def train_step(source_seq, target_seq):
-            loss = 0
-            en_initial_states = encoder.init_states(batch_size)
+        @tf.function(input_signature=train_step_signature)
+        def train_step(source_seq: tf.Tensor,
+                       target_seq: tf.Tensor) -> float:
+            en_initial_states = self.encoder.init_states(source_seq.get_shape()[0])
             with tf.GradientTape() as tape:
                 en_outputs = encoder(source_seq, en_initial_states)
                 en_states = en_outputs[1:]
-                de_state_h, de_state_c = en_states
-                for i in range(target_seq.shape[1] - 1):
-                    decoder_in = tf.expand_dims(target_seq[:, i], 1)
-                    logit, de_state_h, de_state_c, _ = decoder(
-                        decoder_in, (de_state_h, de_state_c), en_outputs[0])
-                    loss += loss_function(target_seq[:, i + 1], logit)
+                de_states = en_states
+                de_outputs = decoder(target_seq[:, :-1], de_states)
+                logits = de_outputs[0]
+                loss = loss_function(target_seq[:, 1:], logits)
             if apply_gradients is True:
                 variables = encoder.trainable_variables + decoder.trainable_variables
                 gradients = tape.gradient(loss, variables)
                 optimizer.apply_gradients(zip(gradients, variables))
-            return loss / (target_seq.shape[1] - 1)
+            return float(loss)
 
-        if self.vectorizer.max_output_len is not None:
-            return tf.function(train_step, input_signature=train_step_signature)
-        else:
-            return train_step
+        return train_step
 
-    def save(self, out_path: str) -> None:
+    def save(self, out_path):
         if not os.path.exists(out_path):
             os.mkdir(out_path)
         summarizer_path = os.path.join(out_path, 'summarizer.pkl')
@@ -134,7 +129,7 @@ class SummarizerAttention(Summarizer):
         self.decoder.save_weights(decoder_path, save_format='tf')
 
     @staticmethod
-    def load(in_path: str):
+    def load(in_path):
         summarizer_path = os.path.join(in_path, 'summarizer.pkl')
         encoder_path = os.path.join(in_path, 'encoder')
         decoder_path = os.path.join(in_path, 'decoder')
@@ -146,7 +141,7 @@ class SummarizerAttention(Summarizer):
         summarizer.decoder = Decoder(summarizer.embedding_shape_out,
                                      summarizer.lstm_size,
                                      embedding_trainable=summarizer.embedding_decoder_trainable)
-        optimizer = SummarizerAttention._new_optimizer()
+        optimizer = BasicSummarizer._new_optimizer()
         summarizer.encoder.compile(optimizer=optimizer)
         summarizer.decoder.compile(optimizer=optimizer)
         summarizer.encoder.load_weights(encoder_path)

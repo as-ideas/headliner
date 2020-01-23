@@ -1,7 +1,7 @@
-import os
-import tempfile
 import datetime
 import logging
+import os
+import tempfile
 from collections import Counter
 from typing import Tuple, List, Iterable, Callable, Dict, Union
 
@@ -15,6 +15,7 @@ from headliner.callbacks.validation_callback import ValidationCallback
 from headliner.embeddings import read_embedding, embedding_to_matrix
 from headliner.evaluation.scorer import Scorer
 from headliner.losses import masked_crossentropy
+from headliner.model.bert_summarizer import BertSummarizer
 from headliner.model.summarizer import Summarizer
 from headliner.preprocessing.bucket_generator import BucketGenerator
 from headliner.preprocessing.dataset_generator import DatasetGenerator
@@ -39,10 +40,8 @@ class Trainer:
                  embedding_path_encoder=None,
                  embedding_path_decoder=None,
                  steps_per_epoch=500,
-                 tensorboard_dir=os.path.join(tempfile.gettempdir(), 'train_tens_',
-                                              datetime.datetime.now().strftime('%Y%m%d_%H%M%S')),
-                 model_save_path=os.path.join(tempfile.gettempdir(), 'summarizer_',
-                                              datetime.datetime.now().strftime('%Y%m%d_%H%M%S')),
+                 tensorboard_dir=None,
+                 model_save_path=None,
                  shuffle_buffer_size=100000,
                  use_bucketing=False,
                  bucketing_buffer_size_batches=10000,
@@ -90,10 +89,7 @@ class Trainer:
         self.loss_function = masked_crossentropy
         self.use_bucketing = use_bucketing
         self.shuffle_buffer_size = None if use_bucketing else shuffle_buffer_size
-        self.train_dataset_generator = DatasetGenerator(batch_size=self.batch_size,
-                                                        shuffle_buffer_size=self.shuffle_buffer_size)
-        self.val_dataset_generator = DatasetGenerator(batch_size=self.batch_size,
-                                                      shuffle_buffer_size=None)
+
         self.bucket_generator = None
         if use_bucketing:
             self.bucket_generator = BucketGenerator(element_length_function=lambda vecs: len(vecs[0]),
@@ -180,8 +176,9 @@ class Trainer:
         vectorize_val = self._vectorize_data(preprocessor=summarizer.preprocessor,
                                              vectorizer=summarizer.vectorizer,
                                              bucket_generator=None)
-        train_dataset = self.train_dataset_generator(lambda: vectorize_train(train_data))
-        val_dataset = self.val_dataset_generator(lambda: vectorize_val(val_data))
+        train_gen, val_gen = self._create_dataset_generators(summarizer)
+        train_dataset = train_gen(lambda: vectorize_train(train_data))
+        val_dataset = val_gen(lambda: vectorize_val(val_data))
 
         train_callbacks = callbacks or []
         if val_data is not None:
@@ -207,17 +204,20 @@ class Trainer:
             train_callbacks.append(tb_callback)
         logs = {}
         epoch_count, batch_count, train_losses = 0, 0, []
-        train_step = summarizer.new_train_step(self.loss_function, self.batch_size, apply_gradients=True)
+        train_step = summarizer.new_train_step(self.loss_function,
+                                               self.batch_size,
+                                               apply_gradients=True)
         while epoch_count < num_epochs:
-            for train_source_seq, train_target_seq in train_dataset.take(-1):
+            for train_batch in train_dataset.take(-1):
                 batch_count += 1
-                current_loss = train_step(train_source_seq, train_target_seq)
+                current_loss = train_step(*train_batch)
                 train_losses.append(current_loss)
                 logs['loss'] = float(sum(train_losses)) / len(train_losses)
                 if batch_count % self.steps_to_log == 0:
-                    self.logger.info('epoch {epoch}, batch {batch}, logs: {logs}'.format(epoch=epoch_count,
-                                                                                         batch=batch_count,
-                                                                                         logs=logs))
+                    self.logger.info('epoch {epoch}, batch {batch}, '
+                                     'logs: {logs}'.format(epoch=epoch_count,
+                                                           batch=batch_count,
+                                                           logs=logs))
                 if batch_count % self.steps_per_epoch == 0:
                     train_losses.clear()
                     for callback in train_callbacks:
@@ -263,8 +263,9 @@ class Trainer:
     def _vectorize_data(self,
                         preprocessor: Preprocessor,
                         vectorizer: Vectorizer,
-                        bucket_generator: BucketGenerator = None) -> Callable[[Iterable[Tuple[str, str]]],
-                                                                              Iterable[Tuple[List[int], List[int]]]]:
+                        bucket_generator: BucketGenerator = None) \
+            -> Callable[[Iterable[Tuple[str, str]]],
+                        Iterable[Tuple[List[int], List[int]]]]:
 
         def vectorize(raw_data: Iterable[Tuple[str, str]]):
             data_preprocessed = (preprocessor(d) for d in raw_data)
@@ -287,8 +288,10 @@ class Trainer:
         for text_encoder, text_decoder in train_preprocessed:
             counter_encoder.update(text_encoder.split())
             counter_decoder.update(text_decoder.split())
-        tokens_encoder = {token_count[0] for token_count in counter_encoder.most_common(self.max_vocab_size_encoder)}
-        tokens_decoder = {token_count[0] for token_count in counter_decoder.most_common(self.max_vocab_size_decoder)}
+        tokens_encoder = {token_count[0] for token_count
+                          in counter_encoder.most_common(self.max_vocab_size_encoder)}
+        tokens_decoder = {token_count[0] for token_count
+                          in counter_decoder.most_common(self.max_vocab_size_decoder)}
         tokens_encoder.update({self.preprocessor.start_token, self.preprocessor.end_token})
         tokens_decoder.update({self.preprocessor.start_token, self.preprocessor.end_token})
         tokenizer_encoder = KerasTokenizer(oov_token=OOV_TOKEN, lower=False, filters='')
@@ -296,3 +299,13 @@ class Trainer:
         tokenizer_encoder.fit(sorted(list(tokens_encoder)))
         tokenizer_decoder.fit(sorted(list(tokens_decoder)))
         return tokenizer_encoder, tokenizer_decoder
+
+    def _create_dataset_generators(self, summarizer):
+        data_rank = 3 if isinstance(summarizer, BertSummarizer) else 2
+        train_gen = DatasetGenerator(batch_size=self.batch_size,
+                                     shuffle_buffer_size=self.shuffle_buffer_size,
+                                     rank=data_rank)
+        val_gen = DatasetGenerator(batch_size=self.batch_size,
+                                   shuffle_buffer_size=None,
+                                   rank=data_rank)
+        return train_gen, val_gen

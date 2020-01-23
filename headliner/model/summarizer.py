@@ -64,7 +64,6 @@ class Summarizer(abc.ABC):
                        loss_function: Callable[[tf.Tensor], tf.Tensor],
                        batch_size: int,
                        apply_gradients=True) -> Callable[[tf.Tensor, tf.Tensor], float]:
-
         """
         Initializes the train_step function to train the model on batches of data.
 
