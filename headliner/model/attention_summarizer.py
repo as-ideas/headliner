@@ -156,4 +156,4 @@ class AttentionSummarizer(Summarizer):
 
     @staticmethod
     def _new_optimizer() -> tf.keras.optimizers.Optimizer:
-        return tf.keras.optimizers.Adam()
+        return tf.keras.optimizers.Adam(learning_rate=5e-4)
