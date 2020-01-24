@@ -43,7 +43,7 @@ class BertVectorizer:
         vec_encoder = []
         sentence_ids = []
         for i, sent in enumerate(sentences):
-            sent = sent + ' [SEP]'
+            sent = sent + '[SEP]'
             vec = self._tokenizer_encoder.encode(sent, add_special_tokens=False)
             if len(vec_encoder) + len(vec) < self.max_input_len:
                 vec_encoder.extend(vec)
