@@ -1,8 +1,11 @@
-# Advanced Neural Machine Translation Example
+# BERT Neural Machine Translation Example
 
-<!--
 [![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/as-ideas/headliner/blob/master/notebooks/BERT_Translation_Example.ipynb)
--->
+
+### Upgrade grpcio which is needed by tensorboard 2.0.2
+```bash
+!pip install --upgrade grpcio
+```
 
 ### Install TensorFlow and also our package via PyPI
 ```bash
@@ -25,7 +28,7 @@ def create_dataset(path, num_examples):
     word_pairs = [[w for w in l.split('\t')[:2]]  for l in lines[:num_examples]]
     return zip(*word_pairs)
 
-eng, ger = create_dataset('deu.txt', 30000)
+eng, ger, meta = create_dataset('deu.txt', 200000)
 data = list(zip(eng, ger))
 ```
 
@@ -71,11 +74,12 @@ vectorizer = BertVectorizer(tokenizer_input, tokenizer_target)
 
 ### Define the model and train it
 ```python
+# Define the model and train it
+# You need to be quite patient, since the model has a lot of params
+import tensorflow as tf
 from headliner.model.bert_summarizer import BertSummarizer
 from headliner.trainer import Trainer
 
-# use pre-trained BERT embedding for the encoder and freeze it 
-# for faster training
 summarizer = BertSummarizer(num_heads=8,
                             feed_forward_dim=1024,
                             num_layers_encoder=0,
@@ -84,20 +88,28 @@ summarizer = BertSummarizer(num_heads=8,
                             embedding_encoder_trainable=False,
                             embedding_size_encoder=768,
                             embedding_size_decoder=768,
-                            dropout_rate=0.1,
+                            dropout_rate=0,
                             max_prediction_len=50)
+# Adjust learning rates of encoder and decoder optimizer schedules
+# You may want to try different learning rates and observe the loss
+summarizer.optimizer_encoder = BertSummarizer.new_optimizer_encoder(
+    learning_rate_start=1e-2
+)
+summarizer.optimizer_decoder = BertSummarizer.new_optimizer_decoder(
+    learning_rate_start=2e-4
+)
 summarizer.init_model(preprocessor, vectorizer)
-trainer = Trainer(steps_per_epoch=500,
+trainer = Trainer(steps_per_epoch=5000,
                   batch_size=8,
                   model_save_path='/tmp/bert_summarizer',
                   tensorboard_dir='/tmp/bert_tensorboard',
-                  steps_to_log=50)
+                  steps_to_log=10)
 trainer.train(summarizer, train, num_epochs=200, val_data=test)
 ```
 
 ### Load best model and do some prediction
 ```python
-best_summarizer = SummarizerBert.load('/tmp/bert_summarizer')
+best_summarizer = BertSummarize.load('/tmp/bert_summarizer')
 best_summarizer.predict('Do you like robots?')
 ```
 
@@ -130,7 +142,7 @@ def plot_attention_weights(summarizer, pred_vectors, layer_name):
     plt.show()
 
 pred_vectors = best_summarizer.predict_vectors(
-    'Tom ran out of the house.', '')
-plot_attention_weights(best_summarizer, pred_vectors, 'decoder_layer1_block2')
+    'Tom ran out of the burning house.', '')
+plot_attention_weights(best_summarizer, pred_vectors, 'decoder_layer4_block2')
 ```
 
