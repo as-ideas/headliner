@@ -22,7 +22,7 @@ setup(
     description='Easy training and deployment of seq2seq models.',
     long_description=long_description,
     license='MIT',
-    install_requires=['scikit-learn', 'nltk', 'pyyaml', 'transformers', 'spacy'],
+    install_requires=['scikit-learn', 'nltk', 'pyyaml', 'transformers>=2.2.2', 'spacy>=2.2.2'],
     extras_require={
         'tests': ['pytest', 'pytest-cov', 'codecov', 'tensorflow==2.0.0'],
         'docs': ['mkdocs', 'mkdocs-material'],
