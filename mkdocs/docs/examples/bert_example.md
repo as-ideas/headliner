@@ -92,11 +92,11 @@ summarizer = BertSummarizer(num_heads=8,
                             max_prediction_len=50)
 # Adjust learning rates of encoder and decoder optimizer schedules
 # You may want to try different learning rates and observe the loss
-summarizer.optimizer_encoder = BertSummarizer.new_optimizer_encoder(
+summarizer.optimizer_decoder = BertSummarizer.new_optimizer_decoder(
     learning_rate_start=1e-2
 )
-summarizer.optimizer_decoder = BertSummarizer.new_optimizer_decoder(
-    learning_rate_start=2e-4
+summarizer.optimizer_encoder = BertSummarizer.new_optimizer_encoder(
+    learning_rate_start=5e-4
 )
 summarizer.init_model(preprocessor, vectorizer)
 trainer = Trainer(steps_per_epoch=5000,
