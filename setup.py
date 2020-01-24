@@ -16,7 +16,7 @@ Headliner is compatible with Python 3.6+ and is distributed under the MIT licens
 
 setup(
     name='headliner',
-    version='1.0.1',
+    version='1.0.2',
     author='Christian Schäfer',
     author_email='c.schaefer.home@gmail.com',
     description='Easy training and deployment of seq2seq models.',
