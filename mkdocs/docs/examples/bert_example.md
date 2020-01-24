@@ -100,7 +100,7 @@ summarizer.optimizer_decoder = BertSummarizer.new_optimizer_decoder(
 )
 summarizer.init_model(preprocessor, vectorizer)
 trainer = Trainer(steps_per_epoch=5000,
-                  batch_size=8,
+                  batch_size=16,
                   model_save_path='/tmp/bert_summarizer',
                   tensorboard_dir='/tmp/bert_tensorboard',
                   steps_to_log=10)
