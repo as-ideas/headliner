@@ -22,11 +22,9 @@ built for our own research to generate headlines from [Welt news articles](https
 The library now supports fine-tuning pre-trained BERT models with 
 custom preprocessing as in [Text Summarization with Pretrained Encoders](https://arxiv.org/pdf/1908.08345.pdf)!
 
-<!--
 check out 
 [this](https://colab.research.google.com/github/as-ideas/headliner/blob/master/notebooks/BERT_Translation_Example.ipynb)
 tutorial on colab!
--->
 
 ## 🧠 Internals
 We use sequence-to-sequence (seq2seq) under the hood,
