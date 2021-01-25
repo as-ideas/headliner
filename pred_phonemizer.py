@@ -1,9 +1,9 @@
 from headliner.model.transformer_summarizer import TransformerSummarizer
 
 if __name__ == '__main__':
-    summarizer = TransformerSummarizer.load('output/summarizer')
+    summarizer = TransformerSummarizer.load('output_save/summarizer_large')
 
-    word = 'Knochenmarksspendenverein'
+    word = 'transformer'
 
     word = ' '.join(word)
     pred = summarizer.predict(word)

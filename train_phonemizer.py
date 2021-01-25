@@ -14,7 +14,7 @@ from headliner.trainer import Trainer
 _vowels = 'iyɨʉɯuɪʏʊeøɘəɵɤoɛœɜɞʌɔæɐaɶɑɒᵻ'
 _non_pulmonic_consonants = 'ʘɓǀɗǃʄǂɠǁʛ'
 _suprasegmentals = 'ː'
-_pulmonic_consonants = 'pbtdʈɖcɟkɡqɢʔɴŋɲɳnɱmʙrʀⱱɾɽɸβfvθðszʃʒʂʐçʝxɣχʁħʕhɦɬɮʋɹɻjɰlɭʎʟ'
+_pulmonic_consonants = 'pbtdʈɖcɟkɡqɢɴŋɲɳnɱmʙrʀⱱɾɽɸβfvθðszʃʒʂʐçʝxɣχʁħʕhɦɬɮʋɹɻjɰlɭʎʟ'
 
 _other_symbols = 'ʍwɥʜʢʡɕʑɺɧ'
 _diacrilics = 'ɚ˞ɫ'
@@ -29,18 +29,19 @@ if __name__ == '__main__':
 
     with open('/Users/cschaefe/datasets/nlp/german_phoneme_dict_all.json', 'r', encoding='utf-8') as f:
         data_dict = json.load(f)
-
     train_data = []
     max_len = 30
 
     for word, phon in data_dict.items():
+        if word == 'aufwändig':
+            print(f'{word} {phon}')
         word = re.sub('[^a-zA-Zäöüß ]+', ' ', word)
         word = ' '.join(word)
         phon = ' '.join(p for p in phon if p in phonemes)
         if 0 < len(phon) < max_len:
             train_data.append((word, phon))
-            print(f'{word} {phon}')
 
+    exit()
     max_len = max([len(p) for _, p in train_data])
     train_data.sort()
     random = Random(42)
