@@ -8,13 +8,13 @@ from thinc.neural.optimizers import Adam
 
 from headliner.model.transformer_summarizer import TransformerSummarizer
 from headliner.trainer import Trainer
-
+import pickle
 
 # Phonemes
 _vowels = 'iyɨʉɯuɪʏʊeøɘəɵɤoɛœɜɞʌɔæɐaɶɑɒᵻ'
 _non_pulmonic_consonants = 'ʘɓǀɗǃʄǂɠǁʛ'
 _suprasegmentals = 'ː'
-_pulmonic_consonants = 'pbtdʈɖcɟkɡqɢɴŋɲɳnɱmʙrʀⱱɾɽɸβfvθðszʃʒʂʐçʝxɣχʁħʕhɦɬɮʋɹɻjɰlɭʎʟ'
+_pulmonic_consonants = 'pbtdʈɖcɟkɡqɢʔɴŋɲɳnɱmʙrʀⱱɾɽɸβfvθðszʃʒʂʐçʝxɣχʁħʕhɦɬɮʋɹɻjɰlɭʎʟ'
 
 _other_symbols = 'ʍwɥʜʢʡɕʑɺɧ'
 _diacrilics = 'ɚ˞ɫ'
@@ -27,19 +27,19 @@ phonemes_set = set(phonemes)
 
 if __name__ == '__main__':
 
-    with open('/Users/cschaefe/datasets/nlp/german_phoneme_dict_all.json', 'r', encoding='utf-8') as f:
-        data_dict = json.load(f)
+    with open('/Users/cschaefe/datasets/nlp/phon_dict_all.pkl', 'rb') as f:
+        data_dict = pickle.load(f)
     train_data = []
-    max_len = 30
+    max_len = 50
 
-    for word, phon in data_dict.items():
-        if word == 'aufwändig':
-            print(f'{word} {phon}')
-        word = re.sub('[^a-zA-Zäöüß ]+', ' ', word)
-        word = ' '.join(word)
-        phon = ' '.join(p for p in phon if p in phonemes)
-        if 0 < len(phon) < max_len:
-            train_data.append((word, phon))
+    for data in data_dict:
+        word = data['title']
+        phon = data['pronunciation']
+        if 0 < len(phon) < max_len and ' ' not in word and 0 < len(word) < max_len:
+            word = re.sub('[^a-zA-Zäöüß ]+', ' ', word)
+            word = ' '.join(word)
+            phon = ' '.join(p for p in phon if p in phonemes)
+            print(f'{word} --- {phon}')
 
     exit()
     max_len = max([len(p) for _, p in train_data])
@@ -59,6 +59,7 @@ if __name__ == '__main__':
                       steps_per_epoch=500,
                       max_vocab_size_encoder=10000,
                       max_vocab_size_decoder=10000,
+                      use_bucketing=True,
                       tensorboard_dir='output/tensorboard_large',
                       model_save_path='output/summarizer_large')
 
