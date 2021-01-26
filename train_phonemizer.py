@@ -27,15 +27,13 @@ phonemes_set = set(phonemes)
 
 if __name__ == '__main__':
 
-    with open('/Users/cschaefe/datasets/nlp/phon_dict_all.pkl', 'rb') as f:
-        data_dict = pickle.load(f)
+    with open('/Users/cschaefe/datasets/nlp/heavily_cleaned_phoneme_dataset_DE.pkl', 'rb') as f:
+        df = pickle.load(f)
+    tuples = df[['title', 'pronunciation']]
+    tuples = [tuple(x) for x in tuples.to_numpy()]
     train_data = []
     max_len = 50
-
-    for data in data_dict:
-        word = data['title']
-        phon = data['pronunciation']
-        word = re.sub('[^a-zA-Zäöüß ]+', ' ', word)
+    for word, phon in tuples:
         if 0 < len(phon) < max_len and ' ' not in word and 0 < len(word) < max_len:
             word = ' '.join(word)
             phon = ' '.join(p for p in phon if p in phonemes)
