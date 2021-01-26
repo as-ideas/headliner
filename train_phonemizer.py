@@ -40,8 +40,8 @@ if __name__ == '__main__':
             word = ' '.join(word)
             phon = ' '.join(p for p in phon if p in phonemes)
             print(f'{word} --- {phon}')
+            train_data.append((word, phon))
 
-    exit()
     max_len = max([len(p) for _, p in train_data])
     train_data.sort()
     random = Random(42)
@@ -63,4 +63,4 @@ if __name__ == '__main__':
                       tensorboard_dir='output/tensorboard_large',
                       model_save_path='output/summarizer_large')
 
-    trainer.train(summarizer, train_data, val_data=val_data, num_epochs=30)
+    trainer.train(summarizer, train_data, val_data=val_data, num_epochs=300)
