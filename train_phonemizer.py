@@ -57,8 +57,8 @@ if __name__ == '__main__':
     summarizer.optimizer = tf.keras.optimizers.Adam(1e-4)
     trainer = Trainer(batch_size=32,
                       steps_per_epoch=500,
-                      max_vocab_size_encoder=10000,
-                      max_vocab_size_decoder=10000,
+                      max_vocab_size_encoder=1000,
+                      max_vocab_size_decoder=1000,
                       use_bucketing=True,
                       tensorboard_dir='output/tensorboard_large',
                       model_save_path='output/summarizer_large')
