@@ -35,8 +35,8 @@ if __name__ == '__main__':
     for data in data_dict:
         word = data['title']
         phon = data['pronunciation']
+        word = re.sub('[^a-zA-Zäöüß ]+', ' ', word)
         if 0 < len(phon) < max_len and ' ' not in word and 0 < len(word) < max_len:
-            word = re.sub('[^a-zA-Zäöüß ]+', ' ', word)
             word = ' '.join(word)
             phon = ' '.join(p for p in phon if p in phonemes)
             print(f'{word} --- {phon}')
