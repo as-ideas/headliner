@@ -48,7 +48,7 @@ if __name__ == '__main__':
     train_data_concat = []
     for (w1, p1), (w2, p2) in zip(train_data[:-1], train_data[1:]):
         train_data_concat.append((w1, p1))
-        train_data_concat.append((w1 + w2, p1 + p2))
+        train_data_concat.append((w1 + ' ' + w2, p1 + ' ' + p2))
 
     for word, phon in train_data_concat:
         print(f'{word} --- {phon}')
