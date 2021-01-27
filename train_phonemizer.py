@@ -4,6 +4,10 @@ import tensorflow as tf
 from functools import _lru_cache_wrapper
 from random import Random
 
+
+from build.lib.headliner.evaluation.scorer import Scorer
+from evaluation import calculate_wer
+from headliner.callbacks import EvaluationCallback
 from thinc.neural.optimizers import Adam
 
 from headliner.model.transformer_summarizer import TransformerSummarizer
@@ -25,6 +29,7 @@ phonemes = set(
 
 phonemes_set = set(phonemes)
 
+
 if __name__ == '__main__':
 
     with open('/Users/cschaefe/datasets/nlp/heavily_cleaned_phoneme_dataset_DE.pkl', 'rb') as f:
@@ -39,35 +44,44 @@ if __name__ == '__main__':
             phon = ' '.join(p for p in phon if p in phonemes)
             train_data.append((word, phon))
 
-
-
     max_len = max([len(p) for _, p in train_data])
     train_data.sort()
     random = Random(42)
     random.shuffle(train_data)
+    val_data, train_data = train_data[:10000], train_data[10000:]
     train_data_concat = []
     for (w1, p1), (w2, p2) in zip(train_data[:-1], train_data[1:]):
         train_data_concat.append((w1, p1))
         train_data_concat.append((w1 + ' ' + w2, p1 + ' ' + p2))
-
     for word, phon in train_data_concat:
         print(f'{word} --- {phon}')
 
-    val_data, train_data = train_data_concat[:1000], train_data_concat[1000:]
-    print(f'train: {len(train_data)}, val: {len(val_data)}, max pred len: {max_len}')
+    print(f'train: {len(train_data_concat)}, val: {len(val_data)}, max pred len: {max_len}')
     summarizer = TransformerSummarizer(num_heads=4,
-                                       feed_forward_dim=1024,
+                                       feed_forward_dim=256,
                                        num_layers=4,
-                                       embedding_size=512,
-                                       dropout_rate=0.,
-                                       max_prediction_len=max_len*2)
+                                       embedding_size=64,
+                                       dropout_rate=0.)
     summarizer.optimizer = tf.keras.optimizers.Adam(1e-4)
+
+    class PERScorer(Scorer):
+
+        def __call__(self, prediction):
+            pred = prediction['predicted_text'].split()[:-1]
+            gold = prediction['preprocessed_text'][1].split()[1:-1]
+            wer = float(calculate_wer(gold, pred))
+            return wer
+
     trainer = Trainer(batch_size=32,
-                      steps_per_epoch=500,
+                      steps_per_epoch=5000,
                       max_vocab_size_encoder=1000,
                       max_vocab_size_decoder=1000,
                       use_bucketing=True,
-                      tensorboard_dir='output/tensorboard_large',
-                      model_save_path='output/summarizer_large')
+                      tensorboard_dir='output/tensorboard_test',
+                      model_save_path='output/summarizer_test',)
 
-    trainer.train(summarizer, train_data, val_data=val_data, num_epochs=300)
+    trainer.train(summarizer,
+                  train_data_concat,
+                  val_data=val_data,
+                  num_epochs=300,
+                  scorers={'phoneme_error_rate': PERScorer()})
