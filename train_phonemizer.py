@@ -37,21 +37,30 @@ if __name__ == '__main__':
         if 0 < len(phon) < max_len and ' ' not in word and 0 < len(word) < max_len:
             word = ' '.join(word)
             phon = ' '.join(p for p in phon if p in phonemes)
-            print(f'{word} --- {phon}')
             train_data.append((word, phon))
+
+
 
     max_len = max([len(p) for _, p in train_data])
     train_data.sort()
     random = Random(42)
     random.shuffle(train_data)
-    val_data, train_data = train_data[:1000], train_data[1000:]
+    train_data_concat = []
+    for (w1, p1), (w2, p2) in zip(train_data[:-1], train_data[1:]):
+        train_data_concat.append((w1, p1))
+        train_data_concat.append((w1 + w2, p1 + p2))
+
+    for word, phon in train_data_concat:
+        print(f'{word} --- {phon}')
+
+    val_data, train_data = train_data_concat[:1000], train_data_concat[1000:]
     print(f'train: {len(train_data)}, val: {len(val_data)}, max pred len: {max_len}')
     summarizer = TransformerSummarizer(num_heads=4,
                                        feed_forward_dim=1024,
                                        num_layers=4,
                                        embedding_size=512,
                                        dropout_rate=0.,
-                                       max_prediction_len=max_len+2)
+                                       max_prediction_len=max_len*2)
     summarizer.optimizer = tf.keras.optimizers.Adam(1e-4)
     trainer = Trainer(batch_size=32,
                       steps_per_epoch=500,
