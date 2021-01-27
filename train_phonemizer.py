@@ -58,9 +58,9 @@ if __name__ == '__main__':
 
     print(f'train: {len(train_data_concat)}, val: {len(val_data)}, max pred len: {max_len}')
     summarizer = TransformerSummarizer(num_heads=4,
-                                       feed_forward_dim=256,
+                                       feed_forward_dim=1024,
                                        num_layers=4,
-                                       embedding_size=64,
+                                       embedding_size=512,
                                        dropout_rate=0.)
     summarizer.optimizer = tf.keras.optimizers.Adam(1e-4)
 
