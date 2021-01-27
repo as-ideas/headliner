@@ -4,7 +4,7 @@ import tensorflow as tf
 
 from headliner.model.summarizer import Summarizer
 from headliner.utils.logger import get_logger
-
+import tqdm
 
 class EvaluationCallback(tf.keras.callbacks.Callback):
     """
@@ -38,7 +38,7 @@ class EvaluationCallback(tf.keras.callbacks.Callback):
             logs = {}
         val_scores = {score_name: 0. for score_name in self.scorers.keys()}
         count_val = 0
-        for d in self.val_data:
+        for d in tqdm.tqdm(self.val_data):
             count_val += 1
             input_text, target_text = d
             prediction = self.summarizer.predict_vectors(input_text, target_text)

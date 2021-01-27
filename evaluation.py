@@ -40,8 +40,8 @@ def calculate_wer(reference, hypothesis):
 
 if __name__ == '__main__':
 
-    pred = list('')
-    gold = list('')
+    pred = list('blablablablalb')
+    gold = list('bla')
     wer = calculate_wer(gold, pred)
 
     print(wer)
