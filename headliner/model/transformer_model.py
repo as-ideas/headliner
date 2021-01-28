@@ -125,6 +125,7 @@ class Transformer(tf.keras.Model):
 
         self.final_layer = tf.keras.layers.Dense(embedding_shape_decoder[0])
 
+    @tf.function(experimental_relax_shapes=True)
     def call(self, inp, tar, training, enc_padding_mask,
              look_ahead_mask, dec_padding_mask):
         enc_output = self.encoder(inp, training, enc_padding_mask)
