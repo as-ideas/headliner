@@ -1,9 +1,9 @@
 import json
 import re
 import tensorflow as tf
-from functools import _lru_cache_wrapper
 from random import Random
 
+from headliner.preprocessing import Preprocessor
 
 from build.lib.headliner.evaluation.scorer import Scorer
 from evaluation import calculate_wer
@@ -77,8 +77,11 @@ if __name__ == '__main__':
                       max_vocab_size_encoder=1000,
                       max_vocab_size_decoder=1000,
                       use_bucketing=True,
-                      tensorboard_dir='output/tensorboard_test',
-                      model_save_path='output/summarizer_test',)
+                      preprocessor=Preprocessor(start_token='<start>', end_token='<end>',
+                                                lower_case=False, hash_numbers=False,
+                                                filter_pattern=None),
+                      tensorboard_dir='output/tensorboard_cased',
+                      model_save_path='output/summarizer_cased',)
 
     trainer.train(summarizer,
                   train_data_concat,

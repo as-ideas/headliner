@@ -39,7 +39,7 @@ def phonemize(text, summarizer, phon_dict):
         if len(word) > 0 and word[0] in PUNCTUATION:
             start = word[0]
             word = word[1:]
-        word = re.sub('[^a-zA-Zäöüß ]+', '', word)
+        word = re.sub('[^a-zA-ZäöüßÄÖÜ ]+', '', word)
         if len(word) > 0:
             if word in phon_dict:
                 phon = phon_dict[word]
