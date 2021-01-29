@@ -41,13 +41,15 @@ if __name__ == '__main__':
     max_len = 50
     for word, phon in tuples:
         if 0 < len(phon) < max_len and ' ' not in word and 0 < len(word) < max_len:
-            word = ' '.join(word)
+            word_ = ' '.join(word)
             phon = ' '.join(p for p in phon if p in phonemes)
-            train_data.append((word, phon))
-            if word.upper() not in data_set:
-                train_data.append((word.lower(), phon))
+            train_data.append((word_, phon))
+            if word.lower() not in data_set:
+                word_ = ' '.join(word.lower())
+                train_data.append((word_, phon))
             if word.title() not in data_set:
-                train_data.append((word.title(), phon))
+                word_ = ' '.join(word.title())
+                train_data.append((word_, phon))
 
     max_len = max([len(p) for _, p in train_data])
     train_data.sort()
