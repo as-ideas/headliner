@@ -36,6 +36,7 @@ if __name__ == '__main__':
         df = pickle.load(f)
     tuples = df[['title', 'pronunciation']]
     tuples = [tuple(x) for x in tuples.to_numpy()]
+    data_set = {w for w, _ in tuples}
     train_data = []
     max_len = 50
     for word, phon in tuples:
@@ -43,12 +44,16 @@ if __name__ == '__main__':
             word = ' '.join(word)
             phon = ' '.join(p for p in phon if p in phonemes)
             train_data.append((word, phon))
+            if word.upper() not in data_set:
+                train_data.append((word.lower(), phon))
+            if word.title() not in data_set:
+                train_data.append((word.title(), phon))
 
     max_len = max([len(p) for _, p in train_data])
     train_data.sort()
     random = Random(42)
     random.shuffle(train_data)
-    val_data, train_data = train_data[:10000], train_data[10000:]
+    val_data, train_data = train_data[:1000], train_data[1000:]
     train_data_concat = []
     for (w1, p1), (w2, p2) in zip(train_data[:-1], train_data[1:]):
         train_data_concat.append((w1, p1))
@@ -73,7 +78,7 @@ if __name__ == '__main__':
             return wer
 
     trainer = Trainer(batch_size=32,
-                      steps_per_epoch=5000,
+                      steps_per_epoch=10000,
                       max_vocab_size_encoder=1000,
                       max_vocab_size_decoder=1000,
                       use_bucketing=True,
