@@ -3,6 +3,8 @@ import re
 import tensorflow as tf
 from random import Random
 
+import tqdm
+
 from headliner.preprocessing import Preprocessor
 
 from build.lib.headliner.evaluation.scorer import Scorer
@@ -14,20 +16,8 @@ from headliner.model.transformer_summarizer import TransformerSummarizer
 from headliner.trainer import Trainer
 import pickle
 
-# Phonemes
-_vowels = 'iyɨʉɯuɪʏʊeøɘəɵɤoɛœɜɞʌɔæɐaɶɑɒᵻ'
-_non_pulmonic_consonants = 'ʘɓǀɗǃʄǂɠǁʛ'
-_suprasegmentals = 'ː'
-_pulmonic_consonants = 'pbtdʈɖcɟkɡqɢʔɴŋɲɳnɱmʙrʀⱱɾɽɸβfvθðszʃʒʂʐçʝxɣχʁħʕhɦɬɮʋɹɻjɰlɭʎʟ'
 
-_other_symbols = 'ʍwɥʜʢʡɕʑɺɧ'
-_diacrilics = 'ɚ˞ɫ'
-
-phonemes = set(
-   _vowels + _non_pulmonic_consonants + _suprasegmentals
-   + _pulmonic_consonants + _other_symbols + _diacrilics)
-
-phonemes_set = set(phonemes)
+phonemes_set = set(' abdefhijklmnoprstuvwxyzæçøŋœɐɑɔəɛɡɪʁʃʊʏʒʔˈˌː̥̩̯̃̍͡')
 
 
 if __name__ == '__main__':
@@ -39,10 +29,17 @@ if __name__ == '__main__':
     data_set = {w for w, _ in tuples}
     train_data = []
     max_len = 50
-    for word, phon in tuples:
+
+    all_phons = set()
+    for word, phon in tqdm.tqdm(tuples, total=len(tuples)):
+        all_phons.update(set(phon))
+        all_phons_list = sorted(list(all_phons))
+        with open('/tmp/all_phons.txt', 'w+', encoding='utf-8') as f:
+            f.write(''.join(all_phons_list))
         if 0 < len(phon) < max_len and ' ' not in word and 0 < len(word) < max_len:
             word_ = ' '.join(word)
-            phon = ' '.join(p for p in phon if p in phonemes)
+            phon = ' '.join(p for p in phon if p in phonemes_set)
+            print(f'{word} {phon}')
             train_data.append((word_, phon))
             if word.lower() not in data_set:
                 word_ = ' '.join(word.lower())
@@ -87,8 +84,8 @@ if __name__ == '__main__':
                       preprocessor=Preprocessor(start_token='<start>', end_token='<end>',
                                                 lower_case=False, hash_numbers=False,
                                                 filter_pattern=None),
-                      tensorboard_dir='output/tensorboard_cased',
-                      model_save_path='output/summarizer_cased',)
+                      tensorboard_dir='output/tensorboard_cased_stress',
+                      model_save_path='output/summarizer_cased_stress',)
 
     trainer.train(summarizer,
                   train_data_concat,
