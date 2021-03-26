@@ -38,7 +38,7 @@ if __name__ == '__main__':
             f.write(''.join(all_phons_list))
         if 0 < len(phon) < max_len and ' ' not in word and 0 < len(word) < max_len:
             word_ = ' '.join(word)
-            phon = ' '.join(p for p in phon if p in phonemes_set)
+            phon = ' '.join(phon)
             print(f'{word} {phon}')
             train_data.append((word_, phon))
             if word.lower() not in data_set:
