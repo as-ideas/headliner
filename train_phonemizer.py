@@ -90,5 +90,4 @@ if __name__ == '__main__':
     trainer.train(summarizer,
                   train_data_concat,
                   val_data=val_data,
-                  num_epochs=300,
-                  scorers={'phoneme_error_rate': PERScorer()})
+                  num_epochs=300)
